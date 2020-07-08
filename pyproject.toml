@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "django-google-cloud-tasks"
+version = "0.0.1-a1"
+description = "Async Tasks with HTTP endpoints"
+authors = ["Joao Daher <joao@daher.dev>"]
+packages = [
+    { include = "django_cloud_tasks" },
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+google-cloud-tasks = "*"
+django = "^3"
+
+[tool.poetry.dev-dependencies]
+pylint = "*"
+nose = "^1"
+coverage = "*"
+
+
+[build-system]
+requires = ["poetry^0.12"]
+build-backend = "poetry.masonry.api"
