@@ -1,0 +1,25 @@
+name: Publish Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Setup Environment
+        run: |
+          make setup
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      - name: Build & Release package
+        run: |
+          make publish
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

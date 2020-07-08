@@ -1,0 +1,99 @@
+name: Github CI
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - master
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Cache dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install Python dependencies
+      run: |
+        make dependencies
+      env:
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+    - name: Lint with pylint
+      run: |
+        make lint
+
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install Python dependencies
+        run: |
+          make dependencies
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Build the package
+        run: |
+          poetry build
+
+  unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: |
+          make dependencies
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Prepare coverage
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter before-build
+
+      - name: Unit test with nose test suite
+        run: |
+          make unit
+        env:
+          LOG_LEVEL: ERROR
+          TEST_GCP_JSON: ${{ secrets.TEST_GCP_JSON }}
+
+      - name: Report coverage
+        run: |
+          poetry run coverage xml
+          GIT_COMMIT_SHA=`[[ -z "$GITHUB_HEAD_REF" ]] && echo $GITHUB_SHA || echo ${{ github.event.pull_request.head.sha }}`  GIT_BRANCH=`[[ -z "$GITHUB_HEAD_REF" ]] && echo ${GITHUB_REF/refs\/heads\/} || echo $GITHUB_HEAD_REF` ./cc-test-reporter after-build -t coverage.py --exit-code $?
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
