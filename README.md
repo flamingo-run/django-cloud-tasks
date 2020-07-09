@@ -1,4 +1,4 @@
-![Github CI](https://github.com/joaodaher/django-cloud-tasks-py/workflows/Github%20CI/badge.svg)
+![Github CI](https://github.com/joaodaher/django-cloud-tasks/workflows/Github%20CI/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b21079c0b64dcb8e2c46/maintainability)](https://codeclimate.com/github/joaodaher/django-cloud-tasks/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/b21079c0b64dcb8e2c46/test_coverage)](https://codeclimate.com/github/joaodaher/django-cloud-tasks/test_coverage)
 [![python](https://img.shields.io/badge/python-3.8-blue.svg)]()
