@@ -5,6 +5,10 @@
 
 # Django Cloud Tasks
 
+## How it works
+
+![image](https://user-images.githubusercontent.com/9717144/100749131-00cce780-33c3-11eb-8f2a-b465bc0a45bb.png)
+
 
 ## Setup
 
