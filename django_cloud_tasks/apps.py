@@ -13,7 +13,10 @@ class DjangoCloudTasksAppConfig(AppConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tasks = {}
-        self.domain = getattr(settings, 'DOMAIN_URL', os.environ.get('DOMAIN_URL', 'http://localhost:8080'))
+        self.domain = self._fetch_config(name='DOMAIN_URL', default='http://localhost:8080')
+
+    def _fetch_config(self, name, default):
+        return getattr(settings, name, os.environ.get(name, default))
 
     def ready(self):
         self.register_tasks()
