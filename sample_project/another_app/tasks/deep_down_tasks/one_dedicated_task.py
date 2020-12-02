@@ -1,6 +1,6 @@
-from django_cloud_tasks.tasks import BaseTask
+from django_cloud_tasks.tasks import Task
 
 
-class OneBigDedicatedTask(BaseTask):
+class OneBigDedicatedTask(Task):
     def run(self, name):
         return f"Chuck Norris is better than {name}"

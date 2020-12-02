@@ -6,7 +6,7 @@ from django.urls import reverse
 from django_cloud_tasks.client import CloudTasksClient
 
 
-class BaseTask(ABC):
+class Task(ABC):
     @abstractmethod
     def run(self, **kwargs):
         raise NotImplementedError()

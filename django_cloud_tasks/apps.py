@@ -27,7 +27,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         return {}
 
     def _scan_tasks(self, app):
-        from django_cloud_tasks.tasks import BaseTask  # pylint: disable=import-outside-toplevel
+        from django_cloud_tasks.tasks import Task  # pylint: disable=import-outside-toplevel
 
         files = []
 
@@ -51,7 +51,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
             foo = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(foo)
             for _, klass in inspect.getmembers(foo):
-                if inspect.isclass(klass) and klass is not BaseTask and issubclass(klass, BaseTask):
+                if inspect.isclass(klass) and klass is not Task and issubclass(klass, Task):
                     yield klass
 
     def _register_task(self, task_class):
