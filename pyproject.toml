@@ -11,6 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8"
 google-cloud-tasks = "*"
+google-cloud-scheduler = "^2"
 django = "^3"
 
 [tool.poetry.dev-dependencies]

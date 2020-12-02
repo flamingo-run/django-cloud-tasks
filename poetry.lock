@@ -122,6 +122,19 @@ six = ">=1.9.0"
 aiohttp = ["aiohttp (>=3.6.2,<4.0.0dev)"]
 
 [[package]]
+name = "google-cloud-scheduler"
+version = "2.0.0"
+description = "Cloud Scheduler API API client library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.22.0,<2.0.0dev", extras = ["grpc"]}
+libcst = ">=0.2.5"
+proto-plus = ">=1.4.0"
+
+[[package]]
 name = "google-cloud-tasks"
 version = "2.0.0"
 description = "Cloud Tasks API API client library"
@@ -417,7 +430,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "9832d14337da8a67792a4cc31b26b302de13ef57175d5d89eea89c91d5edda12"
+content-hash = "c87357b8eaf2a84c05c2791fe63387d159822d5b55586c59104a6cb78206be3a"
 
 [metadata.files]
 asgiref = [
@@ -491,6 +504,10 @@ google-api-core = [
 google-auth = [
     {file = "google-auth-1.23.0.tar.gz", hash = "sha256:5176db85f1e7e837a646cd9cede72c3c404ccf2e3373d9ee14b2db88febad440"},
     {file = "google_auth-1.23.0-py2.py3-none-any.whl", hash = "sha256:b728625ff5dfce8f9e56a499c8a4eb51443a67f20f6d28b67d5774c310ec4b6b"},
+]
+google-cloud-scheduler = [
+    {file = "google-cloud-scheduler-2.0.0.tar.gz", hash = "sha256:a21f131fc33f9d38ac7ae3e90e5d66dc7b9062a87e86c5fea2ec42c685f962cf"},
+    {file = "google_cloud_scheduler-2.0.0-py2.py3-none-any.whl", hash = "sha256:2872aad435f06e2b5315f6585143a3c526910447424cba6e8fd534695c420024"},
 ]
 google-cloud-tasks = [
     {file = "google-cloud-tasks-2.0.0.tar.gz", hash = "sha256:a9dd004057fc441eee8c18bb2dc3bb20ba7b85f353d66894c61e42aeb8764e76"},
