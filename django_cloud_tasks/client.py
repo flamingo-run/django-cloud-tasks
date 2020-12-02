@@ -5,7 +5,9 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from google.cloud import tasks_v2
+from google import auth
+from google.api_core.exceptions import NotFound
+from google.cloud import tasks_v2, scheduler
 from google.oauth2 import service_account
 from google.protobuf import timestamp_pb2
 
@@ -92,4 +94,117 @@ class CloudTasksClient(BaseGoogleCloud):
             task.schedule_time = timestamp
 
         response = self.client.create_task(parent, task)
+        return response
+
+
+class CloudSchedulerClient(BaseGoogleCloud):
+    _client_class = scheduler.CloudSchedulerClient
+    DEFAULT_METHOD = scheduler.HttpMethod.POST
+
+    def create(
+            self,
+            name,
+            url,
+            payload,
+            cron,
+            timezone=DEFAULT_TIMEZONE,
+            method=DEFAULT_METHOD,
+            headers=None,
+            location=DEFAULT_LOCATION,
+    ):
+        parent = f"projects/{self.project_name}/locations/{location}"
+        job = scheduler.Job(
+            name=f'{parent}/jobs/{name}',
+            schedule=cron,
+            time_zone=timezone,
+            http_target=scheduler.HttpTarget(
+                uri=url,
+                http_method=method,
+                body=payload.encode(),
+                headers=headers or {},
+            )
+        )
+
+        response = self.client.create_job(
+            request={
+                "parent": parent,
+                "job": job
+            }
+        )
+        return response
+
+    def update(
+            self,
+            name,
+            url,
+            payload,
+            cron,
+            timezone=DEFAULT_TIMEZONE,
+            method=DEFAULT_METHOD,
+            headers=None,
+            location=DEFAULT_LOCATION,
+    ):
+        parent = f"projects/{self.project_name}/locations/{location}"
+        job = scheduler.Job(
+            name=f'{parent}/jobs/{name}',
+            schedule=cron,
+            time_zone=timezone,
+            http_target=scheduler.HttpTarget(
+                uri=url,
+                http_method=method,
+                body=payload.encode(),
+                headers=headers or {},
+            )
+        )
+
+        response = self.client.update_job(
+            job=job,
+        )
+        return response
+
+    def get(self, name, location=DEFAULT_LOCATION):
+        response = self.client.get_job(
+            name=f"projects/{self.project_name}/locations/{location}/jobs/{name}",
+        )
+        return response
+
+    def delete(self, name, location=DEFAULT_LOCATION):
+        response = self.client.delete_job(
+            name=f"projects/{self.project_name}/locations/{location}/jobs/{name}",
+        )
+        return response
+
+    def put(
+            self,
+            name,
+            url,
+            payload,
+            cron,
+            timezone=DEFAULT_TIMEZONE,
+            method=DEFAULT_METHOD,
+            headers=None,
+            location=DEFAULT_LOCATION,
+    ):
+        try:
+            response = self.update(
+                name=name,
+                url=url,
+                payload=payload,
+                cron=cron,
+                timezone=timezone,
+                method=method,
+                headers=headers,
+                location=location,
+            )
+        except NotFound:
+            response = self.create(
+                name=name,
+                url=url,
+                payload=payload,
+                cron=cron,
+                timezone=timezone,
+                method=method,
+                headers=headers,
+                location=location,
+            )
         return response
