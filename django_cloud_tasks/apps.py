@@ -14,6 +14,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         super().__init__(*args, **kwargs)
         self.tasks = {}
         self.domain = self._fetch_config(name='DOMAIN_URL', default='http://localhost:8080')
+        self.location = self._fetch_config(name='GOOGLE_CLOUD_LOCATION', default='us-east1')
 
     def _fetch_config(self, name, default):
         return getattr(settings, name, os.environ.get(name, default))

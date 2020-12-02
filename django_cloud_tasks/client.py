@@ -14,74 +14,72 @@ from django_cloud_tasks import exceptions
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_LOCATION = 'us-east1'
+DEFAULT_TIMEZONE = 'UTC'
+
+
 class BaseGoogleCloud:
-    _config = None
-    _credentials = None
     _client_class = None
     _scopes = ['https://www.googleapis.com/auth/cloud-platform']
 
     def __init__(self, subject=None, **kwargs):
-        config = self.config()
-        self.project_name = kwargs.get('project') or config.get('project_id')
-
-        # if the client is sending an empty project,
-        # override the project parameter to avoid GCloud SDK to auto-detect it
-        if 'project' in kwargs and kwargs.get('project') is None:
-            kwargs['project'] = self.project_name
+        self.credentials = self._build_credentials(subject=subject)
+        self.project_name = kwargs.get('project') or self.credentials.project_id
 
         self.client = self._client_class(
-            credentials=self.credentials(subject=subject),
+            credentials=self.credentials,
             **kwargs
         )
 
     @classmethod
-    def credentials(cls, subject=None):
-        if not cls._credentials:
-            cls._credentials = (
-                service_account.Credentials.from_service_account_info(cls.config())
-            ).with_scopes(cls._scopes)
-            if subject:
-                cls._credentials = cls._credentials.with_subject(subject=subject)
-        return cls._credentials
-
-    @classmethod
-    def encode_credential(cls, json_str):
-        return base64.b64encode(json_str.encode()).decode()
-
-    @classmethod
-    def config(cls):
-        if not cls._config:
-            if 'GCP_B64' in os.environ:
-                def _b64(v):
-                    return json.loads(base64.b64decode(v))
-
-                func = _b64
-                env_var = 'GCP_B64'
-            else:
-                func = json.loads
-                env_var = 'GCP_JSON'
-
+    def _build_credentials(cls, subject=None):
+        if 'GCP_B64' in os.environ:
+            env_var = 'GCP_B64'
             try:
-                cls._config = func(os.getenv(env_var))
-            except TypeError:
-                raise exceptions.GoogleCredentialsException()
-        return cls._config
+                data = json.loads(base64.b64decode((os.getenv(env_var))))
+                credentials = (
+                    service_account.Credentials.from_service_account_info(data)
+                ).with_scopes(cls._scopes)
+            except TypeError as e:
+                raise exceptions.GoogleCredentialsException() from e
+        else:
+            try:
+                credentials, _ = auth.default()
+            except Exception as e:
+                raise exceptions.GoogleCredentialsException() from e
+
+        if subject:
+            credentials = credentials.with_subject(subject=subject)
+
+        return credentials
+
+    @property
+    def oidc_token(self):
+        return {'oidc_token': {'service_account_email': self.credentials.service_account_email}}
 
 
 class CloudTasksClient(BaseGoogleCloud):
     _client_class = tasks_v2.CloudTasksClient
+    DEFAULT_METHOD = tasks_v2.HttpMethod.POST
 
-    def push(self, name, queue, url, payload, delay_in_seconds=0):
+    def push(self, name, queue, url, payload, method=DEFAULT_METHOD, delay_in_seconds=0):
         parent = self.client.queue_path(self.project_name, queue)
 
+        tasks_v2.Task(
+            name=name,
+            http_request=tasks_v2.HttpRequest(
+                http_method=method,
+                url=url,
+                body=payload.encode(),
+                **self.oidc_token,
+            )
+        )
         task = {
             'http_request': {
-                'http_method': 'POST',
+                'http_method': method,
                 'url': url,
                 'body': payload.encode(),
-                'oidc_token': {
-                    'service_account_email': self.config()['client_email'],
-                }
+                **self.oidc_token,
             },
             'name': name,
         }
@@ -91,7 +89,7 @@ class CloudTasksClient(BaseGoogleCloud):
             timestamp = timestamp_pb2.Timestamp()
             timestamp.FromDatetime(target_date)
 
-            task['schedule_time'] = timestamp
+            task.schedule_time = timestamp
 
         response = self.client.create_task(parent, task)
         return response
