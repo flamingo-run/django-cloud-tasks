@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from django.apps import apps
 from django.urls import reverse
 
-from django_cloud_tasks.client import CloudTasksClient
+from django_cloud_tasks.client import CloudTasksClient, CloudSchedulerClient
 
 
 class Task(ABC):
@@ -47,3 +47,21 @@ class Task(ABC):
     @property
     def __client(self):
         return CloudTasksClient()
+
+
+class PeriodicTask(Task, ABC):
+    run_every = None
+
+    def delay(self, **kwargs):
+        payload = kwargs
+
+        return self.__client.put(
+            name=self.name(),
+            url=self.url(),
+            payload=payload,
+            cron=self.run_every,
+        )
+
+    @property
+    def __client(self):
+        return CloudSchedulerClient()

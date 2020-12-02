@@ -9,3 +9,10 @@ class CalculatePriceTask(Task):
 class FailMiserablyTask(Task):
     def run(self, magic_number):
         return magic_number / 0
+
+
+class SaySomethingTask(PeriodicTask):
+    run_every = '* * * * 1'
+
+    def run(self):
+        print("Hello!!")
