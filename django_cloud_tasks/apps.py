@@ -60,3 +60,10 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
     def _register_task(self, task_class):
         self.tasks[task_class.name()] = task_class
+
+    def schedule_tasks(self):
+        for task_klass in self.tasks.values():
+            from django_cloud_tasks.tasks import PeriodicTask  # pylint: disable=import-outside-toplevel
+
+            if issubclass(task_klass, PeriodicTask):
+                task_klass().delay()
