@@ -57,11 +57,15 @@ class PeriodicTask(Task, ABC):
         payload = kwargs
 
         return self.__client.put(
-            name=self.name(),
+            name=self.schedule_name,
             url=self.url(),
             payload=json.dumps(payload),
             cron=self.run_every,
         )
+
+    @property
+    def schedule_name(self):
+        return self.name()
 
     @property
     def __client(self):
