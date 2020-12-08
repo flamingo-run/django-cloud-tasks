@@ -1,3 +1,4 @@
+import abc
 import importlib.util
 import inspect
 import os
@@ -55,7 +56,12 @@ class DjangoCloudTasksAppConfig(AppConfig):
             foo = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(foo)
             for _, klass in inspect.getmembers(foo):
-                if inspect.isclass(klass) and klass is not Task and issubclass(klass, Task):
+                is_task = inspect.isclass(klass) and issubclass(klass, Task)
+                if not is_task:
+                    continue
+
+                is_abstract = abc.ABC in klass.__bases__
+                if not is_abstract:
                     yield klass
 
     def _register_task(self, task_class):
