@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 
 from django.apps import apps
@@ -27,7 +28,7 @@ class Task(ABC):
             name=self.name(),
             queue=self.queue,
             url=self.url(),
-            payload=payload,
+            payload=json.dumps(payload),
         )
 
     @classmethod
@@ -58,7 +59,7 @@ class PeriodicTask(Task, ABC):
         return self.__client.put(
             name=self.name(),
             url=self.url(),
-            payload=payload,
+            payload=json.dumps(payload),
             cron=self.run_every,
         )
 
