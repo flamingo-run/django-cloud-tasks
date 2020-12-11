@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 
 from django.apps import apps
 from django.urls import reverse
-
-from django_cloud_tasks.client import CloudTasksClient, CloudSchedulerClient
+from gcp_pilot import CloudScheduler, CloudTasks
 
 
 class Task(ABC):
@@ -21,8 +20,8 @@ class Task(ABC):
         payload = kwargs
 
         return self.__client.push(
-            name=self.name(),
-            queue=self.queue,
+            task_name=self.name(),
+            queue_name=self.queue,
             url=self.url(),
             payload=json.dumps(payload),
         )
@@ -43,7 +42,7 @@ class Task(ABC):
 
     @property
     def __client(self):
-        return CloudTasksClient()
+        return CloudTasks()
 
 
 class PeriodicTask(Task, ABC):
@@ -65,4 +64,4 @@ class PeriodicTask(Task, ABC):
 
     @property
     def __client(self):
-        return CloudSchedulerClient()
+        return CloudScheduler()

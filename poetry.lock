@@ -24,7 +24,7 @@ wrapt = ">=1.11,<2.0"
 
 [[package]]
 name = "cachetools"
-version = "4.1.1"
+version = "4.2.0"
 description = "Extensible memoizing collections and decorators"
 category = "main"
 optional = false
@@ -83,6 +83,24 @@ argon2 = ["argon2-cffi (>=16.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "gcp-pilot"
+version = "0.1.0"
+description = "Google Cloud Platform Friendly Pilot"
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+google-api-python-client = ">=1,<2"
+google-cloud-scheduler = {version = ">=2,<3", optional = true, markers = "extra == \"tasks\""}
+google-cloud-tasks = {version = ">=2,<3", optional = true, markers = "extra == \"tasks\""}
+
+[package.extras]
+tasks = ["google-cloud-tasks (>=2,<3)", "google-cloud-scheduler (>=2,<3)"]
+storage = ["google-cloud-storage (>=1,<2)"]
+build = ["google-cloud-build (>=3,<4)"]
+
+[[package]]
 name = "google-api-core"
 version = "1.23.0"
 description = "Google API client core library"
@@ -105,6 +123,22 @@ grpcgcp = ["grpcio-gcp (>=0.2.2)"]
 grpcio-gcp = ["grpcio-gcp (>=0.2.2)"]
 
 [[package]]
+name = "google-api-python-client"
+version = "1.12.8"
+description = "Google API Client Library for Python"
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+
+[package.dependencies]
+google-api-core = ">=1.21.0,<2dev"
+google-auth = ">=1.16.0"
+google-auth-httplib2 = ">=0.0.3"
+httplib2 = ">=0.15.0,<1dev"
+six = ">=1.13.0,<2dev"
+uritemplate = ">=3.0.0,<4dev"
+
+[[package]]
 name = "google-auth"
 version = "1.23.0"
 description = "Google Authentication Library"
@@ -122,8 +156,21 @@ six = ">=1.9.0"
 aiohttp = ["aiohttp (>=3.6.2,<4.0.0dev)"]
 
 [[package]]
+name = "google-auth-httplib2"
+version = "0.0.4"
+description = "Google Authentication Library: httplib2 transport"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+google-auth = "*"
+httplib2 = ">=0.9.1"
+six = "*"
+
+[[package]]
 name = "google-cloud-scheduler"
-version = "2.0.0"
+version = "2.1.0"
 description = "Cloud Scheduler API API client library"
 category = "main"
 optional = false
@@ -136,7 +183,7 @@ proto-plus = ">=1.4.0"
 
 [[package]]
 name = "google-cloud-tasks"
-version = "2.0.0"
+version = "2.1.0"
 description = "Cloud Tasks API API client library"
 category = "main"
 optional = false
@@ -188,6 +235,14 @@ six = ">=1.5.2"
 
 [package.extras]
 protobuf = ["grpcio-tools (>=1.34.0)"]
+
+[[package]]
+name = "httplib2"
+version = "0.18.1"
+description = "A comprehensive HTTP client library."
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "idna"
@@ -260,11 +315,11 @@ python-versions = "*"
 
 [[package]]
 name = "proto-plus"
-version = "1.11.0"
+version = "1.13.0"
 description = "Beautiful, Pythonic protocol buffers."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
 protobuf = ">=3.12.0"
@@ -407,6 +462,14 @@ mypy-extensions = ">=0.3.0"
 typing-extensions = ">=3.7.4"
 
 [[package]]
+name = "uritemplate"
+version = "3.0.1"
+description = "URI templates"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
 name = "urllib3"
 version = "1.26.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -430,7 +493,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c87357b8eaf2a84c05c2791fe63387d159822d5b55586c59104a6cb78206be3a"
+content-hash = "26efb835c23ba7497f9201006e6dbca2301bed01df8e913b97ef1846095f57a9"
 
 [metadata.files]
 asgiref = [
@@ -442,8 +505,8 @@ astroid = [
     {file = "astroid-2.4.2.tar.gz", hash = "sha256:2f4078c2a41bf377eea06d71c9d2ba4eb8f6b1af2135bec27bbbb7d8f12bb703"},
 ]
 cachetools = [
-    {file = "cachetools-4.1.1-py3-none-any.whl", hash = "sha256:513d4ff98dd27f85743a8dc0e92f55ddb1b49e060c2d5961512855cda2c01a98"},
-    {file = "cachetools-4.1.1.tar.gz", hash = "sha256:bbaa39c3dede00175df2dc2b03d0cf18dd2d32a7de7beb68072d13043c9edb20"},
+    {file = "cachetools-4.2.0-py3-none-any.whl", hash = "sha256:c6b07a6ded8c78bf36730b3dc452dfff7d95f2a12a2fed856b1a0cb13ca78c61"},
+    {file = "cachetools-4.2.0.tar.gz", hash = "sha256:3796e1de094f0eaca982441c92ce96c68c89cced4cd97721ab297ea4b16db90e"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
@@ -497,21 +560,33 @@ django = [
     {file = "Django-3.1.4-py3-none-any.whl", hash = "sha256:5c866205f15e7a7123f1eec6ab939d22d5bde1416635cab259684af66d8e48a2"},
     {file = "Django-3.1.4.tar.gz", hash = "sha256:edb10b5c45e7e9c0fb1dc00b76ec7449aca258a39ffd613dbd078c51d19c9f03"},
 ]
+gcp-pilot = [
+    {file = "gcp-pilot-0.1.0.tar.gz", hash = "sha256:233e07fb26161792b4dac1eb599b7e7c708916eaf73d7f7f09efcc00e285a55f"},
+    {file = "gcp_pilot-0.1.0-py3-none-any.whl", hash = "sha256:5c94850a4154e1ef42b636062deb79d1d43ac783953b1ff7ef60d2bfca8ad2b0"},
+]
 google-api-core = [
     {file = "google-api-core-1.23.0.tar.gz", hash = "sha256:1bb3c485c38eacded8d685b1759968f6cf47dd9432922d34edb90359eaa391e2"},
     {file = "google_api_core-1.23.0-py2.py3-none-any.whl", hash = "sha256:94d8c707d358d8d9e8b0045c42be20efb58433d308bd92cf748511c7825569c8"},
+]
+google-api-python-client = [
+    {file = "google-api-python-client-1.12.8.tar.gz", hash = "sha256:f3b9684442eec2cfe9f9bb48e796ef919456b82142c7528c5fd527e5224f08bb"},
+    {file = "google_api_python_client-1.12.8-py2.py3-none-any.whl", hash = "sha256:3c4c4ca46b5c21196bec7ee93453443e477d82cbfa79234d1ce0645f81170eaf"},
 ]
 google-auth = [
     {file = "google-auth-1.23.0.tar.gz", hash = "sha256:5176db85f1e7e837a646cd9cede72c3c404ccf2e3373d9ee14b2db88febad440"},
     {file = "google_auth-1.23.0-py2.py3-none-any.whl", hash = "sha256:b728625ff5dfce8f9e56a499c8a4eb51443a67f20f6d28b67d5774c310ec4b6b"},
 ]
+google-auth-httplib2 = [
+    {file = "google-auth-httplib2-0.0.4.tar.gz", hash = "sha256:8d092cc60fb16517b12057ec0bba9185a96e3b7169d86ae12eae98e645b7bc39"},
+    {file = "google_auth_httplib2-0.0.4-py2.py3-none-any.whl", hash = "sha256:aeaff501738b289717fac1980db9711d77908a6c227f60e4aa1923410b43e2ee"},
+]
 google-cloud-scheduler = [
-    {file = "google-cloud-scheduler-2.0.0.tar.gz", hash = "sha256:a21f131fc33f9d38ac7ae3e90e5d66dc7b9062a87e86c5fea2ec42c685f962cf"},
-    {file = "google_cloud_scheduler-2.0.0-py2.py3-none-any.whl", hash = "sha256:2872aad435f06e2b5315f6585143a3c526910447424cba6e8fd534695c420024"},
+    {file = "google-cloud-scheduler-2.1.0.tar.gz", hash = "sha256:9f9ddf90d5810f5c1cde19b5e86613cc946f875c88bb5a89c41d2eeda23b1a2c"},
+    {file = "google_cloud_scheduler-2.1.0-py2.py3-none-any.whl", hash = "sha256:db120ef77d5b2fbe59f6b8e5736bcd0af79a15e650d77c6196137764d1830561"},
 ]
 google-cloud-tasks = [
-    {file = "google-cloud-tasks-2.0.0.tar.gz", hash = "sha256:a9dd004057fc441eee8c18bb2dc3bb20ba7b85f353d66894c61e42aeb8764e76"},
-    {file = "google_cloud_tasks-2.0.0-py2.py3-none-any.whl", hash = "sha256:a20531f4aa877a995d4ec8138fc0a23881351c7f075c3179c49c0f67e4467f29"},
+    {file = "google-cloud-tasks-2.1.0.tar.gz", hash = "sha256:1d9ffbf5c6afd2ed58ceade458f14983bfbae238a6d78b404e966e8a903f4ecb"},
+    {file = "google_cloud_tasks-2.1.0-py2.py3-none-any.whl", hash = "sha256:fd93bd5b082d60c3c3ca3eb8ed1edc99b481a4ff6b6db0a223bc76bc2645919e"},
 ]
 googleapis-common-protos = [
     {file = "googleapis-common-protos-1.52.0.tar.gz", hash = "sha256:560716c807117394da12cecb0a54da5a451b5cf9866f1d37e9a5e2329a665351"},
@@ -568,6 +643,10 @@ grpcio = [
     {file = "grpcio-1.34.0-cp39-cp39-win_amd64.whl", hash = "sha256:25958bd7c6773e6de79781cc0d6f19d0c82332984dd07ef238889e93485d5afc"},
     {file = "grpcio-1.34.0.tar.gz", hash = "sha256:f98f746cacbaa681de0bcd90d7aa77b440e3e1327a9988f6a2b580d54e27d4c3"},
 ]
+httplib2 = [
+    {file = "httplib2-0.18.1-py3-none-any.whl", hash = "sha256:ca2914b015b6247791c4866782fa6042f495b94401a0f0bd3e1d6e0ba2236782"},
+    {file = "httplib2-0.18.1.tar.gz", hash = "sha256:8af66c1c52c7ffe1aa5dc4bcd7c769885254b0756e6e69f953c7f0ab49a70ba3"},
+]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
     {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
@@ -617,7 +696,7 @@ nose = [
     {file = "nose-1.3.7.tar.gz", hash = "sha256:f1bffef9cbc82628f6e7d7b40d7e255aefaa1adb6a1b1d26c69a8b79e6208a98"},
 ]
 proto-plus = [
-    {file = "proto-plus-1.11.0.tar.gz", hash = "sha256:416a0f13987789333cd8760a0ee998f8eccd6d7165ee9f283d64ca2de3e8774d"},
+    {file = "proto-plus-1.13.0.tar.gz", hash = "sha256:61b57c5257ca583af2ea1ad40e2b8f251988806eea9f01d119088976b995b2c4"},
 ]
 protobuf = [
     {file = "protobuf-3.14.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:629b03fd3caae7f815b0c66b41273f6b1900a579e2ccb41ef4493a4f5fb84f3a"},
@@ -719,6 +798,10 @@ typing-inspect = [
     {file = "typing_inspect-0.6.0-py2-none-any.whl", hash = "sha256:de08f50a22955ddec353876df7b2545994d6df08a2f45d54ac8c05e530372ca0"},
     {file = "typing_inspect-0.6.0-py3-none-any.whl", hash = "sha256:3b98390df4d999a28cf5b35d8b333425af5da2ece8a4ea9e98f71e7591347b4f"},
     {file = "typing_inspect-0.6.0.tar.gz", hash = "sha256:8f1b1dd25908dbfd81d3bebc218011531e7ab614ba6e5bf7826d887c834afab7"},
+]
+uritemplate = [
+    {file = "uritemplate-3.0.1-py2.py3-none-any.whl", hash = "sha256:07620c3f3f8eed1f12600845892b0e036a2420acf513c53f7de0abd911a5894f"},
+    {file = "uritemplate-3.0.1.tar.gz", hash = "sha256:5af8ad10cec94f215e3f48112de2022e1d5a37ed427fbd88652fa908f2ab7cae"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.2-py2.py3-none-any.whl", hash = "sha256:d8ff90d979214d7b4f8ce956e80f4028fc6860e4431f731ea4a8c08f23f99473"},
