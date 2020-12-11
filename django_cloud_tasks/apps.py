@@ -29,11 +29,11 @@ class DjangoCloudTasksAppConfig(AppConfig):
         for app in apps.get_app_configs():
             if app.name.startswith('django.') or app.name == 'django_cloud_tasks':
                 continue
-            for task_class in self._scan_tasks(app=app):
+            for task_class in self._discover_tasks(app=app):
                 self._register_task(task_class=task_class)
         return {}
 
-    def _scan_tasks(self, app):
+    def _discover_tasks(self, app):
         from django_cloud_tasks.tasks import Task  # pylint: disable=import-outside-toplevel
 
         files = []
