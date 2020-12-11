@@ -21,10 +21,10 @@ class Task(ABC):
         status = 200
         return output, status
 
-    def delay(self, **kwargs):
+    async def delay(self, **kwargs):
         payload = kwargs
 
-        return self.__client.push(
+        return await self.__client.push(
             task_name=self.name(),
             queue_name=self.queue,
             url=self.url(),
@@ -53,10 +53,10 @@ class Task(ABC):
 class PeriodicTask(Task, ABC):
     run_every = None
 
-    def delay(self, **kwargs):
+    async def delay(self, **kwargs):
         payload = kwargs
 
-        return self.__client.put(
+        return await self.__client.put(
             name=self.schedule_name,
             url=self.url(),
             payload=json.dumps(payload),
@@ -84,7 +84,7 @@ class PubSubTaskMixin:
 
 class SubscriberTask(PubSubTaskMixin, Task, ABC):
     @abstractmethod
-    async def run(self, message, metadata):
+    def run(self, message, metadata):
         raise NotImplementedError()
 
     async def delay(self, **kwargs):
@@ -112,14 +112,13 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
 class PublisherTask(Task, ABC):
     use_async_publish = False
 
-    async def run(self, message: Dict, attributes: Dict = None):
+    def run(self, message: Dict, attributes: Dict = None):
         return await self.__client.publish(
             message=json.dumps(message),
             topic_id=self.topic_name,
             attributes=attributes,
         )
 
-    @async_to_sync
     async def delay(self, message: Dict, attributes: Dict = None):
         if self.use_async_publish:
             # perform asynchronous publish to PubSub, with overhead in:
