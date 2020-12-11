@@ -2,6 +2,7 @@ import abc
 import importlib.util
 import inspect
 import os
+from typing import List
 
 from django.apps import AppConfig, apps
 from django.conf import settings
@@ -14,6 +15,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tasks = {}
+        self.subscribers = {}
         self.domain = self._fetch_config(name='DOMAIN_URL', default='http://localhost:8080')
         self.location = self._fetch_config(name='GOOGLE_CLOUD_LOCATION', default='us-east1')
 
@@ -65,11 +67,36 @@ class DjangoCloudTasksAppConfig(AppConfig):
                     yield klass
 
     def _register_task(self, task_class):
-        self.tasks[task_class.name()] = task_class
+        from django_cloud_tasks.tasks import SubscriberTask  # pylint: disable=import-outside-toplevel
 
-    def schedule_tasks(self):
-        for task_klass in self.tasks.values():
-            from django_cloud_tasks.tasks import PeriodicTask  # pylint: disable=import-outside-toplevel
+        if issubclass(task_class, SubscriberTask):
+            self.subscribers[task_class.name()] = task_class
+        else:
+            self.tasks[task_class.name()] = task_class
 
+    async def schedule_tasks(self) -> List[str]:
+        from django_cloud_tasks.tasks import PeriodicTask  # pylint: disable=import-outside-toplevel
+
+        report = []
+        for task_name, task_klass in self.tasks.items():
             if issubclass(task_klass, PeriodicTask):
-                task_klass().delay()
+                await task_klass().delay()
+                report.append(task_name)
+        return report
+
+    async def initialize_subscribers(self) -> List[str]:
+        report = []
+        for task_name, task_klass in self.subscribers.items():
+            await task_klass().delay()
+            report.append(task_name)
+        return report
+
+    async def initialize_publishers(self) -> List[str]:
+        from django_cloud_tasks.tasks import PublisherTask  # pylint: disable=import-outside-toplevel
+
+        report = []
+        for task_name, task_klass in self.tasks.items():
+            if issubclass(task_klass, PublisherTask):
+                await task_klass().initialize()
+                report.append(task_name)
+        return report

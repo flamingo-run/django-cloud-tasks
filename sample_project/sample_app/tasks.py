@@ -1,4 +1,4 @@
-from django_cloud_tasks.tasks import Task, PeriodicTask
+from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask, PublisherTask
 
 
 class CalculatePriceTask(Task):
@@ -16,3 +16,18 @@ class SaySomethingTask(PeriodicTask):
 
     def run(self):
         print("Hello!!")
+
+
+class PleaseNotifyMeTask(SubscriberTask):
+    @property
+    def topic_name(self):
+        return 'potato'
+
+    def run(self, message, metadata):
+        return print(message)
+
+
+class PleaseInformMeTask(PublisherTask):
+    @property
+    def topic_name(self):
+        return 'potato'

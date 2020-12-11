@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-google-cloud-tasks"
-version = "0.1.0"
+version = "0.2.0"
 description = "Async Tasks with HTTP endpoints"
 authors = ["Joao Daher <joao@daher.dev>"]
 packages = [
@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8"
 django = "^3"
-gcp-pilot = {version = "*", extras = ["tasks"]}
+gcp-pilot = {version = "*", extras = ["tasks", "pubsub"]}
 
 [tool.poetry.dev-dependencies]
 pylint = "*"
