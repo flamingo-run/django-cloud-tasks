@@ -15,12 +15,10 @@ class GoogleCloudTaskView(View):
         try:
             task_class = self.tasks[task_name]
             data = json.loads(request.body)
-            output, success = task_class().execute(data=data)
-            if success:
-                status = 200
+            output, status = task_class().execute(data=data)
+            if status == 200:
                 result = {'result': output}
             else:
-                status = 400
                 result = {'error': output}
         except KeyError:
             status = 404

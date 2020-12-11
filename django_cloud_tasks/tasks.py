@@ -13,13 +13,9 @@ class Task(ABC):
         raise NotImplementedError()
 
     def execute(self, data):
-        try:
-            output = self.run(**data)
-            success = True
-        except Exception as e:  # pylint: disable=broad-except
-            output = str(e)
-            success = False
-        return output, success
+        output = self.run(**data)
+        status = 200
+        return output, status
 
     def delay(self, **kwargs):
         payload = kwargs
