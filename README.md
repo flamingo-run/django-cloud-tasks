@@ -5,10 +5,23 @@
 
 # Django Cloud Tasks
 
+## APIs
+
+The following APIs must be enabled in your project(s):
+
+- [Cloud Tasks API](https://console.cloud.google.com/marketplace/product/google/cloudtasks.googleapis.com)
+- [Admin SDK API](https://console.cloud.google.com/marketplace/product/google/admin.googleapis.com)
+
 ## How it works
 
 ![image](https://user-images.githubusercontent.com/9717144/100749131-00cce780-33c3-11eb-8f2a-b465bc0a45bb.png)
 
+### Project ID
+
+In this order:
+- `project_id` parameter during client initialization
+- `PROJECT_ID` environment variable
+- `project_id` from credentials
 
 ## Setup
 
