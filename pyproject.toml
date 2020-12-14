@@ -1,12 +1,11 @@
 [tool.poetry]
 name = "django-google-cloud-tasks"
-version = "0.2.0"
+version = "0.2.1"
 description = "Async Tasks with HTTP endpoints"
 authors = ["Joao Daher <joao@daher.dev>"]
 packages = [
     { include = "django_cloud_tasks" },
 ]
-
 
 [tool.poetry.dependencies]
 python = "^3.8"

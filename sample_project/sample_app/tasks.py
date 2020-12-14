@@ -25,9 +25,3 @@ class PleaseNotifyMeTask(SubscriberTask):
 
     def run(self, message, metadata):
         return print(message)
-
-
-class PleaseInformMeTask(PublisherTask):
-    @property
-    def topic_name(self):
-        return 'potato'

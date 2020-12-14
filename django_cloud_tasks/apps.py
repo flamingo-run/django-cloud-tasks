@@ -90,13 +90,3 @@ class DjangoCloudTasksAppConfig(AppConfig):
             await task_klass().delay()
             report.append(task_name)
         return report
-
-    async def initialize_publishers(self) -> List[str]:
-        from django_cloud_tasks.tasks import PublisherTask  # pylint: disable=import-outside-toplevel
-
-        report = []
-        for task_name, task_klass in self.tasks.items():
-            if issubclass(task_klass, PublisherTask):
-                await task_klass().initialize()
-                report.append(task_name)
-        return report

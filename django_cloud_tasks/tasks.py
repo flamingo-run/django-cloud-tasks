@@ -2,6 +2,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Dict
 
+from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.urls import reverse
 from gcp_pilot.scheduler import CloudScheduler
@@ -112,32 +113,27 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
 class PublisherTask(Task, ABC):
     use_async_publish = False
 
-    def run(self, message: Dict, attributes: Dict = None):
-        return await self.__client.publish(
+    def run(self, topic_name: str, message: Dict, attributes: Dict = None):
+        return async_to_sync(self.__client.publish)(
             message=json.dumps(message),
-            topic_id=self.topic_name,
+            topic_id=topic_name,
             attributes=attributes,
         )
 
-    async def delay(self, message: Dict, attributes: Dict = None):
+    async def delay(self, topic_name: str, message: Dict, attributes: Dict = None):
         if self.use_async_publish:
             # perform asynchronous publish to PubSub, with overhead in:
             # - publishing the message as Task
             # - receiving it through the endpoint
             # - and the finally publishing to PubSub
             # might be useful to use the Cloud Task throttling
-            return super().delay(message=message, attributes=attributes)
-        return await self.run(message=message, attributes=attributes)
+            return super().delay(topic_name=topic_name, message=message, attributes=attributes)
+        return await self.run(topic_name=topic_name, message=message, attributes=attributes)
 
-    async def initialize(self):
+    async def initialize(self, topic_name):
         await self.__client.create_topic(
-            topic_id=self.topic_name,
+            topic_id=topic_name,
         )
-
-    @property
-    @abstractmethod
-    def topic_name(self):
-        raise NotImplementedError()
 
     @property
     def __client(self):
