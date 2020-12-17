@@ -121,14 +121,14 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
 class PublisherTask(Task, ABC):
     publish_immediately = False
 
-    def run(self, topic_name: str, message: Dict, attributes: Dict = None):
+    def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         return async_to_sync(self.__client.publish)(
             message=json.dumps(message),
             topic_id=topic_name,
             attributes=attributes,
         )
 
-    async def delay(self, topic_name: str, message: Dict, attributes: Dict = None):
+    async def delay(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         if self.publish_immediately:
             # perform asynchronous publish to PubSub, with overhead in:
             # - publishing the message as Task
