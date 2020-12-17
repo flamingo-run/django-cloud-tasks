@@ -1,4 +1,4 @@
-from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask, PublisherTask
+from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask
 
 
 class CalculatePriceTask(Task):

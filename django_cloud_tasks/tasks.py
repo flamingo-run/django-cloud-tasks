@@ -4,12 +4,11 @@ from typing import Dict
 
 from asgiref.sync import async_to_sync
 from django.apps import apps
+from django.conf import settings
 from django.urls import reverse
+from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
-from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
-
-from django.conf import settings
 
 
 class Task(ABC):
