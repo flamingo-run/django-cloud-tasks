@@ -9,7 +9,7 @@ from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 
-import settings
+from django.conf import settings
 
 
 class Task(ABC):
