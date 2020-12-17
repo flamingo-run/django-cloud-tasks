@@ -80,13 +80,13 @@ class DjangoCloudTasksAppConfig(AppConfig):
         report = []
         for task_name, task_klass in self.tasks.items():
             if issubclass(task_klass, PeriodicTask):
-                await task_klass().delay()
+                task_klass().delay()
                 report.append(task_name)
         return report
 
     async def initialize_subscribers(self) -> List[str]:
         report = []
         for task_name, task_klass in self.subscribers.items():
-            await task_klass().delay()
+            task_klass().delay()
             report.append(task_name)
         return report
