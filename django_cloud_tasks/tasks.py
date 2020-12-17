@@ -93,7 +93,7 @@ class PubSubTaskMixin:
 
 class SubscriberTask(PubSubTaskMixin, Task, ABC):
     @abstractmethod
-    def run(self, message, metadata):
+    def run(self, message, attributes):
         raise NotImplementedError()
 
     async def delay(self, **kwargs):

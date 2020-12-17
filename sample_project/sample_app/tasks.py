@@ -23,5 +23,5 @@ class PleaseNotifyMeTask(SubscriberTask):
     def topic_name(self):
         return 'potato'
 
-    def run(self, message, metadata):
+    def run(self, message, attributes):
         return print(message)

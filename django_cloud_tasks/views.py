@@ -46,5 +46,5 @@ class GoogleCloudSubscribeView(GoogleCloudTaskView):
         task_args = {}
         if 'data' in event:
             task_args['message'] = json.loads(base64.b64decode(event['data']).decode('utf-8'))
-        task_args['metadata'] = event.get('attributes', {})
+        task_args['attributes'] = event.get('attributes', {})
         return task_args
