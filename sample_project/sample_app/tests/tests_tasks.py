@@ -31,3 +31,8 @@ class TasksTest(SimpleTestCase):
             payload={'price': 30, 'quantity': 4, 'discount': 0.2},
         )
         push.assert_called_once_with(**expected_call)
+
+    def test_task_eager(self):
+        with self.settings(EAGER_TASKS=True):
+            r = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
+        self.assertGreater(r, 0)

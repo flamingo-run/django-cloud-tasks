@@ -9,6 +9,8 @@ from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 
+import settings
+
 
 class Task(ABC):
     _url_name = 'tasks-endpoint'
@@ -23,6 +25,9 @@ class Task(ABC):
         return output, status
 
     async def delay(self, **kwargs):
+        if getattr(settings, 'EAGER_TASKS', False):
+            return self.run(**kwargs)
+
         payload = kwargs
 
         return await self.__client.push(
@@ -55,6 +60,9 @@ class PeriodicTask(Task, ABC):
     run_every = None
 
     async def delay(self, **kwargs):
+        if getattr(settings, 'EAGER_TASKS', False):
+            return self.run(**kwargs)
+
         payload = kwargs
 
         return await self.__client.put(
