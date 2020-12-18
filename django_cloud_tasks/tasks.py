@@ -66,7 +66,7 @@ class PeriodicTask(Task, ABC):
 
         payload = kwargs
 
-        return _run_coroutine(
+        return run_coroutine(
             handler=self.__client.put,
             name=self.schedule_name,
             url=self.url(),
@@ -99,7 +99,7 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
         raise NotImplementedError()
 
     def delay(self, **kwargs):
-        return _run_coroutine(
+        return run_coroutine(
             handler=self.__client.create_subscription,
             topic_id=self.topic_name,
             subscription_id=self.subscription_name,
@@ -125,7 +125,7 @@ class PublisherTask(Task, ABC):
     publish_immediately = False
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        return _run_coroutine(
+        return run_coroutine(
             handler=self.__client.publish,
             message=json.dumps(message),
             topic_id=topic_name,
@@ -143,7 +143,7 @@ class PublisherTask(Task, ABC):
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 
     def initialize(self, topic_name):
-        _run_coroutine(
+        run_coroutine(
             handler=self.__client.create_topic,
             topic_id=topic_name,
         )

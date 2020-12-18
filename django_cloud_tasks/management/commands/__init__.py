@@ -5,8 +5,6 @@ from django.apps import apps
 
 from django.core.management.base import BaseCommand
 
-from django_cloud_tasks.helpers import run_coroutine
-
 
 class BaseInitCommand(BaseCommand, abc.ABC):
     action = 'initialize'
@@ -17,13 +15,12 @@ class BaseInitCommand(BaseCommand, abc.ABC):
         return f'{self.action} {self.name}'.title()
 
     @abc.abstractmethod
-    async def perform_init(self, app_config) -> List[str]:
+    def perform_init(self, app_config) -> List[str]:
         raise NotImplementedError()
 
     def handle(self, *args, **options):
         app_config = apps.get_app_config('django_cloud_tasks')
-        report = run_coroutine(
-            handler=self.perform_init,
+        report = self.perform_init(
             app_config=app_config,
         )
 
