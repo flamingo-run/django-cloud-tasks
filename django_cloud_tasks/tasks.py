@@ -1,3 +1,4 @@
+import asyncio
 import json
 from abc import ABC, abstractmethod
 from typing import Dict
@@ -9,6 +10,14 @@ from django.urls import reverse
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
+
+
+def _run_coroutine(handler, **kwargs):
+    try:
+        return async_to_sync(handler)(**kwargs)
+    except RuntimeError:
+        coroutine = handler(**kwargs)
+        return asyncio.get_event_loop().create_task(coroutine)
 
 
 class Task(ABC):
@@ -29,7 +38,8 @@ class Task(ABC):
 
         payload = kwargs
 
-        return async_to_sync(self.__client.push)(
+        return _run_coroutine(
+            handler=self.__client.push,
             task_name=self.name(),
             queue_name=self.queue,
             url=self.url(),
@@ -64,7 +74,8 @@ class PeriodicTask(Task, ABC):
 
         payload = kwargs
 
-        return async_to_sync(self.__client.put)(
+        return _run_coroutine(
+            handler=self.__client.put,
             name=self.schedule_name,
             url=self.url(),
             payload=json.dumps(payload),
@@ -96,7 +107,8 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
         raise NotImplementedError()
 
     def delay(self, **kwargs):
-        return async_to_sync(self.__client.create_subscription)(
+        return _run_coroutine(
+            handler=self.__client.create_subscription,
             topic_id=self.topic_name,
             subscription_id=self.subscription_name,
             push_to_url=self.url(),
@@ -121,7 +133,8 @@ class PublisherTask(Task, ABC):
     publish_immediately = False
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        return async_to_sync(self.__client.publish)(
+        return _run_coroutine(
+            handler=self.__client.publish,
             message=json.dumps(message),
             topic_id=topic_name,
             attributes=attributes,
@@ -138,7 +151,8 @@ class PublisherTask(Task, ABC):
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 
     def initialize(self, topic_name):
-        async_to_sync(self.__client.create_topic)(
+        _run_coroutine(
+            handler=self.__client.create_topic,
             topic_id=topic_name,
         )
 
