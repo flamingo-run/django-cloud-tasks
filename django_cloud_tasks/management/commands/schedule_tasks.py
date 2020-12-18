@@ -7,5 +7,5 @@ class Command(BaseInitCommand):
     action = 'schedule'
     name = 'tasks'
 
-    async def perform_init(self, app_config) -> List[str]:
-        return await app_config.schedule_tasks()
+    def perform_init(self, app_config) -> List[str]:
+        return app_config.schedule_tasks()

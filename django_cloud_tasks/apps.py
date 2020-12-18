@@ -74,7 +74,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         else:
             self.tasks[task_class.name()] = task_class
 
-    async def schedule_tasks(self) -> List[str]:
+    def schedule_tasks(self) -> List[str]:
         from django_cloud_tasks.tasks import PeriodicTask  # pylint: disable=import-outside-toplevel
 
         report = []
@@ -84,7 +84,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
                 report.append(task_name)
         return report
 
-    async def initialize_subscribers(self) -> List[str]:
+    def initialize_subscribers(self) -> List[str]:
         report = []
         for task_name, task_klass in self.subscribers.items():
             task_klass().delay()
