@@ -1,9 +1,7 @@
-import asyncio
 import json
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
@@ -11,13 +9,7 @@ from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 
-
-def _run_coroutine(handler, **kwargs):
-    try:
-        return async_to_sync(handler)(**kwargs)
-    except RuntimeError:
-        coroutine = handler(**kwargs)
-        return asyncio.get_event_loop().create_task(coroutine)
+from django_cloud_tasks.helpers import run_coroutine
 
 
 class Task(ABC):
@@ -38,7 +30,7 @@ class Task(ABC):
 
         payload = kwargs
 
-        return _run_coroutine(
+        return run_coroutine(
             handler=self.__client.push,
             task_name=self.name(),
             queue_name=self.queue,

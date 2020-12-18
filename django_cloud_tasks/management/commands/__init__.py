@@ -1,10 +1,11 @@
 import abc
 from typing import List
 
-from asgiref.sync import async_to_sync
 from django.apps import apps
 
 from django.core.management.base import BaseCommand
+
+from django_cloud_tasks.helpers import run_coroutine
 
 
 class BaseInitCommand(BaseCommand, abc.ABC):
@@ -21,7 +22,10 @@ class BaseInitCommand(BaseCommand, abc.ABC):
 
     def handle(self, *args, **options):
         app_config = apps.get_app_config('django_cloud_tasks')
-        report = async_to_sync(self.perform_init)(app_config=app_config)
+        report = run_coroutine(
+            handler=self.perform_init,
+            app_config=app_config,
+        )
 
         n = len(report)
         report_str = '\n'.join([f'- {name}' for name in report])
