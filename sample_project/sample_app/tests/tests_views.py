@@ -23,9 +23,8 @@ class TaskViewTest(SimpleTestCase):
             'discount': 0.2,
         }
         url = self.url(name="CalculatePriceTask")
-        response = self.client.post(path=url, data=data, content_type='application/json')
-        self.assertEqual(400, response.status_code)
-        self.assertEqual({'error': "can't multiply sequence by non-int of type 'float'"}, response.json())
+        with self.assertRaises(TypeError):
+            self.client.post(path=url, data=data, content_type='application/json')
 
     def test_task_not_found(self):
         data = {}
