@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 from gcp_pilot.mocker import patch_auth
