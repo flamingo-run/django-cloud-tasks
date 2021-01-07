@@ -22,7 +22,7 @@ jobs:
       - name: Detect version upgrade
         id: versioning
         run: |
-          package_version=$(echo $(poetry version -v) | sed "s/django-cloud-tasks //")
+          package_version=$(echo $(poetry version -v) | sed "s/django-google-cloud-tasks //")
           echo "::set-output name=package_version::"$package_version
           upgraded=$(git tag --list | grep -q "${package_version}$" && echo "false" || echo "true")
           echo "::set-output name=upgraded::"$upgraded
