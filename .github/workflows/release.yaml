@@ -3,7 +3,7 @@ name: Tag & Release Package
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   release:
@@ -18,7 +18,7 @@ jobs:
         run: |
           make setup
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       - name: Detect version upgrade
         id: versioning
         run: |
@@ -46,4 +46,4 @@ jobs:
         run: |
           make publish
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

@@ -17,19 +17,19 @@ jobs:
         run: |
           make dependencies
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       - name: Update dependencies
         run: |
           make update
           poetry version patch
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v2
         with:
           token: ${{ secrets.PAT }}
-          base: master
+          base: main
           branch: feature/auto-update
           commit-message: Updated dependencies
           title: 'Dependency Update'

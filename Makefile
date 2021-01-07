@@ -1,5 +1,6 @@
 setup:
 	@pip install -U pip poetry
+	@poetry config pypi-token.pypi $(PYPI_API_TOKEN)
 
 dependencies:
 	@make setup
