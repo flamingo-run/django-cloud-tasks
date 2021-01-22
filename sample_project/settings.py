@@ -40,8 +40,8 @@ INSTALLED_APPS = [
 
     'django_cloud_tasks',
 
-    'sample_app',
-    'another_app',
+    'sample_app.apps.SampleAppConfig',
+    'another_app.apps.AnotherAppConfig',
 ]
 
 MIDDLEWARE = [
