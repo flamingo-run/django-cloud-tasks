@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Dict
 
 from django.apps import apps
@@ -12,7 +12,25 @@ from gcp_pilot.tasks import CloudTasks
 from django_cloud_tasks.helpers import run_coroutine
 
 
-class Task(ABC):
+class TaskMeta(type):
+    def __new__(cls, name, bases, attrs):
+        klass = type.__new__(cls, name, bases, attrs)
+        TaskMeta._register_task(task_class=klass)
+        return klass
+
+    def __call__(cls, *args, **kwargs):
+        if cls.__name__ not in ['Task', 'PeriodicTask', 'SubscriberTask']:
+            return super().__call__(*args, **kwargs)
+        raise NotImplementedError(f"Do not instantiate a {cls.__name__}. Inherit and create your own.")
+
+    @staticmethod
+    def _register_task(task_class):
+        app = apps.get_app_config('django_cloud_tasks')
+        if task_class.__name__ not in ['Task', 'PeriodicTask', 'SubscriberTask']:
+            app.register_task(task_class=task_class)
+
+
+class Task(metaclass=TaskMeta):
     _url_name = 'tasks-endpoint'
 
     @abstractmethod
@@ -57,7 +75,11 @@ class Task(ABC):
         return CloudTasks()
 
 
-class PeriodicTask(Task, ABC):
+class PeriodicTask(Task):
+    @abstractmethod
+    def run(self, **kwargs):
+        raise NotImplementedError()
+
     run_every = None
 
     def delay(self, **kwargs):
@@ -93,7 +115,7 @@ class PubSubTaskMixin:
         raise NotImplementedError()
 
 
-class SubscriberTask(PubSubTaskMixin, Task, ABC):
+class SubscriberTask(PubSubTaskMixin, Task):
     @abstractmethod
     def run(self, message, attributes):
         raise NotImplementedError()
@@ -121,7 +143,7 @@ class SubscriberTask(PubSubTaskMixin, Task, ABC):
         return CloudSubscriber()
 
 
-class PublisherTask(Task, ABC):
+class PublisherTask(Task):
     publish_immediately = False
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):

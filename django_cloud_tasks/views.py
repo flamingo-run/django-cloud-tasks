@@ -14,7 +14,10 @@ class GoogleCloudTaskView(View):
         self.tasks = self._get_available_tasks()
 
     def _get_available_tasks(self):
-        return apps.get_app_config('django_cloud_tasks').tasks
+        app = apps.get_app_config('django_cloud_tasks')
+        all_tasks = app.on_demand_tasks.copy()
+        all_tasks.update(app.periodic_tasks.copy())
+        return all_tasks
 
     def post(self, request, task_name, *args, **kwargs):
         try:
@@ -39,7 +42,7 @@ class GoogleCloudTaskView(View):
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
 class GoogleCloudSubscribeView(GoogleCloudTaskView):
     def _get_available_tasks(self):
-        return apps.get_app_config('django_cloud_tasks').subscribers
+        return apps.get_app_config('django_cloud_tasks').subscriber_tasks.copy()
 
     def _parse_task_args(self, body: str) -> Dict:
         return Message.load(body=body).data
