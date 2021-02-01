@@ -1,8 +1,10 @@
+import asyncio
 import os
 from typing import List, Tuple
 
 from django.apps import AppConfig
 from django.conf import settings
+from gcp_pilot.pubsub import CloudSubscriber
 from gcp_pilot.scheduler import CloudScheduler
 
 
@@ -49,6 +51,11 @@ class DjangoCloudTasksAppConfig(AppConfig):
                     removed.append(task_name)
 
         return updated, removed
+
+    def set_up_permissions(self):
+        sub = CloudSubscriber()
+        routine = sub.set_up_permissions(email=sub.credentials.service_account_email)
+        asyncio.run(routine)
 
     def initialize_subscribers(self) -> List[str]:
         report = []
