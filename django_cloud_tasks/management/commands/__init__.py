@@ -15,13 +15,15 @@ class BaseInitCommand(BaseCommand, abc.ABC):
         return f'{self.action} {self.name}'.title()
 
     @abc.abstractmethod
-    def perform_init(self, app_config) -> List[str]:
+    def perform_init(self, app_config, *args, **options) -> List[str]:
         raise NotImplementedError()
 
     def handle(self, *args, **options):
         app_config = apps.get_app_config('django_cloud_tasks')
         report = self.perform_init(
             app_config=app_config,
+            *args,
+            **options
         )
 
         n = len(report)

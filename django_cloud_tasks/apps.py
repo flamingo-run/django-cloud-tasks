@@ -1,8 +1,9 @@
 import os
-from typing import List
+from typing import List, Tuple
 
 from django.apps import AppConfig
 from django.conf import settings
+from gcp_pilot.scheduler import CloudScheduler
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
@@ -32,12 +33,22 @@ class DjangoCloudTasksAppConfig(AppConfig):
                 container[task_class.name()] = task_class
                 break
 
-    def schedule_tasks(self) -> List[str]:
-        report = []
+    def schedule_tasks(self, delete_by_prefix: str = None) -> Tuple[List[str], List[str]]:
+        updated = []
+        removed = []
         for task_name, task_klass in self.periodic_tasks.items():
             task_klass().delay()
-            report.append(task_name)
-        return report
+            updated.append(task_name)
+
+        if delete_by_prefix:
+            client = CloudScheduler()
+            for job in client.list(prefix=delete_by_prefix):
+                task_name = job.name.split('/jobs/')[-1]
+                if task_name not in updated:
+                    client.delete(name=task_name)
+                    removed.append(task_name)
+
+        return updated, removed
 
     def initialize_subscribers(self) -> List[str]:
         report = []
