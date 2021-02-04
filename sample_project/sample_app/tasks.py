@@ -1,12 +1,26 @@
 from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask
 
 
+class BaseAbstractTask(Task):
+    abstract = True
+
+    def run(self, **kwargs):
+        raise NotImplementedError()  # TODO Allow inheriting from ABC
+
+
+class AnotherBaseAbstractTask(BaseAbstractTask):
+    abstract = True
+
+    def run(self, **kwargs):
+        raise NotImplementedError()
+
+
 class CalculatePriceTask(Task):
     def run(self, price, quantity, discount):
         return price * quantity * (1 - discount)
 
 
-class FailMiserablyTask(Task):
+class FailMiserablyTask(AnotherBaseAbstractTask):
     def run(self, magic_number):
         return magic_number / 0
 

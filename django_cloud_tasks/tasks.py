@@ -15,6 +15,8 @@ from django_cloud_tasks.helpers import run_coroutine
 class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
         klass = type.__new__(cls, name, bases, attrs)
+        if getattr(klass, 'abstract', False) and 'abstract' not in attrs:
+            setattr(klass, 'abstract', False)  # TODO Removing the attribute would be better
         TaskMeta._register_task(task_class=klass)
         return klass
 

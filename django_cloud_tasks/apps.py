@@ -31,7 +31,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
             tasks.Task: self.on_demand_tasks,
         }
         for parent_klass, container in containers.items():
-            if issubclass(task_class, parent_klass):
+            if issubclass(task_class, parent_klass) and not getattr(task_class, 'abstract', False):
                 container[task_class.name()] = task_class
                 break
 
