@@ -75,7 +75,8 @@ disable=missing-docstring,
         logging-format-interpolation,
         too-many-public-methods,
         f-string-without-interpolation,
-        too-many-locals
+        too-many-locals,
+        fixme
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
