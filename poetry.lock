@@ -84,7 +84,7 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "gcp-pilot"
-version = "0.16.0"
+version = "0.16.1"
 description = "Google Cloud Platform Friendly Pilot"
 category = "main"
 optional = false
@@ -597,8 +597,8 @@ django = [
     {file = "Django-3.1.6.tar.gz", hash = "sha256:c6c0462b8b361f8691171af1fb87eceb4442da28477e12200c40420176206ba7"},
 ]
 gcp-pilot = [
-    {file = "gcp-pilot-0.16.0.tar.gz", hash = "sha256:75a5ee7a7852d6d492ea7dc56b9fed31fb4d2058bea142877befa17a8a037024"},
-    {file = "gcp_pilot-0.16.0-py3-none-any.whl", hash = "sha256:3825f80b41283a11e7c1d0f497f5c1c83ff5eb5e4103d14f5e4db800bcf1a46c"},
+    {file = "gcp-pilot-0.16.1.tar.gz", hash = "sha256:3978b67d6a922e756c3b42eb2c99f35da0a065836296c09f4c944fa7a5ed2b65"},
+    {file = "gcp_pilot-0.16.1-py3-none-any.whl", hash = "sha256:03f55f41e738287e69b345fbe91d1d7190b9e580af38105752b58a4cdda070db"},
 ]
 google-api-core = [
     {file = "google-api-core-1.25.1.tar.gz", hash = "sha256:0e152ec37b8481d1be1258d95844a5a7031cd3d83d7c7046d9e9b2d807042440"},
