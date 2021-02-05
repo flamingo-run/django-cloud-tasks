@@ -1,5 +1,6 @@
 import json
 from typing import Dict
+from unittest.mock import ANY
 
 from django.apps import apps
 from django.http import HttpResponse
@@ -22,21 +23,25 @@ class GoogleCloudTaskView(View):
     def post(self, request, task_name, *args, **kwargs):
         try:
             task_class = self.tasks[task_name]
-            data = self._parse_task_args(body=request.body)
-            output, status = task_class().execute(data=data)
-            if status == 200:
-                result = {'result': output}
-            else:
-                result = {'error': output}
         except KeyError:
             status = 404
             result = {
                 'error': f"Task {task_name} not found",
                 'available_tasks': list(self.tasks)
             }
+            return self._prepare_response(status=status, payload=result)
 
-        response = HttpResponse(status=status, content=json.dumps(result), content_type='application/json')
-        return response
+        data = self._parse_task_args(body=request.body)
+        output, status = task_class().execute(data=data)
+        if status == 200:
+            result = {'result': output}
+        else:
+            result = {'error': output}
+
+        return self._prepare_response(status=status, payload=result)
+
+    def _prepare_response(self, status: int, payload: Dict[str, ANY]):
+        return HttpResponse(status=status, content=json.dumps(payload), content_type='application/json')
 
     def _parse_task_args(self, body: str) -> Dict:
         return json.loads(body)
