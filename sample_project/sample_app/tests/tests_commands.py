@@ -14,7 +14,7 @@ class CommandsTest(SimpleTestCase):
     def patch_subscribe(self):
         return patch('gcp_pilot.pubsub.CloudSubscriber.create_subscription')
 
-    def patch_get_scheduled(self, names: str = None):
+    def patch_get_scheduled(self, names: List[str] = None):
         jobs = []
         for name in (names or []):
             job = Mock()
