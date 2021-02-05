@@ -30,7 +30,10 @@ class GoogleCloudTaskView(View):
                 result = {'error': output}
         except KeyError:
             status = 404
-            result = {'error': f"Task {task_name} not found"}
+            result = {
+                'error': f"Task {task_name} not found",
+                'available_tasks': list(self.tasks)
+            }
 
         response = HttpResponse(status=status, content=json.dumps(result), content_type='application/json')
         return response
