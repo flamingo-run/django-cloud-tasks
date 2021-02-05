@@ -31,7 +31,18 @@ class TaskViewTest(SimpleTestCase):
         url = self.url(name='PotatoTask')
         response = self.client.post(path=url, data=data)
         self.assertEqual(404, response.status_code)
-        self.assertEqual({'error': "Task PotatoTask not found"}, response.json())
+
+        expected_response = {
+            'error': "Task PotatoTask not found",
+            'available_tasks': [
+                'PublisherTask',
+                'CalculatePriceTask',
+                'FailMiserablyTask',
+                'OneBigDedicatedTask',
+                'SaySomethingTask',
+            ]
+        }
+        self.assertEqual(expected_response, response.json())
 
     def test_task_called_with_get(self):
         url = self.url(name="CalculatePriceTask")
