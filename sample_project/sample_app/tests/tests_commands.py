@@ -52,7 +52,7 @@ class CommandsTest(SimpleTestCase):
         )
 
     def test_schedule_tasks(self):
-        expected_output = 'Successfully scheduled 1 tasks' \
+        expected_output = 'Successfully scheduled 1 tasks to domain http://localhost:8080' \
                           '\n- [+] SaySomethingTask\n'
         self._assert_command(
             command='schedule_tasks',
@@ -61,7 +61,7 @@ class CommandsTest(SimpleTestCase):
         )
 
     def test_schedule_tasks_with_obsolete(self):
-        expected_output = 'Successfully scheduled 3 tasks' \
+        expected_output = 'Successfully scheduled 3 tasks to domain http://localhost:8080' \
                           '\n- [+] SaySomethingTask' \
                           '\n- [-] potato_task_1' \
                           '\n- [-] potato_task_2\n'
@@ -78,7 +78,7 @@ class CommandsTest(SimpleTestCase):
             self.assertEqual(2, delete.call_count)
 
     def test_initialize_subscribers(self):
-        expected_output = 'Successfully initialized 1 subscribers' \
+        expected_output = 'Successfully initialized 1 subscribers to domain http://localhost:8080' \
                           '\n- PleaseNotifyMeTask\n'
         self._assert_command(
             command='initialize_subscribers',
