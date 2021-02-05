@@ -1,6 +1,5 @@
 import json
-from typing import Dict
-from unittest.mock import ANY
+from typing import Dict, Any
 
 from django.apps import apps
 from django.http import HttpResponse
@@ -40,7 +39,7 @@ class GoogleCloudTaskView(View):
 
         return self._prepare_response(status=status, payload=result)
 
-    def _prepare_response(self, status: int, payload: Dict[str, ANY]):
+    def _prepare_response(self, status: int, payload: Dict[str, Any]):
         return HttpResponse(status=status, content=json.dumps(payload), content_type='application/json')
 
     def _parse_task_args(self, body: str) -> Dict:
