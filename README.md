@@ -17,6 +17,8 @@ The following APIs must be enabled in your project(s):
 
 ## How it works
 
+> Add ``GOOGLE_CLOUD_TASKS_ENDPOINT`` to your Django settings or as an environment variable
+
 ![image](https://user-images.githubusercontent.com/9717144/100749131-00cce780-33c3-11eb-8f2a-b465bc0a45bb.png)
 
 ## Setup

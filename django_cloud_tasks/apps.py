@@ -17,7 +17,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.on_demand_tasks = {}
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
-        self.domain = self._fetch_config(name='DOMAIN_URL', default='http://localhost:8080')
+        self.domain = self._fetch_config(name='GOOGLE_CLOUD_TASKS_ENDPOINT', default='http://localhost:8080')
 
     def _fetch_config(self, name, default):
         return getattr(settings, name, os.environ.get(name, default))
