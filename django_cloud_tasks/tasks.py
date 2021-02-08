@@ -14,10 +14,13 @@ from django_cloud_tasks.helpers import run_coroutine
 
 class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
+        app = apps.get_app_config('django_cloud_tasks')
+        attrs['_app_name'] = app.app_name
+
         klass = type.__new__(cls, name, bases, attrs)
         if getattr(klass, 'abstract', False) and 'abstract' not in attrs:
             setattr(klass, 'abstract', False)  # TODO Removing the attribute would be better
-        TaskMeta._register_task(task_class=klass)
+        TaskMeta._register_task(app=app, task_class=klass)
         return klass
 
     def __call__(cls, *args, **kwargs):
@@ -26,8 +29,7 @@ class TaskMeta(type):
         raise NotImplementedError(f"Do not instantiate a {cls.__name__}. Inherit and create your own.")
 
     @staticmethod
-    def _register_task(task_class):
-        app = apps.get_app_config('django_cloud_tasks')
+    def _register_task(app, task_class):
         if task_class.__name__ not in ['Task', 'PeriodicTask', 'SubscriberTask']:
             app.register_task(task_class=task_class)
 
@@ -64,7 +66,7 @@ class Task(metaclass=TaskMeta):
 
     @property
     def queue(self):
-        return 'tasks'
+        return self._app_name or 'tasks'
 
     @classmethod
     def url(cls):
@@ -100,6 +102,8 @@ class PeriodicTask(Task):
 
     @property
     def schedule_name(self):
+        if self._app_name:
+            return f'{self._app_name}-{self.name()}'
         return self.name()
 
     @property
@@ -107,17 +111,11 @@ class PeriodicTask(Task):
         return CloudScheduler()
 
 
-class PubSubTaskMixin:
+class SubscriberTask(Task):
+    abstract = True
     _use_oidc_auth = True
     _url_name = 'subscriptions-endpoint'
 
-    @property
-    @abstractmethod
-    def topic_name(self):
-        raise NotImplementedError()
-
-
-class SubscriberTask(PubSubTaskMixin, Task):
     @abstractmethod
     def run(self, message, attributes):
         raise NotImplementedError()
@@ -138,7 +136,7 @@ class SubscriberTask(PubSubTaskMixin, Task):
 
     @property
     def subscription_name(self):
-        return self.name()
+        return self._app_name or self.name()
 
     @property
     def __client(self):
@@ -152,7 +150,7 @@ class PublisherTask(Task):
         return run_coroutine(
             handler=self.__client.publish,
             message=json.dumps(message),
-            topic_id=topic_name,
+            topic_id=self._full_topic_name(name=topic_name),
             attributes=attributes,
         )
 
@@ -163,14 +161,20 @@ class PublisherTask(Task):
             # - receiving it through the endpoint
             # - and the finally publishing to PubSub
             # might be useful to use the Cloud Task throttling
-            return super().delay(topic_name=topic_name, message=message, attributes=attributes)
+            full_topic_name = self._full_topic_name(name=topic_name)
+            return super().delay(topic_name=full_topic_name, message=message, attributes=attributes)
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 
     def initialize(self, topic_name):
         run_coroutine(
             handler=self.__client.create_topic,
-            topic_id=topic_name,
+            topic_id=self._full_topic_name(name=topic_name),
         )
+
+    def _full_topic_name(self, name):
+        if self._app_name:
+            return f'{self._app_name}-{name}'
+        return name
 
     @property
     def __client(self):

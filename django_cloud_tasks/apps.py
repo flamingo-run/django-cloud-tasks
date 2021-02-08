@@ -18,6 +18,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
         self.domain = self._fetch_config(name='GOOGLE_CLOUD_TASKS_ENDPOINT', default='http://localhost:8080')
+        self.app_name = self._fetch_config(name='GOOGLE_CLOUD_TASKS_APP_NAME', default=os.environ.get('APP_NAME', None))
 
     def _fetch_config(self, name, default):
         return getattr(settings, name, os.environ.get(name, default))
@@ -35,16 +36,16 @@ class DjangoCloudTasksAppConfig(AppConfig):
                 container[task_class.name()] = task_class
                 break
 
-    def schedule_tasks(self, delete_by_prefix: str = None) -> Tuple[List[str], List[str]]:
+    def schedule_tasks(self) -> Tuple[List[str], List[str]]:
         updated = []
         removed = []
         for task_name, task_klass in self.periodic_tasks.items():
             task_klass().delay()
             updated.append(task_name)
 
-        if delete_by_prefix:
+        if self.app_name:
             client = CloudScheduler()
-            for job in client.list(prefix=delete_by_prefix):
+            for job in client.list(prefix=self.app_name):
                 task_name = job.name.split('/jobs/')[-1]
                 if task_name not in updated:
                     client.delete(name=task_name)

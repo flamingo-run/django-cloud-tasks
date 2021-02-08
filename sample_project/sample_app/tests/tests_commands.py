@@ -1,7 +1,8 @@
 from io import StringIO
 from typing import List
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, PropertyMock
 
+from django.apps import apps
 from django.core.management import call_command
 from django.test import SimpleTestCase
 from gcp_pilot.mocker import patch_auth
@@ -67,15 +68,16 @@ class CommandsTest(SimpleTestCase):
                           '\n- [-] potato_task_2\n'
 
         names = ['potato_task_1', 'potato_task_2']
-        with self.patch_get_scheduled(names=names):
-            with self.patch_delete_schedule() as delete:
-                self._assert_command(
-                    command='schedule_tasks',
-                    params=['--prefix', 'potato'],
-                    expected_schedule_calls=1,
-                    expected_output=expected_output,
-                )
-            self.assertEqual(2, delete.call_count)
+        app_config = apps.get_app_config('django_cloud_tasks')
+        with patch.object(app_config, 'app_name', new_callable=PropertyMock, return_value='potato'):
+            with self.patch_get_scheduled(names=names):
+                with self.patch_delete_schedule() as delete:
+                    self._assert_command(
+                        command='schedule_tasks',
+                        expected_schedule_calls=1,
+                        expected_output=expected_output,
+                    )
+                self.assertEqual(2, delete.call_count)
 
     def test_initialize_subscribers(self):
         expected_output = 'Successfully initialized 1 subscribers to domain http://localhost:8080' \
