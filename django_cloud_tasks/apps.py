@@ -19,6 +19,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.subscriber_tasks = {}
         self.domain = self._fetch_config(name='GOOGLE_CLOUD_TASKS_ENDPOINT', default='http://localhost:8080')
         self.app_name = self._fetch_config(name='GOOGLE_CLOUD_TASKS_APP_NAME', default=os.environ.get('APP_NAME', None))
+        self.delimiter = self._fetch_config(name='GOOGLE_CLOUD_TASKS_DELIMITER', default='--')
 
     def _fetch_config(self, name, default):
         return getattr(settings, name, os.environ.get(name, default))
@@ -64,4 +65,5 @@ class DjangoCloudTasksAppConfig(AppConfig):
         for task_name, task_klass in self.subscriber_tasks.items():
             task_klass().delay()
             report.append(task_name)
+        # TODO: detect obsolete subscriptions (and publisher topics?)
         return report

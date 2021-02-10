@@ -16,6 +16,7 @@ class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
         app = apps.get_app_config('django_cloud_tasks')
         attrs['_app_name'] = app.app_name
+        attrs['_delimiter'] = app.delimiter
 
         klass = type.__new__(cls, name, bases, attrs)
         if getattr(klass, 'abstract', False) and 'abstract' not in attrs:
@@ -103,7 +104,7 @@ class PeriodicTask(Task):
     @property
     def schedule_name(self):
         if self._app_name:
-            return f'{self._app_name}-{self.name()}'
+            return f'{self._app_name}{self._delimiter}{self.name()}'
         return self.name()
 
     @property
@@ -136,7 +137,7 @@ class SubscriberTask(Task):
 
     @property
     def subscription_name(self):
-        return self._app_name or self.name()
+        return f'{self.topic_name}{self._delimiter}{self._app_name or self.name()}'
 
     @property
     def __client(self):
@@ -173,7 +174,7 @@ class PublisherTask(Task):
 
     def _full_topic_name(self, name):
         if self._app_name:
-            return f'{self._app_name}-{name}'
+            return f'{self._app_name}{self._delimiter}{name}'
         return name
 
     @property
