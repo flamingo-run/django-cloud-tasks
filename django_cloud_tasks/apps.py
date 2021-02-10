@@ -40,16 +40,17 @@ class DjangoCloudTasksAppConfig(AppConfig):
         updated = []
         removed = []
         for task_name, task_klass in self.periodic_tasks.items():
-            task_klass().delay()
-            updated.append(task_name)
+            task = task_klass()
+            task.delay()
+            updated.append(task.schedule_name)
 
         if self.app_name:
             client = CloudScheduler()
             for job in client.list(prefix=self.app_name):
-                task_name = job.name.split('/jobs/')[-1]
-                if task_name not in updated:
-                    client.delete(name=task_name)
-                    removed.append(task_name)
+                schedule_name = job.name.split('/jobs/')[-1]
+                if schedule_name not in updated:
+                    asyncio.run(client.delete(name=schedule_name))
+                    removed.append(schedule_name)
 
         return updated, removed
 
