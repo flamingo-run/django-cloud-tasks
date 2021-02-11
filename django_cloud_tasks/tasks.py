@@ -66,7 +66,7 @@ class Task(metaclass=TaskMeta):
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
             # so we'll use a temporary queue (defined in settings) for some time
             backup_queue_name = apps.get_app_config('django_cloud_tasks').get_backup_queue_name(
-                originaL_name=self.queue,
+                original_name=self.queue,
             )
             if not backup_queue_name:
                 raise
