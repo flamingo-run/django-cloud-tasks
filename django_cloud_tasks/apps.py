@@ -40,7 +40,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
     def schedule_tasks(self) -> Tuple[List[str], List[str]]:
         updated = []
         removed = []
-        for task_name, task_klass in self.periodic_tasks.items():
+        for _, task_klass in self.periodic_tasks.items():
             task = task_klass()
             task.delay()
             updated.append(task.schedule_name)
