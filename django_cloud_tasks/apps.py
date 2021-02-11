@@ -21,6 +21,12 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.app_name = self._fetch_config(name='GOOGLE_CLOUD_TASKS_APP_NAME', default=os.environ.get('APP_NAME', None))
         self.delimiter = self._fetch_config(name='GOOGLE_CLOUD_TASKS_DELIMITER', default='--')
 
+    def get_backup_queue_name(self, original_name: str) -> str:
+        return self._fetch_config(
+            name='GOOGLE_CLOUD_TASKS_BACKUP_QUEUE_NAME',
+            default=f'{original_name}{self.delimiter}temp',
+        )
+
     def _fetch_config(self, name, default):
         return getattr(settings, name, os.environ.get(name, default))
 

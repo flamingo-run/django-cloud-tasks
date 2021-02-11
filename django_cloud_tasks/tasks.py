@@ -5,6 +5,7 @@ from typing import Dict
 from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
+from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
@@ -53,13 +54,30 @@ class Task(metaclass=TaskMeta):
 
         payload = kwargs
 
-        return run_coroutine(
-            handler=self.__client.push,
-            task_name=self.name(),
-            queue_name=self.queue,
-            url=self.url(),
-            payload=json.dumps(payload),
-        )
+        try:
+            return run_coroutine(
+                handler=self.__client.push,
+                task_name=self.name(),
+                queue_name=self.queue,
+                url=self.url(),
+                payload=json.dumps(payload),
+            )
+        except DeletedRecently:
+            # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
+            # so we'll use a temporary queue (defined in settings) for some time
+            backup_queue_name = apps.get_app_config('django_cloud_tasks').get_backup_queue_name(
+                originaL_name=self.queue,
+            )
+            if not backup_queue_name:
+                raise
+
+            return run_coroutine(
+                handler=self.__client.push,
+                task_name=self.name(),
+                queue_name=backup_queue_name,
+                url=self.url(),
+                payload=json.dumps(payload),
+            )
 
     @classmethod
     def name(cls):
