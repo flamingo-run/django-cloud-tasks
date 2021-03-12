@@ -7,4 +7,5 @@ class Command(BaseInitCommand):
     name = 'subscribers'
 
     def perform_init(self, app_config, *args, **options) -> List[str]:
-        return app_config.initialize_subscribers()
+        updated, deleted = app_config.initialize_subscribers()
+        return [f"[+] {name}" for name in updated] + [f"[-] {name}" for name in deleted]

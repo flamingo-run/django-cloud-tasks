@@ -66,10 +66,27 @@ class DjangoCloudTasksAppConfig(AppConfig):
         routine = sub.set_up_permissions(email=sub.credentials.service_account_email)
         asyncio.run(routine)
 
-    def initialize_subscribers(self) -> List[str]:
-        report = []
+    def initialize_subscribers(self) -> Tuple[List[str], List[str]]:
+        updated = []
+        removed = []
+
         for task_name, task_klass in self.subscriber_tasks.items():
             task_klass().delay()
-            report.append(task_name)
-        # TODO: detect obsolete subscriptions (and publisher topics?)
-        return report
+            updated.append(task_name)
+
+        async def _get_subscriptions():
+            names = []
+            async for subscription in client.list_subscriptions(suffix=self.app_name):
+                susbcription_name = subscription.name.rsplit('subscriptions/', 1)[-1]
+                task_name = subscription.push_config.push_endpoint.rsplit('/', 1)[-1]
+                names.append((susbcription_name, task_name))
+            return names
+
+        if self.app_name:
+            client = CloudSubscriber()
+            for (subscription_id, subscribed_task) in asyncio.run(_get_subscriptions()):
+                if subscribed_task not in updated:
+                    asyncio.run(client.delete_subscription(subscription_id=subscription_id))
+                    removed.append(subscribed_task)
+
+        return updated, removed
