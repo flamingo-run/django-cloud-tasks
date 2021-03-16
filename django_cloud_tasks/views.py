@@ -52,4 +52,8 @@ class GoogleCloudSubscribeView(GoogleCloudTaskView):
         return apps.get_app_config('django_cloud_tasks').subscriber_tasks.copy()
 
     def _parse_task_args(self, body: str) -> Dict:
-        return Message.load(body=body).data
+        message = Message.load(body=body)
+        return {
+            'message': message.data,
+            'attributes': message.attributes,
+        }
