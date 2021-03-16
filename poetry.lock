@@ -83,7 +83,7 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "gcp-pilot"
-version = "0.21.1"
+version = "0.22.0"
 description = "Google Cloud Platform Friendly Pilot"
 category = "main"
 optional = false
@@ -352,7 +352,7 @@ pyparsing = ">=2.0.2"
 
 [[package]]
 name = "proto-plus"
-version = "1.16.0"
+version = "1.17.0"
 description = "Beautiful, Pythonic protocol buffers."
 category = "main"
 optional = false
@@ -519,16 +519,16 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.3"
+version = "1.26.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
 [package.extras]
-brotli = ["brotlipy (>=0.6.0)"]
 secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotlipy (>=0.6.0)"]
 
 [[package]]
 name = "wrapt"
@@ -627,8 +627,8 @@ django = [
     {file = "Django-3.1.7.tar.gz", hash = "sha256:32ce792ee9b6a0cbbec340123e229ac9f765dff8c2a4ae9247a14b2ba3a365a7"},
 ]
 gcp-pilot = [
-    {file = "gcp-pilot-0.21.1.tar.gz", hash = "sha256:3379aafd6251f8fd653cfc0b56344f3b0d522e607837278289808ff7acb6c4db"},
-    {file = "gcp_pilot-0.21.1-py3-none-any.whl", hash = "sha256:f9e365f311b07a0b505d618796181d5e79d56d2141c2fa4d12aebf3730f0c6d4"},
+    {file = "gcp-pilot-0.22.0.tar.gz", hash = "sha256:97e2909c6b35e4cc8b72dea9bb7f1b3e0c244236ffd51d607d7136a146226f88"},
+    {file = "gcp_pilot-0.22.0-py3-none-any.whl", hash = "sha256:020291b02d6fe35e997f2a4911e4f9468d7d504016aa6e280bb3f758a9917700"},
 ]
 google-api-core = [
     {file = "google-api-core-1.26.1.tar.gz", hash = "sha256:23b0df512c4cc8729793f8992edb350e3211f5fd0ec007afb1599864b421beef"},
@@ -773,8 +773,8 @@ packaging = [
     {file = "packaging-20.9.tar.gz", hash = "sha256:5b327ac1320dc863dca72f4514ecc086f31186744b84a230374cc1fd776feae5"},
 ]
 proto-plus = [
-    {file = "proto-plus-1.16.0.tar.gz", hash = "sha256:d9b26272a3b7e1c5b2d6b6faa5a444909ed4f90cfe4b971aa41801c6c7cd539e"},
-    {file = "proto_plus-1.16.0-py3-none-any.whl", hash = "sha256:1b4a84cad3502147981e3de67df40b271addf9c1d22d63fe3ac8c3a49578ba19"},
+    {file = "proto-plus-1.17.0.tar.gz", hash = "sha256:ebced9a550a4236ec652a4988bf68e5c7da613b001165405975dd548c844e5cd"},
+    {file = "proto_plus-1.17.0-py3-none-any.whl", hash = "sha256:72283578d6f72801049329652dfbfd7f14f3a0658afcf3adca5ab7609abefcbc"},
 ]
 protobuf = [
     {file = "protobuf-3.15.6-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:1771ef20e88759c4d81db213e89b7a1fc53937968e12af6603c658ee4bcbfa38"},
@@ -906,8 +906,8 @@ uritemplate = [
     {file = "uritemplate-3.0.1.tar.gz", hash = "sha256:5af8ad10cec94f215e3f48112de2022e1d5a37ed427fbd88652fa908f2ab7cae"},
 ]
 urllib3 = [
-    {file = "urllib3-1.26.3-py2.py3-none-any.whl", hash = "sha256:1b465e494e3e0d8939b50680403e3aedaa2bc434b7d5af64dfd3c958d7f5ae80"},
-    {file = "urllib3-1.26.3.tar.gz", hash = "sha256:de3eedaad74a2683334e282005cd8d7f22f4d55fa690a2a1020a416cb0a47e73"},
+    {file = "urllib3-1.26.4-py2.py3-none-any.whl", hash = "sha256:2f4da4594db7e1e110a944bb1b551fdf4e6c136ad42e4234131391e21eb5b0df"},
+    {file = "urllib3-1.26.4.tar.gz", hash = "sha256:e7b021f7241115872f92f43c6508082facffbd1c048e3c6e2bb9c2a157e28937"},
 ]
 wrapt = [
     {file = "wrapt-1.12.1.tar.gz", hash = "sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7"},
