@@ -141,7 +141,7 @@ class SubscriberTask(Task):
 
     def delay(self, **kwargs):
         return run_coroutine(
-            handler=self.__client.create_subscription,
+            handler=self.__client.create_or_update_subscription,
             topic_id=self.topic_name,
             subscription_id=self.subscription_name,
             push_to_url=self.url(),
