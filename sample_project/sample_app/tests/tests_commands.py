@@ -81,7 +81,7 @@ class CommandsTest(SimpleTestCase):
 
     def test_initialize_subscribers(self):
         expected_output = 'Successfully initialized 1 subscribers to domain http://localhost:8080' \
-                          '\n- PleaseNotifyMeTask\n'
+                          '\n- [+] PleaseNotifyMeTask\n'
         self._assert_command(
             command='initialize_subscribers',
             expected_subscribe_calls=1,
