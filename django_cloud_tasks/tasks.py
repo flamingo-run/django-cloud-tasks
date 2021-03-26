@@ -1,4 +1,3 @@
-import json
 from abc import abstractmethod
 from typing import Dict
 
@@ -11,6 +10,7 @@ from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 
 from django_cloud_tasks.helpers import run_coroutine
+from django_cloud_tasks.serializers import serialize, deserialize
 
 
 class TaskMeta(type):
@@ -49,10 +49,10 @@ class Task(metaclass=TaskMeta):
         return output, status
 
     def delay(self, **kwargs):
-        if getattr(settings, 'EAGER_TASKS', False):
-            return self.run(**kwargs)
+        payload = serialize(kwargs)
 
-        payload = kwargs
+        if getattr(settings, 'EAGER_TASKS', False):
+            return self.run(**deserialize(payload))
 
         try:
             return run_coroutine(
@@ -60,7 +60,7 @@ class Task(metaclass=TaskMeta):
                 task_name=self.name(),
                 queue_name=self.queue,
                 url=self.url(),
-                payload=json.dumps(payload),
+                payload=payload,
             )
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
@@ -76,7 +76,7 @@ class Task(metaclass=TaskMeta):
                 task_name=self.name(),
                 queue_name=backup_queue_name,
                 url=self.url(),
-                payload=json.dumps(payload),
+                payload=payload,
             )
 
     @classmethod
@@ -106,16 +106,16 @@ class PeriodicTask(Task):
     run_every = None
 
     def delay(self, **kwargs):
-        if getattr(settings, 'EAGER_TASKS', False):
-            return self.run(**kwargs)
+        payload = serialize(kwargs)
 
-        payload = kwargs
+        if getattr(settings, 'EAGER_TASKS', False):
+            return self.run(**deserialize(payload))
 
         return run_coroutine(
             handler=self.__client.put,
             name=self.schedule_name,
             url=self.url(),
-            payload=json.dumps(payload),
+            payload=payload,
             cron=self.run_every,
         )
 
@@ -168,7 +168,7 @@ class PublisherTask(Task):
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         return run_coroutine(
             handler=self.__client.publish,
-            message=json.dumps(message),
+            message=serialize(message),
             topic_id=self._full_topic_name(name=topic_name),
             attributes=attributes,
         )
