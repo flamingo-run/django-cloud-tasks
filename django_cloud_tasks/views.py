@@ -30,8 +30,7 @@ class GoogleCloudTaskView(View):
             }
             return self._prepare_response(status=status, payload=result)
 
-        data = self._parse_task_args(body=request.body)
-        output, status = task_class().execute(data=data)
+        output, status = task_class().execute(request_body=request.body)
         if status == 200:
             result = {'result': output}
         else:

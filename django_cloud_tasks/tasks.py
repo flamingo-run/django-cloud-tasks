@@ -1,9 +1,11 @@
 from abc import abstractmethod
+from datetime import timedelta, datetime
 from typing import Dict
 
 from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
+from django.utils.timezone import now
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
 from gcp_pilot.scheduler import CloudScheduler
@@ -43,24 +45,56 @@ class Task(metaclass=TaskMeta):
     def run(self, **kwargs):
         raise NotImplementedError()
 
-    def execute(self, data):
+    def execute(self, request_body):
+        data = deserialize(request_body)
         output = self.run(**data)
-        status = 200
+        status = 200  # TODO Capture some exceptions and set status code
         return output, status
 
+    # Celery-compatible signature
     def delay(self, **kwargs):
-        payload = serialize(kwargs)
+        return self._send(
+            task_kwargs=kwargs,
+        )
+
+    def asap(self, **kwargs):
+        return self._send(
+            task_kwargs=kwargs,
+        )
+
+    def later(self, when, **kwargs):
+        if isinstance(when, int):
+            delay_in_seconds = when
+        elif isinstance(when, timedelta):
+            delay_in_seconds = when.total_seconds()
+        elif isinstance(when, datetime):
+            delay_in_seconds = (when - now()).total_seconds()
+        else:
+            raise ValueError(f"Unsupported schedule {when} of type {when.__class__.__name__}")
+
+        return self._send(
+            task_kwargs=kwargs,
+            api_kwargs=delay_in_seconds,
+        )
+
+    def _send(self, task_kwargs, api_kwargs=None):
+        payload = serialize(task_kwargs)
 
         if getattr(settings, 'EAGER_TASKS', False):
             return self.run(**deserialize(payload))
 
+        api_kwargs = api_kwargs or {}
+        api_kwargs.update(dict(
+            task_name=self.name(),
+            queue_name=self.queue,
+            url=self.url(),
+            payload=payload,
+        ))
+
         try:
             return run_coroutine(
                 handler=self.__client.push,
-                task_name=self.name(),
-                queue_name=self.queue,
-                url=self.url(),
-                payload=payload,
+                **api_kwargs
             )
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
@@ -99,13 +133,13 @@ class Task(metaclass=TaskMeta):
 
 
 class PeriodicTask(Task):
+    run_every = None
+
     @abstractmethod
     def run(self, **kwargs):
         raise NotImplementedError()
 
-    run_every = None
-
-    def delay(self, **kwargs):
+    def schedule(self, **kwargs):
         payload = serialize(kwargs)
 
         if getattr(settings, 'EAGER_TASKS', False):
@@ -139,7 +173,7 @@ class SubscriberTask(Task):
     def run(self, message, attributes):
         raise NotImplementedError()
 
-    def delay(self, **kwargs):
+    def register(self):
         return run_coroutine(
             handler=self.__client.create_or_update_subscription,
             topic_id=self.topic_name,
@@ -163,7 +197,12 @@ class SubscriberTask(Task):
 
 
 class PublisherTask(Task):
-    publish_immediately = False
+    # perform asynchronous publish to PubSub, with overhead in:
+    # - publishing the message as Task
+    # - receiving it through the endpoint
+    # - and the finally publishing to PubSub
+    # might be useful to use the Cloud Task throttling
+    publish_immediately = True
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         return run_coroutine(
@@ -174,14 +213,13 @@ class PublisherTask(Task):
         )
 
     def delay(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        if self.publish_immediately:
-            # perform asynchronous publish to PubSub, with overhead in:
-            # - publishing the message as Task
-            # - receiving it through the endpoint
-            # - and the finally publishing to PubSub
-            # might be useful to use the Cloud Task throttling
-            full_topic_name = self._full_topic_name(name=topic_name)
-            return super().delay(topic_name=full_topic_name, message=message, attributes=attributes)
+        if not self.publish_immediately:
+            task_kwargs = dict(
+                topic_name=self._full_topic_name(name=topic_name),
+                message=message,
+                attributes=attributes,
+            )
+            return super()._send(task_kwargs=task_kwargs)
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 
     def initialize(self, topic_name):

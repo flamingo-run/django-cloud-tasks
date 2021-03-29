@@ -48,7 +48,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         removed = []
         for _, task_klass in self.periodic_tasks.items():
             task = task_klass()
-            task.delay()
+            task.schedule()
             updated.append(task.schedule_name)
 
         if self.app_name:
@@ -71,7 +71,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         removed = []
 
         for task_name, task_klass in self.subscriber_tasks.items():
-            task_klass().delay()
+            task_klass().register()
             updated.append(task_name)
 
         async def _get_subscriptions():
