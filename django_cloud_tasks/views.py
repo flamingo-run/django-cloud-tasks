@@ -5,8 +5,6 @@ from django.apps import apps
 from django.http import HttpResponse
 from django.views.generic import View
 
-from gcp_pilot.pubsub import Message
-
 
 class GoogleCloudTaskView(View):
     def __init__(self, **kwargs):
@@ -41,18 +39,8 @@ class GoogleCloudTaskView(View):
     def _prepare_response(self, status: int, payload: Dict[str, Any]):
         return HttpResponse(status=status, content=json.dumps(payload), content_type='application/json')
 
-    def _parse_task_args(self, body: str) -> Dict:
-        return json.loads(body)
-
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
 class GoogleCloudSubscribeView(GoogleCloudTaskView):
     def _get_available_tasks(self):
         return apps.get_app_config('django_cloud_tasks').subscriber_tasks.copy()
-
-    def _parse_task_args(self, body: str) -> Dict:
-        message = Message.load(body=body)
-        return {
-            'message': message.data,
-            'attributes': message.attributes,
-        }

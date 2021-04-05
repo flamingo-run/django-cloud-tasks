@@ -7,7 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.timezone import now
 from gcp_pilot.exceptions import DeletedRecently
-from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher
+from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher, Message
 from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 
@@ -45,9 +45,13 @@ class Task(metaclass=TaskMeta):
     def run(self, **kwargs):
         raise NotImplementedError()
 
-    def execute(self, request_body):
+    def _body_to_kwargs(self, request_body):
         data = deserialize(request_body)
-        output = self.run(**data)
+        return data
+
+    def execute(self, request_body):
+        task_kwargs = self._body_to_kwargs(request_body=request_body)
+        output = self.run(**task_kwargs)
         status = 200  # TODO Capture some exceptions and set status code
         return output, status
 
@@ -168,6 +172,13 @@ class SubscriberTask(Task):
     abstract = True
     _use_oidc_auth = True
     _url_name = 'subscriptions-endpoint'
+
+    def _body_to_kwargs(self, request_body):
+        message = Message.load(body=request_body)
+        return {
+            'message': message.data,
+            'attributes': message.attributes,
+        }
 
     @abstractmethod
     def run(self, message, attributes):
