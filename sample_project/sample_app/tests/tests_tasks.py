@@ -31,10 +31,23 @@ class TasksTest(SimpleTestCase):
                 tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
 
         expected_call = dict(
-            task_name='CalculatePriceTask',
             queue_name='tasks',
             url='http://localhost:8080/tasks/CalculatePriceTask',
             payload=json.dumps({'price': 30, 'quantity': 4, 'discount': 0.2}),
+        )
+        push.assert_called_once_with(**expected_call)
+
+    def test_task_async_only_once(self):
+        with self.patch_push() as push:
+            with patch_auth():
+                tasks.FailMiserablyTask().delay(magic_number=666)
+
+        expected_call = dict(
+            task_name='FailMiserablyTask',
+            queue_name='tasks',
+            url='http://localhost:8080/tasks/FailMiserablyTask',
+            payload=json.dumps({'magic_number': 666}),
+            unique=False,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -45,7 +58,6 @@ class TasksTest(SimpleTestCase):
                 tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
 
         expected_call = dict(
-            task_name='CalculatePriceTask',
             queue_name='tasks',
             url='http://localhost:8080/tasks/CalculatePriceTask',
             payload=json.dumps({'price': 30, 'quantity': 4, 'discount': 0.2}),

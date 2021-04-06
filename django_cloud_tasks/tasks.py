@@ -40,6 +40,7 @@ class TaskMeta(type):
 
 class Task(metaclass=TaskMeta):
     _url_name = 'tasks-endpoint'
+    only_once = False
 
     @abstractmethod
     def run(self, **kwargs):
@@ -89,11 +90,16 @@ class Task(metaclass=TaskMeta):
 
         api_kwargs = api_kwargs or {}
         api_kwargs.update(dict(
-            task_name=self.name(),
             queue_name=self.queue,
             url=self.url(),
             payload=payload,
         ))
+
+        if self.only_once:
+            api_kwargs.update(dict(
+                task_name=self.name(),
+                unique=False,
+            ))
 
         try:
             return run_coroutine(
@@ -109,12 +115,10 @@ class Task(metaclass=TaskMeta):
             if not backup_queue_name:
                 raise
 
+            api_kwargs['queue_name'] = backup_queue_name
             return run_coroutine(
                 handler=self.__client.push,
-                task_name=self.name(),
-                queue_name=backup_queue_name,
-                url=self.url(),
-                payload=payload,
+                **api_kwargs
             )
 
     @classmethod

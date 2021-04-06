@@ -21,6 +21,8 @@ class CalculatePriceTask(Task):
 
 
 class FailMiserablyTask(AnotherBaseAbstractTask):
+    only_once = True
+
     def run(self, magic_number):
         return magic_number / 0
 
