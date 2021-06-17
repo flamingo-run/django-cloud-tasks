@@ -4,8 +4,11 @@ from typing import Dict, Any
 from django.apps import apps
 from django.http import HttpResponse
 from django.views.generic import View
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class GoogleCloudTaskView(View):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
