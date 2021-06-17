@@ -54,7 +54,7 @@ django-google-cloud-tasks = {version="<version>"}
 
 ## Usage
 
-See task examples here: [sample_project/sample_app/tasks.py]. Create them in `[app]/tasks.py`.
+See task examples here: [sample_project/sample_app/tasks.py](sample_project/sample_app/tasks.py). Create them in `[app]/tasks.py`.
 
 Add to the app configs:
 
