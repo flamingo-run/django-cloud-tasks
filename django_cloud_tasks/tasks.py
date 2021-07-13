@@ -79,7 +79,7 @@ class Task(metaclass=TaskMeta):
 
         return self._send(
             task_kwargs=kwargs,
-            api_kwargs=delay_in_seconds,
+            api_kwargs=dict(delay_in_seconds=delay_in_seconds),
         )
 
     def _send(self, task_kwargs, api_kwargs=None):
