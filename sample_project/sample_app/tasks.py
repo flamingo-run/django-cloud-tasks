@@ -35,6 +35,8 @@ class SaySomethingTask(PeriodicTask):
 
 
 class PleaseNotifyMeTask(SubscriberTask):
+    enable_message_ordering = True
+
     @property
     def topic_name(self):
         return 'potato'
