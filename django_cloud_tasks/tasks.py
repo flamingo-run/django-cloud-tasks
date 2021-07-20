@@ -6,6 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
 from django.utils.timezone import now
+from google.cloud import pubsub_v1
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher, Message
 from gcp_pilot.scheduler import CloudScheduler
@@ -221,6 +222,10 @@ class PublisherTask(Task):
     # might be useful to use the Cloud Task throttling
     publish_immediately = True
 
+    def __init__(self, enable_message_ordering=False) -> None:
+        super().__init__()
+        self.enable_message_ordering = enable_message_ordering
+
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         return run_coroutine(
             handler=self.__client.publish,
@@ -252,4 +257,8 @@ class PublisherTask(Task):
 
     @property
     def __client(self):
-        return CloudPublisher()
+        publisher_options = pubsub_v1.types.PublisherOptions(
+            enable_message_ordering=self.enable_message_ordering,
+        )
+
+        return CloudPublisher(publisher_options=publisher_options)
