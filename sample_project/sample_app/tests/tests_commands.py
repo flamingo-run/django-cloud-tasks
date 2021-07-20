@@ -39,7 +39,7 @@ class CommandsTest(SimpleTestCase):
             with self.patch_schedule() as schedule:
                 with self.patch_subscribe() as subscribe:
                     call_params = params or []
-                    call_command(command, *call_params, stdout=out)
+                    call_command(command, *call_params, no_color=True, stdout=out)
         self.assertEqual(expected_schedule_calls, schedule.call_count)
         self.assertEqual(expected_subscribe_calls, subscribe.call_count)
         if expected_output:
