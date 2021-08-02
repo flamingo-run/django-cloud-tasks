@@ -20,13 +20,14 @@ class JSONEncoder(DjangoJSONEncoder):
     def default(self, o):
         if o is None:
             return None
-        elif isinstance(o, datetime):
+        if isinstance(o, datetime):
             value = assure_tz(o.astimezone())
             return value.isoformat()
-        elif issubclass(o.__class__, FieldFile):
+        if issubclass(o.__class__, FieldFile):
             return o.url if bool(o) else None
-        else:
-            return super().default(o)
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
 
 
 def serialize(value):
