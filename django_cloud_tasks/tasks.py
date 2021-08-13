@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from abc import abstractmethod
 from datetime import timedelta, datetime
 from typing import Dict
