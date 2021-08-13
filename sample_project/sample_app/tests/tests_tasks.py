@@ -85,5 +85,5 @@ class TasksTest(SimpleTestCase):
     def test_task_eager(self):
         with self.settings(EAGER_TASKS=True):
             with patch_auth():
-                r = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
-        self.assertGreater(r, 0)
+                response = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
+        self.assertGreater(response, 0)
