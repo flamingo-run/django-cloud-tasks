@@ -6,6 +6,8 @@ from django.test import SimpleTestCase
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
+from django_cloud_tasks import exceptions
+from django_cloud_tasks.tasks import PublisherTask
 from sample_project.sample_app import tasks
 
 
@@ -24,6 +26,17 @@ class TasksTest(SimpleTestCase):
 
         expected_tasks = {'PleaseNotifyMeTask'}
         self.assertEqual(expected_tasks, set(app_config.subscriber_tasks))
+
+    def test_get_task(self):
+        app_config = apps.get_app_config('django_cloud_tasks')
+
+        self.assertEqual(PublisherTask, app_config.get_task(name="PublisherTask"))
+
+    def test_get_task_not_found(self):
+        app_config = apps.get_app_config('django_cloud_tasks')
+
+        with self.assertRaises(exceptions.TaskNotFound):
+            app_config.get_task(name="PotatoTask")
 
     def test_task_async(self):
         with self.patch_push() as push:
