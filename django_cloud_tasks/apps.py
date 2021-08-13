@@ -7,6 +7,8 @@ from django.conf import settings
 from gcp_pilot.pubsub import CloudSubscriber
 from gcp_pilot.scheduler import CloudScheduler
 
+from django_cloud_tasks import exceptions
+
 
 class DjangoCloudTasksAppConfig(AppConfig):
     name = 'django_cloud_tasks'
@@ -20,6 +22,15 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.domain = self._fetch_config(name='GOOGLE_CLOUD_TASKS_ENDPOINT', default='http://localhost:8080')
         self.app_name = self._fetch_config(name='GOOGLE_CLOUD_TASKS_APP_NAME', default=os.environ.get('APP_NAME', None))
         self.delimiter = self._fetch_config(name='GOOGLE_CLOUD_TASKS_DELIMITER', default='--')
+
+    def get_task(self, name: str):
+        if name in self.on_demand_tasks:
+            return self.on_demand_tasks[name]
+        if name in self.periodic_tasks:
+            return self.periodic_tasks[name]
+        if name in self.subscriber_tasks:
+            return self.subscriber_tasks[name]
+        raise exceptions.TaskNotFound(name=name)
 
     def get_backup_queue_name(self, original_name: str) -> str:
         return self._fetch_config(
