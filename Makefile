@@ -20,6 +20,7 @@ check:
 lint:
 	@echo "Checking code style ..."
 	@poetry run pylint django_cloud_tasks sample_project
+	@poetry run black --check .
 
 unit:
 	@echo "Running unit tests ..."
