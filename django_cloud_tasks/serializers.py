@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.fields.files import FieldFile
 
-DEFAULT_TIMEZONE = getattr(settings, 'TIMEZONE', 'UTC')
+DEFAULT_TIMEZONE = getattr(settings, "TIMEZONE", "UTC")
 
 
 def assure_tz(dt, tz=DEFAULT_TIMEZONE):

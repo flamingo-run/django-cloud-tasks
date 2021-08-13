@@ -11,7 +11,7 @@ from django_cloud_tasks import exceptions
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
-    name = 'django_cloud_tasks'
+    name = "django_cloud_tasks"
     verbose_name = "Django Cloud Tasks"
 
     def __init__(self, *args, **kwargs):
@@ -19,9 +19,9 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.on_demand_tasks = {}
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
-        self.domain = self._fetch_config(name='GOOGLE_CLOUD_TASKS_ENDPOINT', default='http://localhost:8080')
-        self.app_name = self._fetch_config(name='GOOGLE_CLOUD_TASKS_APP_NAME', default=os.environ.get('APP_NAME', None))
-        self.delimiter = self._fetch_config(name='GOOGLE_CLOUD_TASKS_DELIMITER', default='--')
+        self.domain = self._fetch_config(name="GOOGLE_CLOUD_TASKS_ENDPOINT", default="http://localhost:8080")
+        self.app_name = self._fetch_config(name="GOOGLE_CLOUD_TASKS_APP_NAME", default=os.environ.get("APP_NAME", None))
+        self.delimiter = self._fetch_config(name="GOOGLE_CLOUD_TASKS_DELIMITER", default="--")
 
     def get_task(self, name: str):
         if name in self.on_demand_tasks:
@@ -34,8 +34,8 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
     def get_backup_queue_name(self, original_name: str) -> str:
         return self._fetch_config(
-            name='GOOGLE_CLOUD_TASKS_BACKUP_QUEUE_NAME',
-            default=f'{original_name}{self.delimiter}temp',
+            name="GOOGLE_CLOUD_TASKS_BACKUP_QUEUE_NAME",
+            default=f"{original_name}{self.delimiter}temp",
         )
 
     def _fetch_config(self, name, default):
@@ -50,7 +50,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
             tasks.Task: self.on_demand_tasks,
         }
         for parent_klass, container in containers.items():
-            if issubclass(task_class, parent_klass) and not getattr(task_class, 'abstract', False):
+            if issubclass(task_class, parent_klass) and not getattr(task_class, "abstract", False):
                 container[task_class.name()] = task_class
                 break
 
@@ -65,7 +65,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         if self.app_name:
             client = CloudScheduler()
             for job in client.list(prefix=self.app_name):
-                schedule_name = job.name.split('/jobs/')[-1]
+                schedule_name = job.name.split("/jobs/")[-1]
                 if schedule_name not in updated:
                     asyncio.run(client.delete(name=schedule_name))
                     removed.append(schedule_name)
@@ -88,8 +88,8 @@ class DjangoCloudTasksAppConfig(AppConfig):
         async def _get_subscriptions():
             names = []
             async for subscription in client.list_subscriptions(suffix=self.app_name):
-                susbcription_name = subscription.name.rsplit('subscriptions/', 1)[-1]
-                task_name = subscription.push_config.push_endpoint.rsplit('/', 1)[-1]
+                susbcription_name = subscription.name.rsplit("subscriptions/", 1)[-1]
+                task_name = subscription.push_config.push_endpoint.rsplit("/", 1)[-1]
                 names.append((susbcription_name, task_name))
             return names
 
