@@ -3,44 +3,44 @@ from django.test import SimpleTestCase
 
 class TaskViewTest(SimpleTestCase):
     def url(self, name):
-        return f'/tasks/{name}'
+        return f"/tasks/{name}"
 
     def test_task_called(self):
         data = {
-            'price': 300,
-            'quantity': 4,
-            'discount': 0.2,
+            "price": 300,
+            "quantity": 4,
+            "discount": 0.2,
         }
         url = self.url(name="CalculatePriceTask")
-        response = self.client.post(path=url, data=data, content_type='application/json')
+        response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual({'result': 960.0}, response.json())
+        self.assertEqual({"result": 960.0}, response.json())
 
     def test_task_called_with_internal_error(self):
         data = {
-            'price': 300,
-            'quantity': 'wtf',
-            'discount': 0.2,
+            "price": 300,
+            "quantity": "wtf",
+            "discount": 0.2,
         }
         url = self.url(name="CalculatePriceTask")
         with self.assertRaises(TypeError):
-            self.client.post(path=url, data=data, content_type='application/json')
+            self.client.post(path=url, data=data, content_type="application/json")
 
     def test_task_not_found(self):
         data = {}
-        url = self.url(name='PotatoTask')
+        url = self.url(name="PotatoTask")
         response = self.client.post(path=url, data=data)
         self.assertEqual(404, response.status_code)
 
         expected_response = {
-            'error': "Task PotatoTask not found",
-            'available_tasks': [
-                'PublisherTask',
-                'CalculatePriceTask',
-                'FailMiserablyTask',
-                'OneBigDedicatedTask',
-                'SaySomethingTask',
-            ]
+            "error": "Task PotatoTask not found",
+            "available_tasks": [
+                "PublisherTask",
+                "CalculatePriceTask",
+                "FailMiserablyTask",
+                "OneBigDedicatedTask",
+                "SaySomethingTask",
+            ],
         }
         self.assertEqual(expected_response, response.json())
 
@@ -62,9 +62,9 @@ class TaskViewTest(SimpleTestCase):
 
     def test_nested_task_called(self):
         data = {
-            'name': "you",
+            "name": "you",
         }
         url = self.url(name="OneBigDedicatedTask")
-        response = self.client.post(path=url, data=data, content_type='application/json')
+        response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual({'result': "Chuck Norris is better than you"}, response.json())
+        self.assertEqual({"result": "Chuck Norris is better than you"}, response.json())

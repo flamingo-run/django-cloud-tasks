@@ -28,7 +28,7 @@ class FailMiserablyTask(AnotherBaseAbstractTask):
 
 
 class SaySomethingTask(PeriodicTask):
-    run_every = '* * * * 1'
+    run_every = "* * * * 1"
 
     def run(self):
         print("Hello!!")
@@ -39,7 +39,7 @@ class PleaseNotifyMeTask(SubscriberTask):
 
     @property
     def topic_name(self):
-        return 'potato'
+        return "potato"
 
     def run(self, message, attributes):
         return print(message)

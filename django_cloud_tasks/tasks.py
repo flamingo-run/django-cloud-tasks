@@ -19,29 +19,29 @@ from django_cloud_tasks.serializers import serialize, deserialize
 
 class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
-        app = apps.get_app_config('django_cloud_tasks')
-        attrs['_app_name'] = app.app_name
-        attrs['_delimiter'] = app.delimiter
+        app = apps.get_app_config("django_cloud_tasks")
+        attrs["_app_name"] = app.app_name
+        attrs["_delimiter"] = app.delimiter
 
         klass = type.__new__(cls, name, bases, attrs)
-        if getattr(klass, 'abstract', False) and 'abstract' not in attrs:
-            setattr(klass, 'abstract', False)  # TODO Removing the attribute would be better
+        if getattr(klass, "abstract", False) and "abstract" not in attrs:
+            setattr(klass, "abstract", False)  # TODO Removing the attribute would be better
         TaskMeta._register_task(app=app, task_class=klass)
         return klass
 
     def __call__(cls, *args, **kwargs):
-        if cls.__name__ not in ['Task', 'PeriodicTask', 'SubscriberTask']:
+        if cls.__name__ not in ["Task", "PeriodicTask", "SubscriberTask"]:
             return super().__call__(*args, **kwargs)
         raise NotImplementedError(f"Do not instantiate a {cls.__name__}. Inherit and create your own.")
 
     @staticmethod
     def _register_task(app, task_class):
-        if task_class.__name__ not in ['Task', 'PeriodicTask', 'SubscriberTask']:
+        if task_class.__name__ not in ["Task", "PeriodicTask", "SubscriberTask"]:
             app.register_task(task_class=task_class)
 
 
 class Task(metaclass=TaskMeta):
-    _url_name = 'tasks-endpoint'
+    _url_name = "tasks-endpoint"
     only_once = False
 
     @abstractmethod
@@ -87,41 +87,39 @@ class Task(metaclass=TaskMeta):
     def _send(self, task_kwargs, api_kwargs=None):
         payload = serialize(task_kwargs)
 
-        if getattr(settings, 'EAGER_TASKS', False):
+        if getattr(settings, "EAGER_TASKS", False):
             return self.run(**deserialize(payload))
 
         api_kwargs = api_kwargs or {}
-        api_kwargs.update(dict(
-            queue_name=self.queue,
-            url=self.url(),
-            payload=payload,
-        ))
+        api_kwargs.update(
+            dict(
+                queue_name=self.queue,
+                url=self.url(),
+                payload=payload,
+            )
+        )
 
         if self.only_once:
-            api_kwargs.update(dict(
-                task_name=self.name(),
-                unique=False,
-            ))
+            api_kwargs.update(
+                dict(
+                    task_name=self.name(),
+                    unique=False,
+                )
+            )
 
         try:
-            return run_coroutine(
-                handler=self.__client.push,
-                **api_kwargs
-            )
+            return run_coroutine(handler=self.__client.push, **api_kwargs)
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
             # so we'll use a temporary queue (defined in settings) for some time
-            backup_queue_name = apps.get_app_config('django_cloud_tasks').get_backup_queue_name(
+            backup_queue_name = apps.get_app_config("django_cloud_tasks").get_backup_queue_name(
                 original_name=self.queue,
             )
             if not backup_queue_name:
                 raise
 
-            api_kwargs['queue_name'] = backup_queue_name
-            return run_coroutine(
-                handler=self.__client.push,
-                **api_kwargs
-            )
+            api_kwargs["queue_name"] = backup_queue_name
+            return run_coroutine(handler=self.__client.push, **api_kwargs)
 
     @classmethod
     def name(cls):
@@ -129,13 +127,13 @@ class Task(metaclass=TaskMeta):
 
     @property
     def queue(self):
-        return self._app_name or 'tasks'
+        return self._app_name or "tasks"
 
     @classmethod
     def url(cls):
-        domain = apps.get_app_config('django_cloud_tasks').domain
+        domain = apps.get_app_config("django_cloud_tasks").domain
         path = reverse(cls._url_name, args=(cls.name(),))
-        return f'{domain}{path}'
+        return f"{domain}{path}"
 
     @property
     def __client(self):
@@ -152,7 +150,7 @@ class PeriodicTask(Task):
     def schedule(self, **kwargs):
         payload = serialize(kwargs)
 
-        if getattr(settings, 'EAGER_TASKS', False):
+        if getattr(settings, "EAGER_TASKS", False):
             return self.run(**deserialize(payload))
 
         return run_coroutine(
@@ -166,7 +164,7 @@ class PeriodicTask(Task):
     @property
     def schedule_name(self):
         if self._app_name:
-            return f'{self._app_name}{self._delimiter}{self.name()}'
+            return f"{self._app_name}{self._delimiter}{self.name()}"
         return self.name()
 
     @property
@@ -177,14 +175,14 @@ class PeriodicTask(Task):
 class SubscriberTask(Task):
     abstract = True
     _use_oidc_auth = True
-    _url_name = 'subscriptions-endpoint'
+    _url_name = "subscriptions-endpoint"
     enable_message_ordering = False
 
     def _body_to_kwargs(self, request_body):
         message = Message.load(body=request_body)
         return {
-            'message': message.data,
-            'attributes': message.attributes,
+            "message": message.data,
+            "attributes": message.attributes,
         }
 
     @abstractmethod
@@ -208,7 +206,7 @@ class SubscriberTask(Task):
 
     @property
     def subscription_name(self):
-        return f'{self.topic_name}{self._delimiter}{self._app_name or self.name()}'
+        return f"{self.topic_name}{self._delimiter}{self._app_name or self.name()}"
 
     @property
     def __client(self):
@@ -253,7 +251,7 @@ class PublisherTask(Task):
 
     def _full_topic_name(self, name):
         if self._app_name:
-            return f'{self._app_name}{self._delimiter}{name}'
+            return f"{self._app_name}{self._delimiter}{name}"
         return name
 
     @property
