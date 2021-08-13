@@ -14,9 +14,14 @@ gcp-pilot = {version = "*", extras = ["tasks", "pubsub"]}
 
 [tool.poetry.dev-dependencies]
 pylint = "*"
+black = "*"
 nose = "^1"
 coverage = "*"
 
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
 
 [build-system]
 requires = ["poetry^1"]
