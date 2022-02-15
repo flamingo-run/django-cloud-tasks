@@ -1,16 +1,11 @@
-# pylint: disable=no-member
 from abc import abstractmethod
 from datetime import timedelta, datetime
-from typing import Dict
 
 from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
 from django.utils.timezone import now
-from google.cloud import pubsub_v1
 from gcp_pilot.exceptions import DeletedRecently
-from gcp_pilot.pubsub import CloudSubscriber, CloudPublisher, Message
-from gcp_pilot.scheduler import CloudScheduler
 from gcp_pilot.tasks import CloudTasks
 
 from django_cloud_tasks.helpers import run_coroutine
@@ -138,126 +133,3 @@ class Task(metaclass=TaskMeta):
     @property
     def __client(self):
         return CloudTasks()
-
-
-class PeriodicTask(Task):
-    run_every = None
-
-    @abstractmethod
-    def run(self, **kwargs):
-        raise NotImplementedError()
-
-    def schedule(self, **kwargs):
-        payload = serialize(kwargs)
-
-        if getattr(settings, "EAGER_TASKS", False):
-            return self.run(**deserialize(payload))
-
-        return run_coroutine(
-            handler=self.__client.put,
-            name=self.schedule_name,
-            url=self.url(),
-            payload=payload,
-            cron=self.run_every,
-        )
-
-    @property
-    def schedule_name(self):
-        if self._app_name:
-            return f"{self._app_name}{self._delimiter}{self.name()}"
-        return self.name()
-
-    @property
-    def __client(self):
-        return CloudScheduler()
-
-
-class SubscriberTask(Task):
-    abstract = True
-    _use_oidc_auth = True
-    _url_name = "subscriptions-endpoint"
-    enable_message_ordering = False
-
-    def _body_to_kwargs(self, request_body):
-        message = Message.load(body=request_body)
-        return {
-            "message": message.data,
-            "attributes": message.attributes,
-        }
-
-    @abstractmethod
-    def run(self, message, attributes):
-        raise NotImplementedError()
-
-    def register(self):
-        return run_coroutine(
-            handler=self.__client.create_or_update_subscription,
-            topic_id=self.topic_name,
-            subscription_id=self.subscription_name,
-            enable_message_ordering=self.enable_message_ordering,
-            push_to_url=self.url(),
-            use_oidc_auth=self._use_oidc_auth,
-        )
-
-    @property
-    @abstractmethod
-    def topic_name(self):
-        raise NotImplementedError()
-
-    @property
-    def subscription_name(self):
-        return f"{self.topic_name}{self._delimiter}{self._app_name or self.name()}"
-
-    @property
-    def __client(self):
-        return CloudSubscriber()
-
-
-class PublisherTask(Task):
-    # perform asynchronous publish to PubSub, with overhead in:
-    # - publishing the message as Task
-    # - receiving it through the endpoint
-    # - and the finally publishing to PubSub
-    # might be useful to use the Cloud Task throttling
-    publish_immediately = True
-
-    def __init__(self, enable_message_ordering=False) -> None:
-        super().__init__()
-        self.enable_message_ordering = enable_message_ordering
-
-    def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        return run_coroutine(
-            handler=self.__client.publish,
-            message=serialize(message),
-            topic_id=self._full_topic_name(name=topic_name),
-            attributes=attributes,
-        )
-
-    def delay(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        if not self.publish_immediately:
-            task_kwargs = dict(
-                topic_name=self._full_topic_name(name=topic_name),
-                message=message,
-                attributes=attributes,
-            )
-            return super()._send(task_kwargs=task_kwargs)
-        return self.run(topic_name=topic_name, message=message, attributes=attributes)
-
-    def initialize(self, topic_name):
-        run_coroutine(
-            handler=self.__client.create_topic,
-            topic_id=self._full_topic_name(name=topic_name),
-        )
-
-    def _full_topic_name(self, name):
-        if self._app_name:
-            return f"{self._app_name}{self._delimiter}{name}"
-        return name
-
-    @property
-    def __client(self):
-        publisher_options = pubsub_v1.types.PublisherOptions(
-            enable_message_ordering=self.enable_message_ordering,
-        )
-
-        return CloudPublisher(publisher_options=publisher_options)
