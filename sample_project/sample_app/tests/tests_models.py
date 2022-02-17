@@ -2,8 +2,8 @@ from unittest.mock import patch, call
 from datetime import datetime
 from freezegun import freeze_time
 from django.test import TestCase
-from django_cloud_tasks import factories
-
+from django.core.exceptions import ValidationError
+from django_cloud_tasks import models, factories
 
 class RoutineModelTest(TestCase):
     @freeze_time("2020-01-01")
@@ -57,6 +57,43 @@ class RoutineModelTest(TestCase):
         with self.assertRaises(ValidationError, msg=f"The task {task_name} was not found. Make sure {task_name} is properly set."):
             factories.RoutineFactory(task_name=task_name)
 
+    def tests_enqueue_next_routines_after_completed(self):
+        pipeline = factories.PipelineFactory()
+        first_routine = factories.RoutineWithoutSignalFactory(status="running")
+        pipeline.routines.add(first_routine)
+        second_routine = factories.RoutineFactory()
+        pipeline.routines.add(second_routine)
+        third_routine = factories.RoutineFactory()
+        pipeline.routines.add(third_routine)
+
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
+
+        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+            first_routine.status = "completed"
+            first_routine.save()
+        calls = [call(routine_id=second_routine.pk), call(routine_id=third_routine.pk)]
+        task.assert_has_calls(calls, any_order=True)
+
+    def tests_dont_enqueue_next_routines_after_completed_when_status_dont_change(self):
+        pipeline = factories.PipelineFactory()
+        first_routine = factories.RoutineWithoutSignalFactory(status="completed")
+        pipeline.routines.add(first_routine)
+        second_routine = factories.RoutineFactory()
+        pipeline.routines.add(second_routine)
+        third_routine = factories.RoutineFactory()
+        pipeline.routines.add(third_routine)
+
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
+
+        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+            first_routine.status = "completed"
+            first_routine.save()
+        task.assert_not_called()
+
+
+
 class PipelineModelTest(TestCase):
     def tests_start_pipeline(self):
         pipeline = factories.PipelineFactory()
@@ -102,3 +139,94 @@ class PipelineModelTest(TestCase):
             call(data=third_routine.output, _meta={"routine_id": third_routine.pk})
         ]
         task.assert_has_calls(calls, any_order=True)
+
+# class RoutineStateMachineTest(TestCase):
+#     def test_dont_allow_initial_status_not_equal_pending(self):
+#         for status in self._status_list(ignore_items=["pending", "failed", "scheduled"]):
+#             msg_error = f"The initial routine' status must be 'pending' not '{status}'"
+#             with self.assertRaises(ValidationError, msg=msg_error):
+#                 factories.RoutineFactory(status=status)
+
+#     def test_ignore_if_status_was_not_updated(self):
+#         routine = factories.RoutineFactory(status="completed")
+#         routine.status = "completed"
+#         routine.save()
+
+#     def test_allow_to_update_status_from_pending_or_failed_to_scheduled(self):
+#         self.assert_machine_status_working(
+#             to_status="scheduled",
+#             from_status="pending",
+#             ignore_status_items=["failed"]
+#         )
+#         self.assert_machine_status_working(
+#             to_status="scheduled",
+#             from_status="failed",
+#             ignore_status_items=["pending"]
+#         )
+
+#     def test_allow_to_update_status_from_scheduled_to_running(self):
+#        self.assert_machine_status_working(
+#             to_status="running",
+#             from_status="scheduled",
+#         )
+
+#     def test_allow_to_update_status_from_completed_to_failed(self):
+#         self.assert_machine_status_working(
+#             to_status="failed",
+#             from_status=None,
+#         )
+
+#     def test_allow_to_update_status_from_running_to_completed(self):
+#         self.assert_machine_status_working(
+#             to_status="completed",
+#             from_status="running",
+#         )
+
+#     def test_allow_to_update_status_from_running_to_aborted(self):
+#         self.assert_machine_status_working(
+#             to_status="aborted",
+#             from_status="running",
+#         )
+
+#     def test_allow_to_update_status_from_pending_to_failed(self):
+#         routine = factories.RoutineWithoutSignalFactory()
+#         routine.status = "failed"
+#         routine.save()
+#         self.assert_machine_status_working(
+#             to_status="failed",
+#             from_status="pending",
+#         )
+
+#     def test_allow_to_update_status_from_completed_to_reverting(self):
+#         self.assert_machine_status_working(
+#             to_status="reverting",
+#             from_status="completed",
+#         )
+
+#     def test_allow_to_update_status_from_reverting_to_reverted(self):
+#         self.assert_machine_status_working(
+#             to_status="reverted",
+#             from_status="reverting",
+#         )
+
+#     def assert_machine_status_working(self, to_status: str, from_status: str, ignore_status_items: list[str] = None):
+#         if not ignore_status_items:
+#             ignore_status_items = []
+#         # routine = factories.RoutineFactory(status=from_status)
+#         # routine.status = to_status
+#         # routine.save()
+#         # routine.refresh_from_db()
+#         # self.assertEqual(to_status, routine.status)
+#         ignore_status_items.append(to_status)
+#         for status in self._status_list(ignore_items=ignore_status_items):
+#             msg_error = f"Do not allow update status '{status}' -> '{to_status}'"
+#             with self.assertRaises(ValidationError, msg=msg_error):
+#                 routine = factories.RoutineWithoutSignalFactory(status=status)
+#                 routine.status = to_status
+#                 routine.save()
+
+#     def _status_list(self, ignore_items: list) -> list:
+#         statuses = list(models.Routine.Statuses)
+#         for item in ignore_items:
+#             statuses.remove(item)
+#         return statuses
