@@ -1,7 +1,8 @@
 import inspect
-from typing import Optional, Callable, Union, Type, Dict, List
-from django.utils.connection import ConnectionProxy
+from typing import Optional, Callable, Union, Type
 from contextlib import contextmanager
+from django.utils.connection import ConnectionProxy
+
 
 def patch_cache_lock(
     lock_side_effect: Optional[Union[Callable, Exception, Type[Exception]]] = None,

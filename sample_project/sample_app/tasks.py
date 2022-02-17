@@ -1,6 +1,5 @@
 from typing import Dict
 from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask, RoutineTask
-from django_cloud_tasks import models
 
 
 class BaseAbstractTask(Task):

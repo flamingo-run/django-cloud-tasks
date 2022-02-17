@@ -104,4 +104,4 @@ class DjangoCloudTasksAppConfig(AppConfig):
         return updated, removed
 
     def ready(self):
-        from django_cloud_tasks import signals
+        from django_cloud_tasks import signals  # pylint: disable=import-outside-toplevel,unused-import

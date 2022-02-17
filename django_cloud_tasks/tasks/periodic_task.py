@@ -8,6 +8,7 @@ from django_cloud_tasks.helpers import run_coroutine
 from django_cloud_tasks.serializers import serialize, deserialize
 from django_cloud_tasks import tasks
 
+
 class PeriodicTask(tasks.Task):
     run_every = None
 

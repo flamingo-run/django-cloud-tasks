@@ -5,6 +5,7 @@ from gcp_pilot.pubsub import CloudSubscriber, Message
 from django_cloud_tasks.helpers import run_coroutine
 from django_cloud_tasks import tasks
 
+
 class SubscriberTask(tasks.Task):
     abstract = True
     _use_oidc_auth = True

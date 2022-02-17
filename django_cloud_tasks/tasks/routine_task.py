@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 import logging
 from typing import Dict
 from abc import abstractmethod
@@ -5,6 +6,7 @@ from django.core.cache import cache
 from django_cloud_tasks import models, tasks
 
 logger = logging.getLogger()
+
 
 class RoutineTask(tasks.Task):
     abstract = True
@@ -18,6 +20,7 @@ class RoutineTask(tasks.Task):
         routine = models.Routine.objects.get(pk=_meta.get("routine_id"))
         routine.status = models.Routine.Statuses.REVERTED
         routine.save()
+
 
 class PipelineRoutineTask(tasks.Task):
     WAIT_FOR_LOCK = 5  # in seconds
@@ -48,9 +51,9 @@ class PipelineRoutineTask(tasks.Task):
         try:
             logger.info(f"Routine #{routine_id} is running")
             task_response = routine.task().run(**routine.body)
-        except Exception as e:
+        except Exception as error:  # pylint: disable=no-member,broad-except
             logger.info(f"Routine #{routine_id} has failed")
-            routine.fail(output={"error": str(e)})
+            routine.fail(output={"error": str(error)})
             routine.enqueue()
             logger.info(f"Routine #{routine_id} has been enqueued for retry")
             return

@@ -1,9 +1,10 @@
+from typing import List
 from unittest.mock import patch, call
 from datetime import datetime
 from freezegun import freeze_time
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django_cloud_tasks import models
+from django_cloud_tasks import models, exceptions
 from django_cloud_tasks.tests import factories
 
 
@@ -56,7 +57,7 @@ class RoutineModelTest(TestCase):
 
     def tests_ensure_valid_task_name(self):
         task_name = "InvalidTaskName"
-        with self.assertRaises(ValidationError, msg=f"The task {task_name} was not found. Make sure {task_name} is properly set."):
+        with self.assertRaises(exceptions.TaskNotFound, msg=f"Task {task_name} not registered."):
             factories.RoutineFactory(task_name=task_name)
 
     def tests_enqueue_next_routines_after_completed(self):
@@ -173,9 +174,10 @@ class PipelineModelTest(TestCase):
             pipeline.revert()
         calls = [
             call(data=fourth_routine.output, _meta={"routine_id": fourth_routine.pk}),
-            call(data=third_routine.output, _meta={"routine_id": third_routine.pk})
+            call(data=third_routine.output, _meta={"routine_id": third_routine.pk}),
         ]
         task.assert_has_calls(calls, any_order=True)
+
 
 class RoutineStateMachineTest(TestCase):
     def setUp(self):
@@ -202,16 +204,10 @@ class RoutineStateMachineTest(TestCase):
         routine.save()
 
     def test_allow_to_update_status_from_pending_or_failed_to_scheduled(self):
-        self.assert_machine_status(
-            accepted_status=["scheduled", "aborted"],
-            from_status="pending"
-        )
+        self.assert_machine_status(accepted_status=["scheduled", "aborted"], from_status="pending")
 
     def test_allow_to_update_status_from_scheduled_to_running(self):
-        self.assert_machine_status(
-            accepted_status=["running"],
-            from_status="scheduled"
-        )
+        self.assert_machine_status(accepted_status=["running"], from_status="scheduled")
 
     def test_allow_to_update_status_from_running_to_completed(self):
         self.assert_machine_status(
@@ -220,10 +216,7 @@ class RoutineStateMachineTest(TestCase):
         )
 
     def test_allow_to_update_status_from_completed_to_failed_or_reverting(self):
-        self.assert_machine_status(
-            accepted_status=["reverting"],
-            from_status="completed"
-        )
+        self.assert_machine_status(accepted_status=["reverting"], from_status="completed")
 
     def test_allow_to_update_status_from_reverting_to_reverted(self):
         self.assert_machine_status(
@@ -231,7 +224,7 @@ class RoutineStateMachineTest(TestCase):
             from_status="reverting",
         )
 
-    def assert_machine_status(self, from_status: str, accepted_status: list[str]):
+    def assert_machine_status(self, from_status: str, accepted_status: List[str]):
         for status in accepted_status:
             routine = factories.RoutineWithoutSignalFactory(status=from_status)
             routine.status = status
