@@ -29,7 +29,7 @@ class RoutineModelTest(TestCase):
     @freeze_time("2020-01-01")
     def tests_enqueue(self):
         routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
             routine.enqueue()
             routine.refresh_from_db()
             self.assertEqual("scheduled", routine.status)
@@ -69,7 +69,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
             first_routine.status = "completed"
             first_routine.save()
         calls = [call(routine_id=second_routine.pk), call(routine_id=third_routine.pk)]
@@ -87,7 +87,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
             first_routine.status = "completed"
             first_routine.save()
         task.assert_not_called()
@@ -104,7 +104,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.revert") as task:
+        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -122,7 +122,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -145,7 +145,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
             pipeline.start()
         calls = [call(routine_id=first_routine.pk), call(routine_id=another_first_routine.pk)]
         task.assert_has_calls(calls, any_order=True)
@@ -167,7 +167,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.tasks.RoutineTask.revert") as task:
+        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as task:
             pipeline.revert()
         calls = [
             call(data=fourth_routine.output, _meta={"routine_id": fourth_routine.pk}),
@@ -176,6 +176,12 @@ class PipelineModelTest(TestCase):
         task.assert_has_calls(calls, any_order=True)
 
 class RoutineStateMachineTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        routine_task = patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay")
+        routine_task.start()
+        self.addCleanup(routine_task.stop)
+
     def _status_list(self, ignore_items: list) -> list:
         statuses = models.Routine.Statuses.values
         for item in ignore_items:

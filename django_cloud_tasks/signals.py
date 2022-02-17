@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from django_cloud_tasks import models, exceptions
+from django_cloud_tasks import models, exceptions, tasks
 
 
 @receiver(pre_save, sender=models.Routine)
@@ -38,6 +38,18 @@ def revert_previous_routines(sender, instance, **kwargs):
     if instance.status == models.Routine.Statuses.REVERTED:
         for routine in instance.dependent_routines.all():
             routine.revert()
+
+@receiver(pre_save, sender=models.Routine)
+def enqueue_routine_scheduled(sender, instance, **kwargs):
+    if not instance.pk:
+        return
+
+    current_routine = models.Routine.objects.get(pk=instance.pk)
+    if current_routine.status == instance.status:
+        return
+
+    if instance.status == models.Routine.Statuses.SCHEDULED:
+        tasks.PipelineRoutineTask().delay(routine_id=instance.pk)
 
 @receiver(pre_save, sender=models.Routine)
 def ensure_status_machine(sender, instance, **kwargs):
