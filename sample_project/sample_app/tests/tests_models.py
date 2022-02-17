@@ -92,6 +92,42 @@ class RoutineModelTest(TestCase):
             first_routine.save()
         task.assert_not_called()
 
+    def tests_enqueue_previously_routines_after_reverted(self):
+        pipeline = factories.PipelineFactory()
+        first_routine = factories.RoutineWithoutSignalFactory(status="completed")
+        pipeline.routines.add(first_routine)
+        second_routine = factories.RoutineFactory()
+        pipeline.routines.add(second_routine)
+        third_routine = factories.RoutineFactory(status="reverting")
+        pipeline.routines.add(third_routine)
+
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
+
+        with patch("django_cloud_tasks.tasks.RoutineTask.revert") as task:
+            third_routine.status = "reverted"
+            third_routine.save()
+
+        task.assert_called_once_with(data=first_routine.output, _meta={"routine_id": first_routine.pk})
+
+    def tests_dont_enqueue_next_routines_after_completed_when_status_dont_change(self):
+        pipeline = factories.PipelineFactory()
+        first_routine = factories.RoutineWithoutSignalFactory(status="completed")
+        pipeline.routines.add(first_routine)
+        second_routine = factories.RoutineFactory()
+        pipeline.routines.add(second_routine)
+        third_routine = factories.RoutineFactory(status="reverted")
+        pipeline.routines.add(third_routine)
+
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
+        factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
+
+        with patch("django_cloud_tasks.tasks.RoutineTask.revert") as task:
+            third_routine.status = "reverted"
+            third_routine.save()
+
+        task.assert_not_called()
+
 
 
 class PipelineModelTest(TestCase):
