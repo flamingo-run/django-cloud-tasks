@@ -25,3 +25,16 @@ def enqueue_next_routines(sender, instance, **kwargs):
     if instance.status == models.Routine.Statuses.COMPLETED:
         for routine in instance.next_routines.all():
             routine.enqueue()
+
+@receiver(pre_save, sender=models.Routine)
+def revert_previous_routines(sender, instance, **kwargs):
+    if not instance.pk:
+        return
+
+    current_routine = models.Routine.objects.get(pk=instance.pk)
+    if current_routine.status == instance.status:
+        return
+
+    if instance.status == models.Routine.Statuses.REVERTED:
+        for routine in instance.dependent_routines.all():
+            routine.revert()
