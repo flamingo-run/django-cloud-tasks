@@ -102,3 +102,6 @@ class DjangoCloudTasksAppConfig(AppConfig):
                     removed.append(subscribed_task)
 
         return updated, removed
+
+    def ready(self):
+        from django_cloud_tasks import signals
