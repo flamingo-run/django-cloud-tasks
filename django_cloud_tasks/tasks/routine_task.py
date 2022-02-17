@@ -1,6 +1,7 @@
 import logging
 from typing import Dict
 from abc import abstractmethod
+from django.core.cache import cache
 from django_cloud_tasks import models, tasks
 
 logger = logging.getLogger()
@@ -19,7 +20,17 @@ class RoutineTask(tasks.Task):
         routine.save()
 
 class PipelineRoutineTask(tasks.Task):
+    WAIT_FOR_LOCK = 5  # in seconds
+    LOCK_EXPIRATION = 60  # in seconds
+
     def run(self, routine_id: int):
+        lock_key = f"lock-{self.__class__.__name__}-{routine_id}"
+        routine_lock = cache.lock(key=lock_key, timeout=self.LOCK_EXPIRATION, blocking_timeout=self.WAIT_FOR_LOCK)
+
+        with routine_lock:
+            self._run(routine_id=routine_id)
+
+    def _run(self, routine_id: int):
         routine = models.Routine.objects.get(pk=routine_id)
         if routine.status == models.Routine.Statuses.COMPLETED:
             logger.info(f"Routine #{routine_id} is already completed")
