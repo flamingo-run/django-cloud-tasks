@@ -91,8 +91,6 @@ class Routine(models.Model):
             if self.status == self.Statuses.COMPLETED:
                 self.status = self.Statuses.REVERTING
                 self.save()
-                meta = {"routine_id": self.pk}
-                self.task().revert(data=self.output, _meta=meta)
                 return
 
             self.status = self.Statuses.ABORTED
