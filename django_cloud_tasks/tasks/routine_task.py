@@ -15,7 +15,7 @@ class RoutineTask(tasks.Task):
             routine.enqueue()
             return
 
-        if routine.retries_exhausted_limit and routine.attempt_count > routine.retries_exhausted_limit:
+        if routine.max_retries and routine.attempt_count >= routine.max_retries:
             routine.fail(output="Retry exhausted")
             # should we append routine_id into exhausted_task_body?
             routine.get_exhausted_task().run(**routine.exhausted_task_body)
@@ -25,7 +25,7 @@ class RoutineTask(tasks.Task):
         routine.save()
 
         try:
-            routine.get_task().run(**routine.body)
+            routine.task().run(**routine.body)
         except Exception as e:
             routine.fail(output=str(e))
             routine.enqueue()

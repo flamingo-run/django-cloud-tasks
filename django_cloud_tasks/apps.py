@@ -11,6 +11,7 @@ from django_cloud_tasks import exceptions
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
+    default_auto_field = "django.db.models.AutoField"
     name = "django_cloud_tasks"
     verbose_name = "Django Cloud Tasks"
 
