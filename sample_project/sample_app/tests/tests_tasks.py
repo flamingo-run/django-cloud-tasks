@@ -6,7 +6,8 @@ from django.apps import apps
 from django.test import SimpleTestCase, TestCase
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
-from django_cloud_tasks import exceptions, factories
+from django_cloud_tasks import exceptions
+from django_cloud_tasks.tests import factories
 from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
