@@ -2,25 +2,30 @@
 from django.core.exceptions import ValidationError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.db.models import Model
 
-from django_cloud_tasks import models, exceptions, tasks
+from django_cloud_tasks import models, tasks
 
 
 @receiver(pre_save, sender=models.Routine)
 def ensure_valid_task_name(sender, instance, **kwargs):
     # TODO: validate this field with to Django Field Validation
     # A exception is raised when the task is not found
-    instance.task
+    instance.task  # pylint: disable=pointless-statement
+
+
+def _is_status_changing(instance: Model) -> bool:
+    if not instance.pk:
+        return False
+
+    current_routine = models.Routine.objects.get(pk=instance.pk)
+
+    return current_routine.status != instance.status
 
 
 @receiver(pre_save, sender=models.Routine)
 def enqueue_next_routines(sender, instance, **kwargs):
-    if not instance.pk:
-        return
-
-    current_routine = models.Routine.objects.get(pk=instance.pk)
-
-    if current_routine.status == instance.status:
+    if not _is_status_changing(instance=instance):
         return
 
     if instance.status == models.Routine.Statuses.COMPLETED:
@@ -30,11 +35,7 @@ def enqueue_next_routines(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=models.Routine)
 def revert_previous_routines(sender, instance, **kwargs):
-    if not instance.pk:
-        return
-
-    current_routine = models.Routine.objects.get(pk=instance.pk)
-    if current_routine.status == instance.status:
+    if not _is_status_changing(instance=instance):
         return
 
     if instance.status == models.Routine.Statuses.REVERTED:
@@ -44,11 +45,7 @@ def revert_previous_routines(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=models.Routine)
 def enqueue_routine_scheduled(sender, instance, **kwargs):
-    if not instance.pk:
-        return
-
-    current_routine = models.Routine.objects.get(pk=instance.pk)
-    if current_routine.status == instance.status:
+    if not _is_status_changing(instance=instance):
         return
 
     if instance.status == models.Routine.Statuses.SCHEDULED:
@@ -56,16 +53,24 @@ def enqueue_routine_scheduled(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=models.Routine)
+def enqueue_revert_task(sender, instance, **kwargs):
+    if not _is_status_changing(instance=instance):
+        return
+
+    if instance.status == models.Routine.Statuses.REVERTING:
+        meta = {"routine_id": instance.pk}
+        instance.task().revert(data=instance.output, _meta=meta)
+
+
+@receiver(pre_save, sender=models.Routine)
 def ensure_status_machine(sender, instance, **kwargs):
     if not instance.pk and instance.status != models.Routine.Statuses.PENDING:
         raise ValidationError(f"The initial routine's status must be 'pending' not '{instance.status}'")
 
-    if not instance.pk:
+    if not _is_status_changing(instance=instance):
         return
 
     current_routine = models.Routine.objects.get(pk=instance.pk)
-    if current_routine.status == instance.status:
-        return
 
     statuses = models.Routine.Statuses
     machine_statuses = {

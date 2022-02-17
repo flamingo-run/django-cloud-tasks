@@ -107,7 +107,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -170,7 +170,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
             pipeline.revert()
         calls = [
             call(data=fourth_routine.output, _meta={"routine_id": fourth_routine.pk}),
