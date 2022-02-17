@@ -52,6 +52,11 @@ class RoutineModelTest(TestCase):
             self.assertEqual("aborted", routine.status)
         revert_task.assert_not_called()
 
+    def tests_ensure_valid_task_name(self):
+        task_name = "InvalidTaskName"
+        with self.assertRaises(ValidationError, msg=f"The task {task_name} was not found. Make sure {task_name} is properly set."):
+            factories.RoutineFactory(task_name=task_name)
+
 class PipelineModelTest(TestCase):
     def tests_start_pipeline(self):
         pipeline = factories.PipelineFactory()

@@ -100,10 +100,10 @@ class Routine(models.Model):
             self.status = self.Statuses.ABORTED
             self.save()
 
+    @property
     def task(self) -> Optional[tasks.Task]:
         app = apps.get_app_config("django_cloud_tasks")
-        tasks = app.on_demand_tasks.copy()
-        return tasks.get(self.task_name)
+        return app.get_task(name=self.task_name)
 
 
 class RoutineVertex(models.Model):
