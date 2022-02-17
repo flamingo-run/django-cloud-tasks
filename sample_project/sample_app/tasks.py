@@ -1,4 +1,6 @@
-from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask
+from typing import Dict
+from django_cloud_tasks.tasks import Task, PeriodicTask, SubscriberTask, RoutineTask
+from django_cloud_tasks import models
 
 
 class BaseAbstractTask(Task):
@@ -43,3 +45,12 @@ class PleaseNotifyMeTask(SubscriberTask):
 
     def run(self, message, attributes):
         return print(message)
+
+
+class SayHelloTask(RoutineTask):
+    def run(self, attributes):
+        return {"message": "hello"}
+
+    def revert(self, data: Dict, _meta: Dict, attributes):
+        super().revert(data=data, _meta=_meta)
+        return {"message": "goodbye"}

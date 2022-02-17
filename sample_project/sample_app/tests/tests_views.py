@@ -36,9 +36,12 @@ class TaskViewTest(SimpleTestCase):
             "error": "Task PotatoTask not found",
             "available_tasks": [
                 "PublisherTask",
+                "PipelineRoutineTask",
                 "CalculatePriceTask",
                 "FailMiserablyTask",
+                "SayHelloTask",
                 "OneBigDedicatedTask",
+                "DummyRoutineTask",
                 "SaySomethingTask",
             ],
         }
