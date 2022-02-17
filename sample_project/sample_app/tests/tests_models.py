@@ -3,7 +3,9 @@ from datetime import datetime
 from freezegun import freeze_time
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django_cloud_tasks import models, factories
+from django_cloud_tasks import models
+from django_cloud_tasks.tests import factories
+
 
 class RoutineModelTest(TestCase):
     @freeze_time("2020-01-01")
@@ -38,7 +40,7 @@ class RoutineModelTest(TestCase):
 
     def tests_revert_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(status="completed", output="{'id': 42}")
-        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as revert_task:
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as revert_task:
             routine.revert()
             routine.refresh_from_db()
             self.assertEqual("reverting", routine.status)
@@ -46,7 +48,7 @@ class RoutineModelTest(TestCase):
 
     def tests_revert_not_processed_routine(self):
         routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.factories.DummyRoutineTask.revert") as revert_task:
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as revert_task:
             routine.revert()
             routine.refresh_from_db()
             self.assertEqual("aborted", routine.status)
