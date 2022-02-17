@@ -1,6 +1,5 @@
 setup:
 	@pip install -U pip poetry
-	@poetry config pypi-token.pypi $(PYPI_API_TOKEN)
 
 dependencies:
 	@make setup
@@ -33,6 +32,7 @@ publish:
 	@make clean
 	@printf "\nPublishing lib"
 	@make setup
+	@poetry config pypi-token.pypi $(PYPI_API_TOKEN)
 	@poetry publish --build
 	@make clean
 
