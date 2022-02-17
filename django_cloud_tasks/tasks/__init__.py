@@ -9,6 +9,6 @@ __all__ = (
     "PeriodicTask",
     "PublisherTask",
     "SubscriberTask",
-    "RoutineTask"
-    "PipelineRoutineTask"
+    "RoutineTask",
+    "PipelineRoutineTask",
 )

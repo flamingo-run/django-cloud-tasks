@@ -12,6 +12,7 @@ from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 
+
 class TasksTest(SimpleTestCase):
     def patch_push(self, **kwargs):
         return patch("gcp_pilot.tasks.CloudTasks.push", **kwargs)
@@ -19,7 +20,15 @@ class TasksTest(SimpleTestCase):
     def test_registered_tasks(self):
         app_config = apps.get_app_config("django_cloud_tasks")
 
-        expected_tasks = {"PublisherTask", "CalculatePriceTask", "FailMiserablyTask", "OneBigDedicatedTask", "PipelineRoutineTask", "SayHelloTask", "DummyRoutineTask"}
+        expected_tasks = {
+            "PublisherTask",
+            "CalculatePriceTask",
+            "FailMiserablyTask",
+            "OneBigDedicatedTask",
+            "PipelineRoutineTask",
+            "SayHelloTask",
+            "DummyRoutineTask",
+        }
         self.assertEqual(expected_tasks, set(app_config.on_demand_tasks))
 
         expected_tasks = {"SaySomethingTask"}
@@ -92,6 +101,7 @@ class TasksTest(SimpleTestCase):
 
 class PipelineRoutineTaskTest(TestCase):
     _mock_lock = None
+
     def setUp(self):
         super().setUp()
 
@@ -114,10 +124,10 @@ class PipelineRoutineTaskTest(TestCase):
             status="completed",
             task_name="SayHelloTask",
         )
-        with self.assertLogs(level='INFO') as cm:
+        with self.assertLogs(level="INFO") as context:
             PipelineRoutineTask().delay(routine_id=routine.pk)
             self.assert_routine_lock(routine_id=routine.pk)
-            self.assertEqual(cm.output, [f"INFO:root:Routine #{routine.pk} is already completed"])
+            self.assertEqual(context.output, [f"INFO:root:Routine #{routine.pk} is already completed"])
 
     def tests_start_pipeline_revert_flow_if_exceeded_retries(self):
         routine = factories.RoutineWithoutSignalFactory(
@@ -127,11 +137,14 @@ class PipelineRoutineTaskTest(TestCase):
             attempt_count=2,
         )
         with patch("django_cloud_tasks.models.Pipeline.revert") as revert:
-            with self.assertLogs(level='INFO') as context:
+            with self.assertLogs(level="INFO") as context:
                 PipelineRoutineTask().delay(routine_id=routine.pk)
-                self.assertEqual(context.output, [
-                    f"INFO:root:Routine #{routine.id} has exhausted retries and is being reverted",
-                ])
+                self.assertEqual(
+                    context.output,
+                    [
+                        f"INFO:root:Routine #{routine.id} has exhausted retries and is being reverted",
+                    ],
+                )
                 self.assert_routine_lock(routine_id=routine.pk)
                 revert.assert_called_once()
 
@@ -139,17 +152,20 @@ class PipelineRoutineTaskTest(TestCase):
         routine = factories.RoutineWithoutSignalFactory(
             status="running",
             task_name="SayHelloTask",
-            body={"attributes": [1,2,3]},
+            body={"attributes": [1, 2, 3]},
             attempt_count=1,
         )
-        with self.assertLogs(level='INFO') as cm:
+        with self.assertLogs(level="INFO") as context:
             PipelineRoutineTask().run(routine_id=routine.pk)
             self.assert_routine_lock(routine_id=routine.pk)
             routine.refresh_from_db()
-            self.assertEqual(cm.output, [
-                f"INFO:root:Routine #{routine.id} is running",
-                f"INFO:root:Routine #{routine.id} just completed",
-            ])
+            self.assertEqual(
+                context.output,
+                [
+                    f"INFO:root:Routine #{routine.id} is running",
+                    f"INFO:root:Routine #{routine.id} just completed",
+                ],
+            )
             self.assertEqual("completed", routine.status)
             self.assertEqual(2, routine.attempt_count)
 
@@ -157,20 +173,23 @@ class PipelineRoutineTaskTest(TestCase):
         routine = factories.RoutineWithoutSignalFactory(
             status="running",
             task_name="SayHelloTask",
-            body={"attributes": [1,2,3]},
+            body={"attributes": [1, 2, 3]},
             attempt_count=1,
         )
-        with self.assertLogs(level='INFO') as cm:
+        with self.assertLogs(level="INFO") as context:
             with patch("sample_project.sample_app.tasks.SayHelloTask.run", side_effect=Exception("any error")):
                 with patch("django_cloud_tasks.models.Routine.enqueue") as enqueue:
                     PipelineRoutineTask().run(routine_id=routine.pk)
                     self.assert_routine_lock(routine_id=routine.pk)
                     routine.refresh_from_db()
-                    self.assertEqual(cm.output, [
-                        f"INFO:root:Routine #{routine.id} is running",
-                        f"INFO:root:Routine #{routine.id} has failed",
-                        f"INFO:root:Routine #{routine.id} has been enqueued for retry",
-                    ])
+                    self.assertEqual(
+                        context.output,
+                        [
+                            f"INFO:root:Routine #{routine.id} is running",
+                            f"INFO:root:Routine #{routine.id} has failed",
+                            f"INFO:root:Routine #{routine.id} has been enqueued for retry",
+                        ],
+                    )
                     self.assertEqual("failed", routine.status)
                     enqueue.assert_called_once()
                     self.assertEqual(2, routine.attempt_count)

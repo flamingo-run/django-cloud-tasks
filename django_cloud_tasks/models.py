@@ -1,9 +1,8 @@
-from typing import Optional, Dict
-from django.db import transaction
-from django.apps import apps
-
+# pylint: disable=no-member
 from datetime import datetime
-from django.db import models
+from typing import Optional, Dict
+from django.db import transaction, models
+from django.apps import apps
 from django_cloud_tasks import tasks, serializers
 
 
