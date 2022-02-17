@@ -86,7 +86,6 @@ class Routine(models.Model):
             self.status = self.Statuses.SCHEDULED
             self.starts_at = datetime.now()
             self.save()
-            tasks.RoutineTask().delay(routine_id=self.pk)
 
     def revert(self):
         with transaction.atomic():
