@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tests import factories
+from django_cloud_tasks.tests import factories, tests_base
 from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
@@ -27,6 +27,7 @@ class TasksTest(SimpleTestCase):
             "OneBigDedicatedTask",
             "PipelineRoutineTask",
             "SayHelloTask",
+            "SayHelloWithParamsTask",
             "DummyRoutineTask",
         }
         self.assertEqual(expected_tasks, set(app_config.on_demand_tasks))
@@ -193,3 +194,19 @@ class PipelineRoutineTaskTest(TestCase):
                     self.assertEqual("failed", routine.status)
                     enqueue.assert_called_once()
                     self.assertEqual(2, routine.attempt_count)
+
+
+class SayHelloTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
+    @property
+    def task(self):
+        return tasks.SayHelloTask
+
+
+class SayHelloWithParamsTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
+    @property
+    def task(self):
+        return tasks.SayHelloWithParamsTask
+
+    @property
+    def task_run_params(self):
+        return {"spell": "Obliviate"}

@@ -47,9 +47,18 @@ class PleaseNotifyMeTask(SubscriberTask):
 
 
 class SayHelloTask(RoutineTask):
-    def run(self, attributes):
+    def run(self, **kwargs):
         return {"message": "hello"}
 
-    def revert(self, data: Dict, _meta: Dict, attributes):
+    def revert(self, data: Dict, _meta: Dict):
+        super().revert(data=data, _meta=_meta)
+        return {"message": "goodbye"}
+
+
+class SayHelloWithParamsTask(RoutineTask):
+    def run(self, spell: str):
+        return {"message": spell}
+
+    def revert(self, data: Dict, _meta: Dict):
         super().revert(data=data, _meta=_meta)
         return {"message": "goodbye"}
