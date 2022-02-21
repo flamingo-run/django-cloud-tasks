@@ -135,6 +135,16 @@ class RoutineModelTest(TestCase):
 class PipelineModelTest(TestCase):
     def tests_start_pipeline(self):
         pipeline = factories.PipelineFactory()
+        leaf_already_completed = factories.RoutineWithoutSignalFactory(status="completed")
+        pipeline.routines.add(leaf_already_completed)
+
+        leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
+        pipeline.routines.add(leaf_already_reverted)
+
+        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+            pipeline.start()
+        task.assert_not_called()
+
         second_routine = factories.RoutineFactory()
         pipeline.routines.add(second_routine)
         third_routine = factories.RoutineFactory()
@@ -155,6 +165,14 @@ class PipelineModelTest(TestCase):
 
     def tests_revert_pipeline(self):
         pipeline = factories.PipelineFactory()
+
+        leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
+        pipeline.routines.add(leaf_already_reverted)
+
+        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
+            pipeline.revert()
+        task.assert_not_called()
+
         second_routine = factories.RoutineFactory()
         pipeline.routines.add(second_routine)
 
