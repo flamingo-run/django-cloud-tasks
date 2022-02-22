@@ -24,30 +24,26 @@ def _is_status_changing(instance: Model) -> bool:
 
 
 def enqueue_next_routines(instance: models.Routine):
-    if instance.status == models.Routine.Statuses.COMPLETED:
-        for routine in instance.next_routines.all():
-            routine.enqueue()
+    for routine in instance.next_routines.all():
+        routine.enqueue()
 
 
 def revert_previous_routines(instance: models.Routine):
-    if instance.status == models.Routine.Statuses.REVERTED:
-        for routine in instance.dependent_routines.all():
-            routine.revert()
+    for routine in instance.dependent_routines.all():
+        routine.revert()
 
 
 def enqueue_routine_scheduled(instance: models.Routine):
-    if instance.status == models.Routine.Statuses.SCHEDULED:
-        tasks.PipelineRoutineTask().delay(routine_id=instance.pk)
+    tasks.PipelineRoutineTask().delay(routine_id=instance.pk)
 
 
 def enqueue_revert_task(instance: models.Routine):
-    if instance.status == models.Routine.Statuses.REVERTING:
-        meta = {"routine_id": instance.pk}
-        instance.task().revert(data=instance.output, _meta=meta)
+    tasks.PipelineRoutineRevertTask().delay(routine_id=instance.pk)
 
 
 STATUS_ACTION = {
     models.Routine.Statuses.COMPLETED: enqueue_next_routines,
+    models.Routine.Statuses.ABORTED: revert_previous_routines,
     models.Routine.Statuses.REVERTED: revert_previous_routines,
     models.Routine.Statuses.SCHEDULED: enqueue_routine_scheduled,
     models.Routine.Statuses.REVERTING: enqueue_revert_task,
