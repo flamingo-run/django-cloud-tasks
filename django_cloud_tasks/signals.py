@@ -79,8 +79,8 @@ def ensure_status_machine(sender, instance, **kwargs):
         statuses.SCHEDULED: [statuses.PENDING, statuses.FAILED],
         statuses.RUNNING: [statuses.SCHEDULED],
         statuses.COMPLETED: [statuses.RUNNING],
-        statuses.ABORTED: [statuses.PENDING],
-        statuses.FAILED: [statuses.RUNNING],
+        statuses.ABORTED: [statuses.PENDING, statuses.FAILED],
+        statuses.FAILED: [statuses.RUNNING, statuses.SCHEDULED],
         statuses.REVERTING: [statuses.COMPLETED],
         statuses.REVERTED: [statuses.REVERTING],
     }
