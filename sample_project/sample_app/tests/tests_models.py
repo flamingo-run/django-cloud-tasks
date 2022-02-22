@@ -41,15 +41,15 @@ class RoutineModelTest(TestCase):
 
     def tests_revert_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(status="completed", output="{'id': 42}")
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as revert_task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as revert_task:
             routine.revert()
             routine.refresh_from_db()
             self.assertEqual("reverting", routine.status)
-        revert_task.assert_called_once_with(data=routine.output, _meta={"routine_id": routine.pk})
+        revert_task.assert_called_once_with(routine_id=routine.pk)
 
     def tests_revert_not_processed_routine(self):
         routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as revert_task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as revert_task:
             routine.revert()
             routine.refresh_from_db()
             self.assertEqual("aborted", routine.status)
@@ -107,11 +107,11 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
-        task.assert_called_once_with(data=first_routine.output, _meta={"routine_id": first_routine.pk})
+        task.assert_called_once_with(routine_id=first_routine.pk)
 
     def tests_dont_enqueue_previously_routines_after_reverted_completed_when_status_dont_change(self):
         pipeline = factories.PipelineFactory()
@@ -125,7 +125,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -169,7 +169,7 @@ class PipelineModelTest(TestCase):
         leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
         pipeline.routines.add(leaf_already_reverted)
 
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
             pipeline.revert()
         task.assert_not_called()
 
@@ -188,11 +188,11 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.tests.factories.DummyRoutineTask.revert") as task:
+        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
             pipeline.revert()
         calls = [
-            call(data=fourth_routine.output, _meta={"routine_id": fourth_routine.pk}),
-            call(data=third_routine.output, _meta={"routine_id": third_routine.pk}),
+            call(routine_id=fourth_routine.pk),
+            call(routine_id=third_routine.pk),
         ]
         task.assert_has_calls(calls, any_order=True)
 
@@ -200,9 +200,12 @@ class PipelineModelTest(TestCase):
 class RoutineStateMachineTest(TestCase):
     def setUp(self):
         super().setUp()
+        revert_routine_task = patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay")
         routine_task = patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay")
         routine_task.start()
+        revert_routine_task.start()
         self.addCleanup(routine_task.stop)
+        self.addCleanup(revert_routine_task.stop)
 
     def _status_list(self, ignore_items: list) -> list:
         statuses = models.Routine.Statuses.values

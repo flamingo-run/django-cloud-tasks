@@ -50,8 +50,7 @@ class SayHelloTask(RoutineTask):
     def run(self, **kwargs):
         return {"message": "hello"}
 
-    def revert(self, data: Dict, _meta: Dict):
-        super().revert(data=data, _meta=_meta)
+    def revert(self, data: Dict):
         return {"message": "goodbye"}
 
 
@@ -59,6 +58,5 @@ class SayHelloWithParamsTask(RoutineTask):
     def run(self, spell: str):
         return {"message": spell}
 
-    def revert(self, data: Dict, _meta: Dict):
-        super().revert(data=data, _meta=_meta)
+    def revert(self, data: Dict):
         return {"message": "goodbye"}

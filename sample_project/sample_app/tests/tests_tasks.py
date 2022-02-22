@@ -8,7 +8,7 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tests import factories, tests_base
-from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask
+from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask, PipelineRoutineRevertTask
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 
@@ -29,6 +29,8 @@ class TasksTest(SimpleTestCase):
             "SayHelloTask",
             "SayHelloWithParamsTask",
             "DummyRoutineTask",
+            "RoutineLockTaskMixin",
+            "PipelineRoutineRevertTask",
         }
         self.assertEqual(expected_tasks, set(app_config.on_demand_tasks))
 
@@ -98,6 +100,32 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 response = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
         self.assertGreater(response, 0)
+
+
+class PipelineRoutineRevertTaskTest(TestCase):
+    _mock_lock = None
+
+    def setUp(self):
+        super().setUp()
+
+        patched_settings = self.settings(EAGER_TASKS=True)
+        patched_settings.enable()
+        self.addCleanup(patched_settings.disable)
+
+        stack = ExitStack()
+        self.mock_lock = stack.enter_context(patch_cache_lock())
+
+    def test_process_revert_and_update_routine_to_reverted(self):
+        routine = factories.RoutineWithoutSignalFactory(
+            status="reverting",
+            task_name="SayHelloTask",
+            output={"spell": "Obliviate"},
+        )
+        with patch("sample_project.sample_app.tasks.SayHelloTask.revert") as revert:
+            PipelineRoutineRevertTask().delay(routine_id=routine.pk)
+            revert.assert_called_once_with(data=routine.output)
+            routine.refresh_from_db()
+            self.assertEqual(routine.status, "reverted")
 
 
 class PipelineRoutineTaskTest(TestCase):
