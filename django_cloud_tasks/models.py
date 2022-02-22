@@ -11,13 +11,15 @@ class Pipeline(models.Model):
 
     def start(self):
         routines = self.routines.filter(
-            Q(dependent_routines__id__isnull=True) & Q(status=Routine.Statuses.PENDING)
+            models.Q(dependent_routines__id__isnull=True) & models.Q(status=Routine.Statuses.PENDING)
         )
         for routine in routines:
             routine.enqueue()
 
     def revert(self):
-        routines = self.routines.filter(Q(next_routines__id__isnull=True) & ~Q(status=Routine.Statuses.REVERTED))
+        routines = self.routines.filter(
+            models.Q(next_routines__id__isnull=True) & ~models.Q(status=Routine.Statuses.REVERTED)
+        )
         for routine in routines:
             routine.revert()
 

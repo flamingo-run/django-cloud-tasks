@@ -221,11 +221,11 @@ class RoutineStateMachineTest(TestCase):
         routine.status = "pending"
         routine.save()
 
-    def test_allow_to_update_status_from_pending_or_failed_to_scheduled(self):
+    def test_allow_to_update_status_from_pending_to_scheduled_or_aborted(self):
         self.assert_machine_status(accepted_status=["scheduled", "aborted"], from_status="pending")
 
-    def test_allow_to_update_status_from_scheduled_to_running(self):
-        self.assert_machine_status(accepted_status=["running"], from_status="scheduled")
+    def test_allow_to_update_status_from_scheduled_to_running_or_failed(self):
+        self.assert_machine_status(accepted_status=["running", "failed"], from_status="scheduled")
 
     def test_allow_to_update_status_from_running_to_completed(self):
         self.assert_machine_status(
