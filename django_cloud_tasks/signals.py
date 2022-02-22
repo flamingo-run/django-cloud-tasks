@@ -23,43 +23,44 @@ def _is_status_changing(instance: Model) -> bool:
     return current_routine.status != instance.status
 
 
-@receiver(pre_save, sender=models.Routine)
-def enqueue_next_routines(sender, instance, **kwargs):
-    if not _is_status_changing(instance=instance):
-        return
-
+def enqueue_next_routines(instance: models.Routine):
     if instance.status == models.Routine.Statuses.COMPLETED:
         for routine in instance.next_routines.all():
             routine.enqueue()
 
 
-@receiver(pre_save, sender=models.Routine)
-def revert_previous_routines(sender, instance, **kwargs):
-    if not _is_status_changing(instance=instance):
-        return
-
+def revert_previous_routines(instance: models.Routine):
     if instance.status == models.Routine.Statuses.REVERTED:
         for routine in instance.dependent_routines.all():
             routine.revert()
 
 
-@receiver(pre_save, sender=models.Routine)
-def enqueue_routine_scheduled(sender, instance, **kwargs):
-    if not _is_status_changing(instance=instance):
-        return
-
+def enqueue_routine_scheduled(instance: models.Routine):
     if instance.status == models.Routine.Statuses.SCHEDULED:
         tasks.PipelineRoutineTask().delay(routine_id=instance.pk)
 
 
-@receiver(pre_save, sender=models.Routine)
-def enqueue_revert_task(sender, instance, **kwargs):
-    if not _is_status_changing(instance=instance):
-        return
-
+def enqueue_revert_task(instance: models.Routine):
     if instance.status == models.Routine.Statuses.REVERTING:
         meta = {"routine_id": instance.pk}
         instance.task().revert(data=instance.output, _meta=meta)
+
+
+STATUS_ACTION = {
+    models.Routine.Statuses.COMPLETED: enqueue_next_routines,
+    models.Routine.Statuses.REVERTED: revert_previous_routines,
+    models.Routine.Statuses.SCHEDULED: enqueue_routine_scheduled,
+    models.Routine.Statuses.REVERTING: enqueue_revert_task,
+}
+
+
+@receiver(pre_save, sender=models.Routine)
+def handle_status_changed(sender, instance, **kwargs):
+    if not _is_status_changing(instance=instance):
+        return
+
+    if action := STATUS_ACTION.get(instance.status):
+        action(instance=instance)
 
 
 @receiver(pre_save, sender=models.Routine)
