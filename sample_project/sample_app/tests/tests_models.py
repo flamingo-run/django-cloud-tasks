@@ -47,14 +47,6 @@ class RoutineModelTest(TestCase):
             self.assertEqual("reverting", routine.status)
         revert_task.assert_called_once_with(routine_id=routine.pk)
 
-    def tests_revert_not_processed_routine(self):
-        routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as revert_task:
-            routine.revert()
-            routine.refresh_from_db()
-            self.assertEqual("aborted", routine.status)
-        revert_task.assert_not_called()
-
     def tests_ensure_valid_task_name(self):
         task_name = "InvalidTaskName"
         with self.assertRaises(exceptions.TaskNotFound, msg=f"Task {task_name} not registered."):
@@ -216,6 +208,7 @@ class PipelineModelTest(TestCase):
         self.assertEqual(expected_routine_1["body"], routine.body)
         self.assertEqual(expected_routine_1["task_name"], routine.task_name)
 
+
 class RoutineStateMachineTest(TestCase):
     def setUp(self):
         super().setUp()
@@ -243,11 +236,8 @@ class RoutineStateMachineTest(TestCase):
         routine.status = "pending"
         routine.save()
 
-    def test_allow_to_update_status_from_pending_to_scheduled_or_aborted(self):
-        self.assert_machine_status(accepted_status=["scheduled", "aborted"], from_status="pending")
-
     def test_allow_to_update_status_from_scheduled_to_running_or_failed(self):
-        self.assert_machine_status(accepted_status=["running", "failed"], from_status="scheduled")
+        self.assert_machine_status(accepted_status=["running", "failed", "reverting"], from_status="scheduled")
 
     def test_allow_to_update_status_from_running_to_completed(self):
         self.assert_machine_status(
