@@ -131,6 +131,16 @@ class RoutineModelTest(TestCase):
 
         task.assert_not_called()
 
+    def test_add_next(self):
+        routine = factories.RoutineFactory()
+        expected_routine_1 = {
+            "task_name": "DummyRoutineTask",
+            "body": {"spell": "onfundo"},
+        }
+        next_routine = routine.add_next(expected_routine_1)
+        self.assertEqual(expected_routine_1["body"], next_routine.body)
+        self.assertEqual(expected_routine_1["task_name"], next_routine.task_name)
+
 
 class PipelineModelTest(TestCase):
     def tests_start_pipeline(self):
@@ -196,6 +206,15 @@ class PipelineModelTest(TestCase):
         ]
         task.assert_has_calls(calls, any_order=True)
 
+    def test_add_routine(self):
+        pipeline = factories.PipelineFactory()
+        expected_routine_1 = {
+            "task_name": "DummyRoutineTask",
+            "body": {"spell": "wingardium leviosa"},
+        }
+        routine = pipeline.add_routine(expected_routine_1)
+        self.assertEqual(expected_routine_1["body"], routine.body)
+        self.assertEqual(expected_routine_1["task_name"], routine.task_name)
 
 class RoutineStateMachineTest(TestCase):
     def setUp(self):

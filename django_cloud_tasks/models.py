@@ -5,7 +5,6 @@ from django.db import transaction, models
 from django.apps import apps
 from django_cloud_tasks import tasks, serializers
 
-
 class Pipeline(models.Model):
     name = models.CharField(max_length=100)
 
@@ -22,6 +21,9 @@ class Pipeline(models.Model):
         )
         for routine in routines:
             routine.revert()
+
+    def add_routine(self, routine: Dict) -> "Routine":
+        return self.routines.create(**routine)
 
 
 class Routine(models.Model):
@@ -99,6 +101,10 @@ class Routine(models.Model):
 
             self.status = self.Statuses.ABORTED
             self.save()
+
+    def add_next(self, routine: Dict) -> "Routine":
+        routine["pipeline_id"] = self.pipeline_id
+        return self.next_routines.create(**routine)
 
     @property
     def task(self) -> Optional[tasks.Task]:
