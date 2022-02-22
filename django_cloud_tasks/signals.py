@@ -43,7 +43,6 @@ def enqueue_revert_task(instance: models.Routine):
 
 STATUS_ACTION = {
     models.Routine.Statuses.COMPLETED: enqueue_next_routines,
-    models.Routine.Statuses.ABORTED: revert_previous_routines,
     models.Routine.Statuses.REVERTED: revert_previous_routines,
     models.Routine.Statuses.SCHEDULED: enqueue_routine_scheduled,
     models.Routine.Statuses.REVERTING: enqueue_revert_task,
@@ -75,9 +74,8 @@ def ensure_status_machine(sender, instance, **kwargs):
         statuses.SCHEDULED: [statuses.PENDING, statuses.FAILED],
         statuses.RUNNING: [statuses.SCHEDULED],
         statuses.COMPLETED: [statuses.RUNNING],
-        statuses.ABORTED: [statuses.PENDING, statuses.FAILED],
         statuses.FAILED: [statuses.RUNNING, statuses.SCHEDULED],
-        statuses.REVERTING: [statuses.COMPLETED],
+        statuses.REVERTING: [statuses.COMPLETED, statuses.PENDING, statuses.SCHEDULED, statuses.FAILED],
         statuses.REVERTED: [statuses.REVERTING],
     }
     available_statuses = machine_statuses[instance.status]

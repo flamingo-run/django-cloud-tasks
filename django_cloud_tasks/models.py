@@ -5,6 +5,7 @@ from django.db import transaction, models
 from django.apps import apps
 from django_cloud_tasks import tasks, serializers
 
+
 class Pipeline(models.Model):
     name = models.CharField(max_length=100)
 
@@ -35,7 +36,6 @@ class Routine(models.Model):
         FAILED = ("failed", "Failed")
         REVERTING = ("reverting", "Reverting")
         REVERTED = ("reverted", "Reverted")
-        ABORTED = ("aborted", "Aborted")
 
     task_name = models.CharField(max_length=100)
     pipeline = models.ForeignKey(
@@ -94,13 +94,9 @@ class Routine(models.Model):
 
     def revert(self):
         with transaction.atomic():
-            if self.status == self.Statuses.COMPLETED:
+            if self.status not in [self.Statuses.REVERTED, self.Statuses.REVERTING]:
                 self.status = self.Statuses.REVERTING
                 self.save()
-                return
-
-            self.status = self.Statuses.ABORTED
-            self.save()
 
     def add_next(self, routine: Dict) -> "Routine":
         routine["pipeline_id"] = self.pipeline_id
