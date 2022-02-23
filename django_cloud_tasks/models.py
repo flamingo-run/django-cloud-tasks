@@ -17,6 +17,8 @@ class Pipeline(models.Model):
             routine.enqueue()
 
     def revert(self):
+        # TODO: Actually we don't know what to do when a routine with RUNNNING status is triggered
+        # to revert. We trust that it will not be a big deal for now. But would be great to support that soon
         routines = self.routines.filter(
             models.Q(next_routines__id__isnull=True) & ~models.Q(status=Routine.Statuses.REVERTED)
         )
@@ -37,6 +39,8 @@ class Routine(models.Model):
         REVERTING = ("reverting", "Reverting")
         REVERTED = ("reverted", "Reverted")
 
+    # TODO: We have a signal to check if task_name defined does exists.
+    # We can do it with Django Field Validators
     task_name = models.CharField(max_length=100)
     pipeline = models.ForeignKey(
         to="django_cloud_tasks.Pipeline",
