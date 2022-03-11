@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import List, Tuple
+from typing import Iterable, Tuple
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -55,53 +55,65 @@ class DjangoCloudTasksAppConfig(AppConfig):
                 container[task_class.name()] = task_class
                 break
 
-    def schedule_tasks(self) -> Tuple[List[str], List[str]]:
-        updated = []
-        removed = []
-        for _, task_klass in self.periodic_tasks.items():
-            task = task_klass()
-            task.schedule()
-            updated.append(task.schedule_name)
+    def schedule_tasks(self) -> Tuple[Iterable[str], Iterable[str], Iterable[str]]:
+        client = CloudScheduler()
 
-        if self.app_name:
-            client = CloudScheduler()
+        def _get_tasks():
+            names = []
+            if not self.app_name:
+                return names
             for job in client.list(prefix=self.app_name):
                 schedule_name = job.name.split("/jobs/")[-1]
-                if schedule_name not in updated:
-                    asyncio.run(client.delete(name=schedule_name))
-                    removed.append(schedule_name)
+                names.append((schedule_name.split("--", 1)[-1], schedule_name))
+            return names
 
-        return updated, removed
+        expected = self.periodic_tasks.copy()
+        existing = dict(_get_tasks())
+
+        to_add = set(expected) - set(existing)
+        to_remove = set(existing) - set(expected)
+        updated = set(expected) - set(to_add)
+
+        for task_to_add in to_add:
+            task_klass = expected[task_to_add]
+            task_klass().schedule()
+
+        for task_to_remove in to_remove:
+            asyncio.run(client.delete(name=existing[task_to_remove]))
+
+        return to_add, updated, to_remove
 
     def set_up_permissions(self):
         sub = CloudSubscriber()
         routine = sub.set_up_permissions(email=sub.credentials.service_account_email)
         asyncio.run(routine)
 
-    def initialize_subscribers(self) -> Tuple[List[str], List[str]]:
-        updated = []
-        removed = []
-
-        for task_name, task_klass in self.subscriber_tasks.items():
-            task_klass().register()
-            updated.append(task_name)
+    def initialize_subscribers(self) -> Tuple[Iterable[str], Iterable[str], Iterable[str]]:
+        client = CloudSubscriber()
 
         async def _get_subscriptions():
             names = []
+            if not self.app_name:
+                return names
+
             async for subscription in client.list_subscriptions(suffix=self.app_name):
-                susbcription_name = subscription.name.rsplit("subscriptions/", 1)[-1]
+                subscription_id = subscription.name.rsplit("subscriptions/", 1)[-1]
                 task_name = subscription.push_config.push_endpoint.rsplit("/", 1)[-1]
-                names.append((susbcription_name, task_name))
+                names.append((task_name, subscription_id))
             return names
 
-        if self.app_name:
-            client = CloudSubscriber()
-            for (subscription_id, subscribed_task) in asyncio.run(_get_subscriptions()):
-                if subscribed_task not in updated:
-                    asyncio.run(client.delete_subscription(subscription_id=subscription_id))
-                    removed.append(subscribed_task)
+        expected = self.subscriber_tasks.copy()
+        existing = dict(asyncio.run(_get_subscriptions()))
 
-        return updated, removed
+        to_add = set(expected) - set(existing)
+        to_remove = set(existing) - set(expected)
+        updated = set(expected) - set(to_add)
 
-    def ready(self):
-        from django_cloud_tasks import signals  # pylint: disable=import-outside-toplevel,unused-import
+        for task_to_add in to_add:
+            task_klass = expected[task_to_add]
+            task_klass().register()
+
+        for task_to_remove in to_remove:
+            asyncio.run(client.delete_subscription(subscription_id=existing[task_to_remove]))
+
+        return to_add, updated, to_remove

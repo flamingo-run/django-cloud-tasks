@@ -8,6 +8,10 @@ class Command(BaseInitCommand):
     name = "tasks"
 
     def perform_init(self, app_config, *args, **options) -> List[str]:
-        updated, deleted = app_config.schedule_tasks()
+        added, updated, deleted = app_config.schedule_tasks()
 
-        return [f"[+] {name}" for name in updated] + [f"[-] {name}" for name in deleted]
+        return (
+            [f"[+] {name}" for name in added]
+            + [f"[-] {name}" for name in deleted]
+            + [f"[~] {name}" for name in updated]
+        )
