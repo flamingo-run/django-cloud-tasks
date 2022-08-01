@@ -51,8 +51,7 @@ class Task(metaclass=TaskMeta):
     def execute(self, request_body):
         task_kwargs = self._body_to_kwargs(request_body=request_body)
         output = self.run(**task_kwargs)
-        status = 200  # TODO Capture some exceptions and set status code
-        return output, status
+        return output
 
     # Celery-compatible signature
     def delay(self, **kwargs):

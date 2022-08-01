@@ -25,13 +25,10 @@ class GoogleCloudTaskView(View):
             result = {"error": f"Task {task_name} not found", "available_tasks": list(self.tasks)}
             return self._prepare_response(status=status, payload=result)
 
-        output, status = task_class().execute(request_body=request.body)
-        if status == 200:
-            result = {"result": output}
-        else:
-            result = {"error": output}
+        output = task_class().execute(request_body=request.body)
+        result = {"result": output}
 
-        return self._prepare_response(status=status, payload=result)
+        return self._prepare_response(status=200, payload=result)
 
     def _prepare_response(self, status: int, payload: Dict[str, Any]):
         return HttpResponse(status=status, content=json.dumps(payload), content_type="application/json")
