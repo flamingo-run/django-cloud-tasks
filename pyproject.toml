@@ -39,6 +39,12 @@ max-line-length = "120"
 good-names= "i, j, k, m, n, dt, db, pk, tz, qs, ex, _"
 
 
+[tool.coverage.run]
+branch = true
+source = ["django_cloud_tasks"]
+omit = ["*/manage.py", "*/settings.py", "*/wsgi.py"]
+
+
 [build-system]
 requires = ["poetry"]
 build-backend = "poetry.masonry.api"
