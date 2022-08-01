@@ -1,6 +1,7 @@
 # pylint: disable=no-member
 from abc import abstractmethod
 from datetime import timedelta, datetime
+from random import randint
 
 from django.apps import apps
 from django.conf import settings
@@ -75,6 +76,20 @@ class Task(metaclass=TaskMeta):
         else:
             raise ValueError(f"Unsupported schedule {when} of type {when.__class__.__name__}")
 
+        return self._send(
+            task_kwargs=kwargs,
+            api_kwargs=dict(delay_in_seconds=int(delay_in_seconds)),
+            queue=queue,
+        )
+
+    def until(self, max_date, queue=None, **kwargs):
+        if not isinstance(max_date, datetime):
+            raise ValueError("max_date must be a datetime")
+        if max_date < now():
+            raise ValueError("max_date must be in the future")
+
+        max_seconds = (max_date - now()).total_seconds()
+        delay_in_seconds = randint(0, int(max_seconds))
         return self._send(
             task_kwargs=kwargs,
             api_kwargs=dict(delay_in_seconds=delay_in_seconds),
