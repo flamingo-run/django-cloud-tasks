@@ -117,3 +117,6 @@ class DjangoCloudTasksAppConfig(AppConfig):
             asyncio.run(client.delete_subscription(subscription_id=existing[task_to_remove]))
 
         return to_add, updated, to_remove
+
+    def ready(self):
+        from django_cloud_tasks import signals  # pylint: disable=import-outside-toplevel, unused-import
