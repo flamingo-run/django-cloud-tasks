@@ -54,9 +54,10 @@ class Task(metaclass=TaskMeta):
         return output
 
     # Celery-compatible signature
-    def delay(self, **kwargs):
+    def delay(self, queue=None, **kwargs):
         return self._send(
             task_kwargs=kwargs,
+            queue=queue,
         )
 
     def asap(self, **kwargs):
@@ -64,7 +65,7 @@ class Task(metaclass=TaskMeta):
             task_kwargs=kwargs,
         )
 
-    def later(self, when, **kwargs):
+    def later(self, when, queue=None, **kwargs):
         if isinstance(when, int):
             delay_in_seconds = when
         elif isinstance(when, timedelta):
@@ -77,9 +78,10 @@ class Task(metaclass=TaskMeta):
         return self._send(
             task_kwargs=kwargs,
             api_kwargs=dict(delay_in_seconds=delay_in_seconds),
+            queue=queue,
         )
 
-    def _send(self, task_kwargs, api_kwargs=None):
+    def _send(self, task_kwargs, api_kwargs=None, queue=None):
         payload = serialize(task_kwargs)
 
         if getattr(settings, "EAGER_TASKS", False):
@@ -88,7 +90,7 @@ class Task(metaclass=TaskMeta):
         api_kwargs = api_kwargs or {}
         api_kwargs.update(
             dict(
-                queue_name=self.queue,
+                queue_name=queue or self.queue,
                 url=self.url(),
                 payload=payload,
             )
