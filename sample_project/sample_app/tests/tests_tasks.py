@@ -1,9 +1,12 @@
 from contextlib import ExitStack
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.apps import apps
 from django.test import SimpleTestCase, TestCase
+from django.utils.timezone import now
+from freezegun import freeze_time
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 from django_cloud_tasks import exceptions
@@ -100,6 +103,56 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 response = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
         self.assertGreater(response, 0)
+
+    def test_task_later_int(self):
+        with self.patch_push() as push:
+            with patch_auth():
+                tasks.CalculatePriceTask().later(when=1800, price=30, quantity=4, discount=0.2)
+
+        expected_call = dict(
+            delay_in_seconds=1800,
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        )
+        push.assert_called_once_with(**expected_call)
+
+    def test_task_later_delta(self):
+        delta = timedelta(minutes=42)
+        with self.patch_push() as push:
+            with patch_auth():
+                tasks.CalculatePriceTask().later(when=delta, price=30, quantity=4, discount=0.2)
+
+        expected_call = dict(
+            delay_in_seconds=2520,
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        )
+        push.assert_called_once_with(**expected_call)
+
+    @freeze_time("2020-01-01T00:00:00")
+    def test_task_later_time(self):
+        some_time = now() + timedelta(minutes=100)
+        with self.patch_push() as push:
+            with patch_auth():
+                tasks.CalculatePriceTask().later(when=some_time, price=30, quantity=4, discount=0.2)
+
+        expected_call = dict(
+            delay_in_seconds=60 * 100,
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        )
+        push.assert_called_once_with(**expected_call)
+
+    def test_task_later_error(self):
+        with self.patch_push() as push:
+            with patch_auth():
+                with self.assertRaisesRegex(expected_exception=ValueError, expected_regex="Unsupported schedule"):
+                    tasks.CalculatePriceTask().later(when="potato", price=30, quantity=4, discount=0.2)
+
+        push.assert_not_called()
 
 
 class PipelineRoutineRevertTaskTest(TestCase):
