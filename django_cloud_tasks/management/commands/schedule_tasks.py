@@ -11,7 +11,7 @@ class Command(BaseInitCommand):
         added, updated, deleted = app_config.schedule_tasks()
 
         return (
-            [f"[+] {name}" for name in added]
-            + [f"[-] {name}" for name in deleted]
-            + [f"[~] {name}" for name in updated]
+            [f"[+] {name}" for name in sorted(added)]
+            + [f"[-] {name}" for name in sorted(deleted)]
+            + [f"[~] {name}" for name in sorted(updated)]
         )
