@@ -4,7 +4,7 @@ from abc import abstractmethod
 from django.conf import settings
 from gcp_pilot.scheduler import CloudScheduler
 
-from django_cloud_tasks.helpers import run_coroutine
+from django_cloud_tasks.serializers import deserialize, serialize
 from django_cloud_tasks.serializers import serialize, deserialize
 from django_cloud_tasks import tasks
 
@@ -22,8 +22,7 @@ class PeriodicTask(tasks.Task):
         if getattr(settings, "EAGER_TASKS", False):
             return self.run(**deserialize(payload))
 
-        return run_coroutine(
-            handler=self.__client.put,
+        return self.__client.put(
             name=self.schedule_name,
             url=self.url(),
             payload=payload,

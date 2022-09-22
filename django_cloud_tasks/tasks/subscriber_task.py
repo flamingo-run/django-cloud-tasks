@@ -1,12 +1,12 @@
 # pylint: disable=no-member
 from abc import abstractmethod
+
 from gcp_pilot.pubsub import CloudSubscriber, Message
 
-from django_cloud_tasks.helpers import run_coroutine
-from django_cloud_tasks import tasks
+from django_cloud_tasks.tasks.task import Task
 
 
-class SubscriberTask(tasks.Task):
+class SubscriberTask(Task):
     abstract = True
     _use_oidc_auth = True
     _url_name = "subscriptions-endpoint"
@@ -24,8 +24,7 @@ class SubscriberTask(tasks.Task):
         raise NotImplementedError()
 
     def register(self):
-        return run_coroutine(
-            handler=self.__client.create_or_update_subscription,
+        return self.__client.create_or_update_subscription(
             topic_id=self.topic_name,
             subscription_id=self.subscription_name,
             enable_message_ordering=self.enable_message_ordering,

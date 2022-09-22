@@ -1,4 +1,3 @@
-import asyncio
 import os
 from typing import Iterable, Tuple
 
@@ -79,31 +78,30 @@ class DjangoCloudTasksAppConfig(AppConfig):
             task_klass().schedule()
 
         for task_to_remove in to_remove:
-            asyncio.run(client.delete(name=existing[task_to_remove]))
+            client.delete(name=existing[task_to_remove])
 
         return to_add, updated, to_remove
 
     def set_up_permissions(self):
         sub = CloudSubscriber()
-        routine = sub.set_up_permissions(email=sub.credentials.service_account_email)
-        asyncio.run(routine)
+        sub.set_up_permissions(email=sub.credentials.service_account_email)
 
     def initialize_subscribers(self) -> Tuple[Iterable[str], Iterable[str], Iterable[str]]:
         client = CloudSubscriber()
 
-        async def _get_subscriptions():
+        def _get_subscriptions():
             names = []
             if not self.app_name:
                 return names
 
-            async for subscription in client.list_subscriptions(suffix=self.app_name):
+            for subscription in client.list_subscriptions(suffix=self.app_name):
                 subscription_id = subscription.name.rsplit("subscriptions/", 1)[-1]
                 task_name = subscription.push_config.push_endpoint.rsplit("/", 1)[-1]
                 names.append((task_name, subscription_id))
             return names
 
         expected = self.subscriber_tasks.copy()
-        existing = dict(asyncio.run(_get_subscriptions()))
+        existing = dict(_get_subscriptions())
 
         to_add = set(expected) - set(existing)
         to_remove = set(existing) - set(expected)
@@ -114,7 +112,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
             task_klass().register()
 
         for task_to_remove in to_remove:
-            asyncio.run(client.delete_subscription(subscription_id=existing[task_to_remove]))
+            client.delete_subscription(subscription_id=existing[task_to_remove])
 
         return to_add, updated, to_remove
 
