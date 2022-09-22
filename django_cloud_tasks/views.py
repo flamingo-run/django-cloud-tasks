@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from django.apps import apps
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views.generic import View
 
 
@@ -30,7 +30,7 @@ class GoogleCloudTaskView(View):
         return self._prepare_response(status=200, payload=result)
 
     def _prepare_response(self, status: int, payload: Dict[str, Any]):
-        return HttpResponse(status=status, content=json.dumps(payload), content_type="application/json")
+        return JsonResponse(status=status, data=payload)
 
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
