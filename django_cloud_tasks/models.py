@@ -1,9 +1,11 @@
 # pylint: disable=no-member
-from datetime import datetime
-from typing import Optional, Dict
-from django.db import transaction, models
+from typing import Dict, Optional
+
 from django.apps import apps
-from django_cloud_tasks import tasks, serializers
+from django.db import models, transaction
+from django.utils import timezone
+
+from django_cloud_tasks import serializers
 
 
 class Pipeline(models.Model):
@@ -81,19 +83,19 @@ class Routine(models.Model):
     def fail(self, output: Dict):
         self.output = output
         self.status = self.Statuses.FAILED
-        self.ends_at = datetime.now()
+        self.ends_at = timezone.now()
         self.save()
 
     def complete(self, output: Dict):
         self.output = output
         self.status = self.Statuses.COMPLETED
-        self.ends_at = datetime.now()
+        self.ends_at = timezone.now()
         self.save()
 
     def enqueue(self):
         with transaction.atomic():
             self.status = self.Statuses.SCHEDULED
-            self.starts_at = datetime.now()
+            self.starts_at = timezone.now()
             self.save()
 
     def revert(self):
