@@ -1,10 +1,12 @@
 from typing import List
-from unittest.mock import patch, call
-from datetime import datetime
-from freezegun import freeze_time
-from django.test import TestCase
+from unittest.mock import call, patch
+
 from django.core.exceptions import ValidationError
-from django_cloud_tasks import models, exceptions
+from django.test import TestCase
+from django.utils import timezone
+from freezegun import freeze_time
+
+from django_cloud_tasks import exceptions, models
 from django_cloud_tasks.tests import factories
 
 
@@ -17,7 +19,7 @@ class RoutineModelTest(TestCase):
         routine.refresh_from_db()
         self.assertEqual("failed", routine.status)
         self.assertEqual(error, routine.output)
-        self.assertEqual(datetime.now(), routine.ends_at.replace(tzinfo=None))
+        self.assertEqual(timezone.now(), routine.ends_at)
 
     @freeze_time("2020-01-01")
     def tests_complete(self):
@@ -27,7 +29,7 @@ class RoutineModelTest(TestCase):
         routine.refresh_from_db()
         self.assertEqual("completed", routine.status)
         self.assertEqual(output, routine.output)
-        self.assertEqual(datetime.now(), routine.ends_at.replace(tzinfo=None))
+        self.assertEqual(timezone.now(), routine.ends_at)
 
     @freeze_time("2020-01-01")
     def tests_enqueue(self):
@@ -36,7 +38,7 @@ class RoutineModelTest(TestCase):
             routine.enqueue()
             routine.refresh_from_db()
             self.assertEqual("scheduled", routine.status)
-            self.assertEqual(datetime.now(), routine.starts_at.replace(tzinfo=None))
+            self.assertEqual(timezone.now(), routine.starts_at)
         task.assert_called_once_with(routine_id=routine.pk)
 
     def tests_revert_completed_routine(self):
