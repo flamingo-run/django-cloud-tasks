@@ -1,6 +1,7 @@
 import inspect
-from typing import Optional, Callable, Union, Type
 from contextlib import contextmanager
+from typing import Callable, Optional, Type, Union
+
 from django.utils.connection import ConnectionProxy
 
 

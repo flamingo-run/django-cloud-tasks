@@ -42,12 +42,14 @@ class DjangoCloudTasksAppConfig(AppConfig):
         return getattr(settings, name, os.environ.get(name, default))
 
     def register_task(self, task_class):
-        from django_cloud_tasks import tasks  # pylint: disable=import-outside-toplevel
+        from django_cloud_tasks.tasks.periodic_task import PeriodicTask  # pylint: disable=import-outside-toplevel
+        from django_cloud_tasks.tasks.subscriber_task import SubscriberTask  # pylint: disable=import-outside-toplevel
+        from django_cloud_tasks.tasks.task import Task  # pylint: disable=import-outside-toplevel
 
         containers = {
-            tasks.SubscriberTask: self.subscriber_tasks,
-            tasks.PeriodicTask: self.periodic_tasks,
-            tasks.Task: self.on_demand_tasks,
+            SubscriberTask: self.subscriber_tasks,
+            PeriodicTask: self.periodic_tasks,
+            Task: self.on_demand_tasks,
         }
         for parent_klass, container in containers.items():
             if issubclass(task_class, parent_klass) and not getattr(task_class, "abstract", False):

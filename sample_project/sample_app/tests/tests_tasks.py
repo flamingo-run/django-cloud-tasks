@@ -1,5 +1,5 @@
-from contextlib import ExitStack
 import json
+from contextlib import ExitStack
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -9,9 +9,10 @@ from django.utils.timezone import now
 from freezegun import freeze_time
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
+
 from django_cloud_tasks import exceptions
+from django_cloud_tasks.tasks import PipelineRoutineRevertTask, PipelineRoutineTask, PublisherTask
 from django_cloud_tasks.tests import factories, tests_base
-from django_cloud_tasks.tasks import PublisherTask, PipelineRoutineTask, PipelineRoutineRevertTask
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 

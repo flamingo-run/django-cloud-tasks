@@ -1,5 +1,4 @@
-from django.urls import path, include
-
+from django.urls import include, path
 
 urlpatterns = [
     path("", include("django_cloud_tasks.urls")),

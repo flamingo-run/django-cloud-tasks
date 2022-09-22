@@ -1,7 +1,8 @@
 import factory
 from django.db.models.signals import post_save, pre_save
+
+from django_cloud_tasks.models import Pipeline, Routine, RoutineVertex
 from django_cloud_tasks.tasks import RoutineTask
-from django_cloud_tasks.models import Routine, Pipeline, RoutineVertex
 
 
 class PipelineFactory(factory.django.DjangoModelFactory):
