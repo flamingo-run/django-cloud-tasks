@@ -4,7 +4,6 @@ from typing import Dict
 from google.cloud import pubsub_v1
 from gcp_pilot.pubsub import CloudPublisher
 
-from django_cloud_tasks.helpers import run_coroutine
 from django_cloud_tasks.serializers import serialize
 from django_cloud_tasks import tasks
 
@@ -22,8 +21,7 @@ class PublisherTask(tasks.Task):
         self.enable_message_ordering = enable_message_ordering
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
-        return run_coroutine(
-            handler=self.__client.publish,
+        return self.__client.publish(
             message=serialize(message),
             topic_id=self._full_topic_name(name=topic_name),
             attributes=attributes,
@@ -40,8 +38,7 @@ class PublisherTask(tasks.Task):
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 
     def initialize(self, topic_name):
-        run_coroutine(
-            handler=self.__client.create_topic,
+        self.__client.create_topic(
             topic_id=self._full_topic_name(name=topic_name),
         )
 

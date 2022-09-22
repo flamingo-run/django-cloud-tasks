@@ -120,7 +120,7 @@ class Task(metaclass=TaskMeta):
             )
 
         try:
-            return run_coroutine(handler=self.__client.push, **api_kwargs)
+            return self.__client.push(**api_kwargs)
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
             # so we'll use a temporary queue (defined in settings) for some time
@@ -131,7 +131,7 @@ class Task(metaclass=TaskMeta):
                 raise
 
             api_kwargs["queue_name"] = backup_queue_name
-            return run_coroutine(handler=self.__client.push, **api_kwargs)
+            return self.__client.push(**api_kwargs)
 
     @classmethod
     def name(cls):
