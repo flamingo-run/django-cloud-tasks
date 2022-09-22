@@ -14,12 +14,20 @@ test:
 	@make unit
 
 check:
-	@poetry check
+	@echo "Checking safety and integrity ..."
+	poetry check
+	poetry run safety check
 
 lint:
 	@echo "Checking code style ..."
-	@poetry run pylint django_cloud_tasks sample_project
-	@poetry run black --check .
+	DJANGO_SETTINGS_MODULE=sample_project.settings ENV=test poetry run pylint ./django_cloud_tasks ./sample_project
+	poetry run black --check .
+	poetry run isort --check .
+
+style:
+	@echo "Applying code style ..."
+	poetry run black .
+	poetry run isort .
 
 unit:
 	@echo "Running unit tests ..."
