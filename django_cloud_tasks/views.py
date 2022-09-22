@@ -1,5 +1,4 @@
-import json
-from typing import Dict, Any
+from typing import Any, Dict
 
 from django.apps import apps
 from django.http import HttpResponse

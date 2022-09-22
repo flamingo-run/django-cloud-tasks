@@ -1,6 +1,6 @@
 from io import StringIO
 from typing import List
-from unittest.mock import patch, Mock, PropertyMock
+from unittest.mock import Mock, PropertyMock, patch
 
 from django.apps import apps
 from django.core.management import call_command

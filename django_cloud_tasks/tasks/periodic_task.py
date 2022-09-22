@@ -5,11 +5,10 @@ from django.conf import settings
 from gcp_pilot.scheduler import CloudScheduler
 
 from django_cloud_tasks.serializers import deserialize, serialize
-from django_cloud_tasks.serializers import serialize, deserialize
-from django_cloud_tasks import tasks
+from django_cloud_tasks.tasks.task import Task
 
 
-class PeriodicTask(tasks.Task):
+class PeriodicTask(Task):
     run_every = None
 
     @abstractmethod

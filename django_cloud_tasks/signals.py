@@ -1,10 +1,10 @@
 # pylint: disable=no-member
 from django.core.exceptions import ValidationError
+from django.db.models import Model
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from django.db.models import Model
 
-from django_cloud_tasks import models, tasks
+from django_cloud_tasks import models
 
 
 @receiver(pre_save, sender=models.Routine)
@@ -34,11 +34,15 @@ def revert_previous_routines(instance: models.Routine):
 
 
 def enqueue_routine_scheduled(instance: models.Routine):
-    tasks.PipelineRoutineTask().delay(routine_id=instance.pk)
+    from django_cloud_tasks.tasks import PipelineRoutineTask  # pylint: disable=import-outside-toplevel
+
+    PipelineRoutineTask().delay(routine_id=instance.pk)
 
 
 def enqueue_revert_task(instance: models.Routine):
-    tasks.PipelineRoutineRevertTask().delay(routine_id=instance.pk)
+    from django_cloud_tasks.tasks import PipelineRoutineRevertTask  # pylint: disable=import-outside-toplevel
+
+    PipelineRoutineRevertTask().delay(routine_id=instance.pk)
 
 
 STATUS_ACTION = {

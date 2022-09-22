@@ -2,7 +2,6 @@ import abc
 from typing import List
 
 from django.apps import apps
-
 from django.core.management.base import BaseCommand
 
 

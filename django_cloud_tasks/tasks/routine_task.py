@@ -1,14 +1,17 @@
 # pylint: disable=no-member
 import logging
-from typing import Dict
 from abc import abstractmethod
+from typing import Dict
+
 from django.core.cache import cache
-from django_cloud_tasks import models, tasks
+
+from django_cloud_tasks import models
+from django_cloud_tasks.tasks.task import Task
 
 logger = logging.getLogger()
 
 
-class RoutineTask(tasks.Task):
+class RoutineTask(Task):
     abstract = True
 
     @abstractmethod
@@ -20,7 +23,7 @@ class RoutineTask(tasks.Task):
         raise NotImplementedError()
 
 
-class RoutineLockTaskMixin(tasks.Task):
+class RoutineLockTaskMixin(Task):
     WAIT_FOR_LOCK = 5  # in seconds
     LOCK_EXPIRATION = 60  # in seconds
 

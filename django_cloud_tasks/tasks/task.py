@@ -1,6 +1,6 @@
 # pylint: disable=no-member
 from abc import abstractmethod
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from random import randint
 
 from django.apps import apps
@@ -10,8 +10,7 @@ from django.utils.timezone import now
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.tasks import CloudTasks
 
-from django_cloud_tasks.helpers import run_coroutine
-from django_cloud_tasks.serializers import serialize, deserialize
+from django_cloud_tasks.serializers import deserialize, serialize
 
 
 class TaskMeta(type):

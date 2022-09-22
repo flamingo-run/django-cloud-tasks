@@ -109,7 +109,7 @@ class Routine(models.Model):
         return self.next_routines.create(**routine)
 
     @property
-    def task(self) -> Optional[tasks.Task]:
+    def task(self) -> Optional["django_cloud_tasks.tasks.Task"]:
         app = apps.get_app_config("django_cloud_tasks")
         return app.get_task(name=self.task_name)
 

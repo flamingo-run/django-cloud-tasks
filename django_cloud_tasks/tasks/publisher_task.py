@@ -1,14 +1,14 @@
 # pylint: disable=no-member
 from typing import Dict
 
-from google.cloud import pubsub_v1
 from gcp_pilot.pubsub import CloudPublisher
+from google.cloud import pubsub_v1
 
 from django_cloud_tasks.serializers import serialize
-from django_cloud_tasks import tasks
+from django_cloud_tasks.tasks.task import Task
 
 
-class PublisherTask(tasks.Task):
+class PublisherTask(Task):
     # perform asynchronous publish to PubSub, with overhead in:
     # - publishing the message as Task
     # - receiving it through the endpoint
