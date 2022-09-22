@@ -8,29 +8,39 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.10,<3.11"
 django = ">=3,<5"
 gcp-pilot = {version = "*", extras = ["tasks", "pubsub"]}
 
 
 [tool.poetry.dev-dependencies]
 pylint = "*"
+pylint-django = "*"
 black = "*"
-nose = "^1"
 coverage = "*"
 factory-boy = "*"
 freezegun = "*"
+isort = "*"
+safety = "*"
+
 
 [tool.black]
 line-length = 120
-target-version = ['py39']
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+include_trailing_comma = true
+multi_line_output = 3
+src_paths = ["."]
 
 
-[tool.pylint.master]
+[tool.pylint.main]
 ignore = "migrations"
-
-[tool.pylint.messages_control]
-disable = "C0114, C0115, C0116, W0212, W0511, W0613, W1203, W0221, R0901, R0903, R0913, R0801, R0401, R0902, R0914"
+#load-plugins = "pylint_django"  # FIXME: fix the settings discovery
+recursive = true
+disable = "C0114, C0115, C0116, W0212, W0511, W0613, W1203, W0221, R0901, R0903, R0913, R0801, R0401, R0902, R0904, R0914"
 
 [tool.pylint.format]
 max-line-length = "120"
