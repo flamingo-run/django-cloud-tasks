@@ -16,6 +16,9 @@ class PublisherTask(Task):
     # might be useful to use the Cloud Task throttling
     publish_immediately = True
 
+    _ordered_client = None
+    _unordered_client = None
+
     def __init__(self, enable_message_ordering=False) -> None:
         super().__init__()
         self.enable_message_ordering = enable_message_ordering
@@ -47,10 +50,18 @@ class PublisherTask(Task):
             return f"{self._app_name}{self._delimiter}{name}"
         return name
 
+    def __ordered_client(self):
+        if not self.__class__._ordered_client:
+            publisher_options = pubsub_v1.types.PublisherOptions(enable_message_ordering=True)
+            self.__class__._ordered_client = CloudPublisher(publisher_options=publisher_options)
+        return self.__class__._ordered_client
+
+    def __unordered_client(self):
+        if not self.__class__._unordered_client:
+            publisher_options = pubsub_v1.types.PublisherOptions(enable_message_ordering=False)
+            self.__class__._unordered_client = CloudPublisher(publisher_options=publisher_options)
+        return self.__class__._unordered_client
+
     @property
     def __client(self):
-        publisher_options = pubsub_v1.types.PublisherOptions(
-            enable_message_ordering=self.enable_message_ordering,
-        )
-
-        return CloudPublisher(publisher_options=publisher_options)
+        return self.__ordered_client() if self.enable_message_ordering else self.__unordered_client()
