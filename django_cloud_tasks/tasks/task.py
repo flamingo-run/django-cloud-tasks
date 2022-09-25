@@ -40,6 +40,8 @@ class Task(metaclass=TaskMeta):
     _url_name = "tasks-endpoint"
     only_once = False
 
+    _client = None
+
     @abstractmethod
     def run(self, **kwargs):
         raise NotImplementedError()
@@ -148,4 +150,7 @@ class Task(metaclass=TaskMeta):
 
     @property
     def __client(self):
-        return CloudTasks()
+        if not self.__class__._client:
+            self.__class__._client = CloudTasks()
+
+        return self.__class__._client
