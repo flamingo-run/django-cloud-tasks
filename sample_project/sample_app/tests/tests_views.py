@@ -43,6 +43,7 @@ class TaskViewTest(SimpleTestCase):
                 "FailMiserablyTask",
                 "SayHelloTask",
                 "SayHelloWithParamsTask",
+                "BroadcastHelloTask",
                 "OneBigDedicatedTask",
                 "DummyRoutineTask",
                 "SaySomethingTask",

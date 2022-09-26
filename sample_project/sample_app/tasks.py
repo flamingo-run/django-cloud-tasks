@@ -1,6 +1,6 @@
 from typing import Dict
 
-from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task
+from django_cloud_tasks.tasks import PeriodicTask, PublisherTask, RoutineTask, SubscriberTask, Task
 
 
 class BaseAbstractTask(Task):
@@ -61,3 +61,8 @@ class SayHelloWithParamsTask(RoutineTask):
 
     def revert(self, data: Dict):
         return {"message": "goodbye"}
+
+
+class BroadcastHelloTask(PublisherTask):
+    def delay(self):
+        return super().delay(topic_name="broadcast", message={"message": "hello"})
