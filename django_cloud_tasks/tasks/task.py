@@ -54,7 +54,7 @@ class Task(metaclass=TaskMeta):
         return output
 
     # Celery-compatible signature
-    def delay(self, queue=None, **kwargs):
+    def delay(self, queue: str | None = None, **kwargs):
         return self._send(
             task_kwargs=kwargs,
             queue=queue,
@@ -95,7 +95,7 @@ class Task(metaclass=TaskMeta):
             queue=queue,
         )
 
-    def _send(self, task_kwargs, api_kwargs=None, queue=None):
+    def _send(self, task_kwargs: dict, api_kwargs: dict | None = None, queue: str | None = None):
         payload = serialize(task_kwargs)
 
         if getattr(settings, "EAGER_TASKS", False):

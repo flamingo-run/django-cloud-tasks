@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from django.apps import apps
 from django.http import JsonResponse
@@ -29,7 +29,7 @@ class GoogleCloudTaskView(View):
 
         return self._prepare_response(status=200, payload=result)
 
-    def _prepare_response(self, status: int, payload: Dict[str, Any]):
+    def _prepare_response(self, status: int, payload: dict[str, Any]):
         return JsonResponse(status=status, data=payload)
 
 

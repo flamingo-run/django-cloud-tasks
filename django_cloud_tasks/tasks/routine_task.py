@@ -1,7 +1,6 @@
 # pylint: disable=no-member
 import logging
 from abc import abstractmethod
-from typing import Dict
 
 from django.core.cache import cache
 
@@ -19,7 +18,7 @@ class RoutineTask(Task):
         raise NotImplementedError()
 
     @abstractmethod
-    def revert(self, data: Dict):
+    def revert(self, data: dict):
         raise NotImplementedError()
 
 
