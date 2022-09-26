@@ -41,6 +41,10 @@ class PleaseNotifyMeTask(SubscriberTask):
     def topic_name(self):
         return "potato"
 
+    @property
+    def dead_letter_topic_name(self):
+        return None
+
     def run(self, message, attributes):
         return print(message)
 
