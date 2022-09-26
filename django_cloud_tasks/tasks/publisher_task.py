@@ -9,19 +9,13 @@ from django_cloud_tasks.tasks.task import Task
 
 
 class PublisherTask(Task):
-    # perform asynchronous publish to PubSub, with overhead in:
-    # - publishing the message as Task
-    # - receiving it through the endpoint
-    # - and the finally publishing to PubSub
-    # might be useful to use the Cloud Task throttling
-    publish_immediately = True
-
     _ordered_client = None
     _unordered_client = None
 
-    def __init__(self, enable_message_ordering=False) -> None:
+    def __init__(self, enable_message_ordering=False, publish_immediately=True) -> None:
         super().__init__()
         self.enable_message_ordering = enable_message_ordering
+        self.publish_immediately = publish_immediately
 
     def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
         return self.__client.publish(
