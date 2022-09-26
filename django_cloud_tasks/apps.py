@@ -107,7 +107,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
         to_add = set(expected) - set(existing)
         to_remove = set(existing) - set(expected)
-        updated = set(expected) - set(to_add)
+        to_update = set(expected) - set(to_add)
 
         for task_to_add in to_add:
             task_klass = expected[task_to_add]
@@ -116,7 +116,11 @@ class DjangoCloudTasksAppConfig(AppConfig):
         for task_to_remove in to_remove:
             client.delete_subscription(subscription_id=existing[task_to_remove])
 
-        return to_add, updated, to_remove
+        for task_to_update in to_update:
+            task_klass = expected[task_to_update]
+            task_klass().register()
+
+        return to_add, to_update, to_remove
 
     def ready(self):
         from django_cloud_tasks import signals  # pylint: disable=import-outside-toplevel, unused-import
