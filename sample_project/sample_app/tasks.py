@@ -1,5 +1,3 @@
-from typing import Dict
-
 from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task
 
 
@@ -51,7 +49,7 @@ class SayHelloTask(RoutineTask):
     def run(self, **kwargs):
         return {"message": "hello"}
 
-    def revert(self, data: Dict):
+    def revert(self, data: dict):
         return {"message": "goodbye"}
 
 
@@ -59,5 +57,5 @@ class SayHelloWithParamsTask(RoutineTask):
     def run(self, spell: str):
         return {"message": spell}
 
-    def revert(self, data: Dict):
+    def revert(self, data: dict):
         return {"message": "goodbye"}

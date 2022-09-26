@@ -1,5 +1,5 @@
 # pylint: disable=no-member
-from typing import Dict, Optional
+from typing import Type
 
 from django.apps import apps
 from django.db import models, transaction
@@ -27,7 +27,7 @@ class Pipeline(models.Model):
         for routine in routines:
             routine.revert()
 
-    def add_routine(self, routine: Dict) -> "Routine":
+    def add_routine(self, routine: dict) -> "Routine":
         return self.routines.create(**routine)
 
 
@@ -80,13 +80,13 @@ class Routine(models.Model):
         related_name="dependent_routines",
     )
 
-    def fail(self, output: Dict):
+    def fail(self, output: dict):
         self.output = output
         self.status = self.Statuses.FAILED
         self.ends_at = timezone.now()
         self.save()
 
-    def complete(self, output: Dict):
+    def complete(self, output: dict):
         self.output = output
         self.status = self.Statuses.COMPLETED
         self.ends_at = timezone.now()
@@ -104,12 +104,12 @@ class Routine(models.Model):
                 self.status = self.Statuses.REVERTING
                 self.save()
 
-    def add_next(self, routine: Dict) -> "Routine":
+    def add_next(self, routine: dict) -> "Routine":
         routine["pipeline_id"] = self.pipeline_id
         return self.next_routines.create(**routine)
 
     @property
-    def task(self) -> Optional["django_cloud_tasks.tasks.Task"]:
+    def task(self) -> Type["django_cloud_tasks.tasks.Task"] | None:
         app = apps.get_app_config("django_cloud_tasks")
         return app.get_task(name=self.task_name)
 

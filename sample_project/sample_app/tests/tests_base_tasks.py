@@ -1,13 +1,15 @@
 import inspect
 from contextlib import contextmanager
-from typing import Callable, Optional, Type, Union
+from typing import Callable, Type
 
 from django.utils.connection import ConnectionProxy
 
+LockType = (Callable | Exception | Type[Exception]) | None
+
 
 def patch_cache_lock(
-    lock_side_effect: Optional[Union[Callable, Exception, Type[Exception]]] = None,
-    unlock_side_effect: Optional[Union[Callable, Exception, Type[Exception]]] = None,
+    lock_side_effect: LockType = None,
+    unlock_side_effect: LockType = None,
 ):
     class CacheAssertion:
         def __init__(self):
