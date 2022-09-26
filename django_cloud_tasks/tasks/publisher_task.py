@@ -1,8 +1,5 @@
 # pylint: disable=no-member
-from typing import Dict
-
 from gcp_pilot.pubsub import CloudPublisher
-from google.cloud import pubsub_v1
 
 from django_cloud_tasks.serializers import serialize
 from django_cloud_tasks.tasks.task import Task
@@ -14,20 +11,19 @@ class PublisherTask(Task):
     # - receiving it through the endpoint
     # - and the finally publishing to PubSub
     # might be useful to use the Cloud Task throttling
-    publish_immediately = True
+    publish_immediately: bool = True
+    enable_message_ordering: bool = False
 
-    def __init__(self, enable_message_ordering=False) -> None:
-        super().__init__()
-        self.enable_message_ordering = enable_message_ordering
-
-    def run(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
+    def run(self, topic_name: str, message: dict, attributes: dict[str, str] | None = None):
         return self.__client.publish(
             message=serialize(message),
             topic_id=self._full_topic_name(name=topic_name),
             attributes=attributes,
         )
 
-    def delay(self, topic_name: str, message: Dict, attributes: Dict[str, str] = None):
+    def delay(self, topic_name: str, message: dict, ordering_key: str | None = None, attributes: dict[str, str] = None):
+        self.enable_message_ordering = ordering_key is not None
+
         if not self.publish_immediately:
             task_kwargs = dict(
                 topic_name=self._full_topic_name(name=topic_name),
@@ -49,8 +45,4 @@ class PublisherTask(Task):
 
     @property
     def __client(self):
-        publisher_options = pubsub_v1.types.PublisherOptions(
-            enable_message_ordering=self.enable_message_ordering,
-        )
-
-        return CloudPublisher(publisher_options=publisher_options)
+        return CloudPublisher(enable_message_ordering=self.enable_message_ordering)
