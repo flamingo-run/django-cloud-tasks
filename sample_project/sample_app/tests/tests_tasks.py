@@ -11,13 +11,21 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tasks import PipelineRoutineRevertTask, PipelineRoutineTask, PublisherTask
+from django_cloud_tasks.tasks import PipelineRoutineRevertTask, PipelineRoutineTask, PublisherTask, Task
 from django_cloud_tasks.tests import factories, tests_base
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 
 
 class TasksTest(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        Task._Task__get_client.cache_clear()
+
+    def tearDown(self):
+        super().tearDown()
+        Task._Task__get_client.cache_clear()
+
     def patch_push(self, **kwargs):
         return patch("gcp_pilot.tasks.CloudTasks.push", **kwargs)
 
@@ -154,6 +162,24 @@ class TasksTest(SimpleTestCase):
                     tasks.CalculatePriceTask().later(when="potato", price=30, quantity=4, discount=0.2)
 
         push.assert_not_called()
+
+    def test_singleton_client_on_task(self):
+        # we have a singleton if it calls the same task twice
+        with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
+            for _ in range(10):
+                tasks.CalculatePriceTask().delay()
+
+        client.assert_called_once_with()
+        self.assertEqual(10, client().push.call_count)
+
+    def test_singleton_client_creates_new_instance_on_new_task(self):
+        # but I am not sure how the client is coded, so each task
+        # has its own client
+        with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
+            tasks.SayHelloTask().delay()
+            tasks.CalculatePriceTask().delay()
+
+        self.assertEqual(2, client.call_count)
 
 
 class PipelineRoutineRevertTaskTest(TestCase):
