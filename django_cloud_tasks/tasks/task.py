@@ -1,6 +1,7 @@
 # pylint: disable=no-member
 from abc import abstractmethod
 from datetime import datetime, timedelta
+from functools import lru_cache
 from random import randint
 
 from django.apps import apps
@@ -148,4 +149,9 @@ class Task(metaclass=TaskMeta):
 
     @property
     def __client(self):
+        return self.__get_client()
+
+    @classmethod
+    @lru_cache()
+    def __get_client(cls):
         return CloudTasks()
