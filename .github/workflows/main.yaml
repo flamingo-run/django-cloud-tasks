@@ -12,45 +12,37 @@ jobs:
   linter:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.x'
+          cache: poetry
+      - name: Install Python dependencies
+        run: make dependencies
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10.x'
-
-    - name: Cache dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      run: |
-        make dependencies
-
-    - name: Lint with pylint
-      run: |
-        make lint
+      - name: Lint with pylint
+        run: |
+          make lint
   security:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.10.x', '3.11.x' ]
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
 
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: |
-          make dependencies
+      - name: Install Python dependencies
+        run: make dependencies
 
       - name: Check vulnerabilities
         run: |
@@ -68,23 +60,21 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+    strategy:
+      matrix:
+        python-version: [ '3.10.x', '3.11.x' ]
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
 
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: |
-          make dependencies
+      - name: Install Python dependencies
+        run: make dependencies
 
       - name: Unit test with Django test suite
         run: |
