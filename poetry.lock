@@ -215,14 +215,14 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "django"
-version = "4.1.4"
+version = "4.1.6"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Django-4.1.4-py3-none-any.whl", hash = "sha256:0b223bfa55511f950ff741983d408d78d772351284c75e9f77d2b830b6b4d148"},
-    {file = "Django-4.1.4.tar.gz", hash = "sha256:d38a4e108d2386cb9637da66a82dc8d0733caede4c83c4afdbda78af4214211b"},
+    {file = "Django-4.1.6-py3-none-any.whl", hash = "sha256:c6fe7ebe7c017fe59f1029821dae0acb5a2ddcd6c9a0138fd20a8bfefac914bc"},
+    {file = "Django-4.1.6.tar.gz", hash = "sha256:bceb0fe1a386781af0788cae4108622756cd05e7775448deec04a71ddf87685d"},
 ]
 
 [package.dependencies]
