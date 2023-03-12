@@ -11,6 +11,7 @@ packages = [
 python = ">=3.10,<3.12"
 django = ">=4,<5"
 gcp-pilot = {version = "*", extras = ["tasks", "pubsub"]}
+drf-kit = "^1.19.0"
 
 
 [tool.poetry.dev-dependencies]
