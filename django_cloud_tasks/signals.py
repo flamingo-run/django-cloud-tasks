@@ -15,12 +15,8 @@ def ensure_valid_task_name(sender, instance, **kwargs):
 
 
 def _is_status_changing(instance: Model) -> bool:
-    if not instance.pk:
-        return False
-
-    current_routine = models.Routine.objects.get(pk=instance.pk)
-
-    return current_routine.status != instance.status
+    previous_status, current_status = instance._diff.get("status", (None, None))
+    return previous_status != current_status
 
 
 def enqueue_next_routines(instance: models.Routine):
@@ -70,7 +66,7 @@ def ensure_status_machine(sender, instance, **kwargs):
     if not _is_status_changing(instance=instance):
         return
 
-    current_routine = models.Routine.objects.get(pk=instance.pk)
+    previous_status, _ = instance._diff.get("status", (None, None))
 
     statuses = models.Routine.Statuses
     machine_statuses = {
@@ -84,5 +80,5 @@ def ensure_status_machine(sender, instance, **kwargs):
     }
     available_statuses = machine_statuses[instance.status]
 
-    if current_routine.status not in available_statuses:
-        raise ValidationError(f"Status update from '{current_routine.status}' to '{instance.status}' is not allowed")
+    if previous_status not in available_statuses:
+        raise ValidationError(f"Status update from '{previous_status}' to '{instance.status}' is not allowed")
