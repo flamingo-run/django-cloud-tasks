@@ -68,11 +68,11 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
 
-        expected_call = dict(
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/CalculatePriceTask",
-            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
-        )
+        expected_call = {
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        }
         push.assert_called_once_with(**expected_call)
 
     def test_task_async_only_once(self):
@@ -80,13 +80,13 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.FailMiserablyTask().delay(magic_number=666)
 
-        expected_call = dict(
-            task_name="FailMiserablyTask",
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/FailMiserablyTask",
-            payload=json.dumps({"magic_number": 666}),
-            unique=False,
-        )
+        expected_call = {
+            "task_name": "FailMiserablyTask",
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/FailMiserablyTask",
+            "payload": json.dumps({"magic_number": 666}),
+            "unique": False,
+        }
         push.assert_called_once_with(**expected_call)
 
     def test_task_async_reused_queue(self):
@@ -95,11 +95,11 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
 
-        expected_call = dict(
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/CalculatePriceTask",
-            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
-        )
+        expected_call = {
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        }
         expected_backup_call = expected_call
         expected_backup_call["queue_name"] += "--temp"
 
@@ -118,12 +118,12 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.CalculatePriceTask().later(when=1800, price=30, quantity=4, discount=0.2)
 
-        expected_call = dict(
-            delay_in_seconds=1800,
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/CalculatePriceTask",
-            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
-        )
+        expected_call = {
+            "delay_in_seconds": 1800,
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        }
         push.assert_called_once_with(**expected_call)
 
     def test_task_later_delta(self):
@@ -132,12 +132,12 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.CalculatePriceTask().later(when=delta, price=30, quantity=4, discount=0.2)
 
-        expected_call = dict(
-            delay_in_seconds=2520,
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/CalculatePriceTask",
-            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
-        )
+        expected_call = {
+            "delay_in_seconds": 2520,
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        }
         push.assert_called_once_with(**expected_call)
 
     @freeze_time("2020-01-01T00:00:00")
@@ -147,12 +147,12 @@ class TasksTest(SimpleTestCase):
             with patch_auth():
                 tasks.CalculatePriceTask().later(when=some_time, price=30, quantity=4, discount=0.2)
 
-        expected_call = dict(
-            delay_in_seconds=60 * 100,
-            queue_name="tasks",
-            url="http://localhost:8080/tasks/CalculatePriceTask",
-            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
-        )
+        expected_call = {
+            "delay_in_seconds": 60 * 100,
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+        }
         push.assert_called_once_with(**expected_call)
 
     def test_task_later_error(self):

@@ -25,11 +25,11 @@ class PublisherTask(Task):
         self.enable_message_ordering = ordering_key is not None
 
         if not self.publish_immediately:
-            task_kwargs = dict(
-                topic_name=self._full_topic_name(name=topic_name),
-                message=message,
-                attributes=attributes,
-            )
+            task_kwargs = {
+                "topic_name": self._full_topic_name(name=topic_name),
+                "message": message,
+                "attributes": attributes,
+            }
             return super()._send(task_kwargs=task_kwargs)
         return self.run(topic_name=topic_name, message=message, attributes=attributes)
 

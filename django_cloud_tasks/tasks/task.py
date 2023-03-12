@@ -15,12 +15,12 @@ from django_cloud_tasks.serializers import deserialize, serialize
 
 
 class TaskMeta(type):
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         app = apps.get_app_config("django_cloud_tasks")
         attrs["_app_name"] = app.app_name
         attrs["_delimiter"] = app.delimiter
 
-        klass = type.__new__(cls, name, bases, attrs)
+        klass = type.__new__(mcs, name, bases, attrs)
         if getattr(klass, "abstract", False) and "abstract" not in attrs:
             setattr(klass, "abstract", False)  # TODO Removing the attribute would be better
         TaskMeta._register_task(app=app, task_class=klass)
@@ -78,7 +78,7 @@ class Task(metaclass=TaskMeta):
 
         return self._send(
             task_kwargs=kwargs,
-            api_kwargs=dict(delay_in_seconds=int(delay_in_seconds)),
+            api_kwargs={"delay_in_seconds": int(delay_in_seconds)},
             queue=queue,
         )
 
@@ -92,7 +92,7 @@ class Task(metaclass=TaskMeta):
         delay_in_seconds = randint(0, int(max_seconds))
         return self._send(
             task_kwargs=kwargs,
-            api_kwargs=dict(delay_in_seconds=delay_in_seconds),
+            api_kwargs={"delay_in_seconds": delay_in_seconds},
             queue=queue,
         )
 
@@ -104,19 +104,19 @@ class Task(metaclass=TaskMeta):
 
         api_kwargs = api_kwargs or {}
         api_kwargs.update(
-            dict(
-                queue_name=queue or self.queue,
-                url=self.url(),
-                payload=payload,
-            )
+            {
+                "queue_name": queue or self.queue,
+                "url": self.url(),
+                "payload": payload,
+            }
         )
 
         if self.only_once:
             api_kwargs.update(
-                dict(
-                    task_name=self.name(),
-                    unique=False,
-                )
+                {
+                    "task_name": self.name(),
+                    "unique": False,
+                }
             )
 
         try:
