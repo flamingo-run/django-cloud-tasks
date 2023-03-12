@@ -84,25 +84,25 @@ class Routine(models.Model, ModelDiffMixin):
         self.output = output
         self.status = self.Statuses.FAILED
         self.ends_at = timezone.now()
-        self.save()
+        self.save(update_fields=["status", "output", "ends_at"])
 
     def complete(self, output: dict):
         self.output = output
         self.status = self.Statuses.COMPLETED
         self.ends_at = timezone.now()
-        self.save()
+        self.save(update_fields=["status", "output", "ends_at"])
 
     def enqueue(self):
         with transaction.atomic():
             self.status = self.Statuses.SCHEDULED
             self.starts_at = timezone.now()
-            self.save()
+            self.save(update_fields=["status", "starts_at"])
 
     def revert(self):
         with transaction.atomic():
             if self.status not in [self.Statuses.REVERTED, self.Statuses.REVERTING]:
                 self.status = self.Statuses.REVERTING
-                self.save()
+                self.save(update_fields=["status"])
 
     def add_next(self, routine: dict) -> "Routine":
         routine["pipeline_id"] = self.pipeline_id

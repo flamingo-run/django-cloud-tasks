@@ -42,7 +42,7 @@ class PipelineRoutineRevertTask(RoutineLockTaskMixin):
         routine = models.Routine.objects.get(pk=routine_id)
         routine.task().revert(data=routine.output)
         routine.status = models.Routine.Statuses.REVERTED
-        routine.save()
+        routine.save(update_fields=["status"])
 
 
 class PipelineRoutineTask(RoutineLockTaskMixin):
@@ -61,7 +61,7 @@ class PipelineRoutineTask(RoutineLockTaskMixin):
 
         routine.attempt_count += 1
         routine.status = models.Routine.Statuses.RUNNING
-        routine.save()
+        routine.save(update_fields=["attempt_count", "status"])
 
         try:
             logger.info(f"Routine #{routine_id} is running")
