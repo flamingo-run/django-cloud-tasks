@@ -8,7 +8,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.11,<3.12"
 django = ">=4,<5"
 gcp-pilot = {version = "*", extras = ["tasks", "pubsub"]}
 
