@@ -3,6 +3,7 @@ from typing import Iterable, Tuple
 
 from django.apps import AppConfig
 from django.conf import settings
+from django.utils.module_loading import module_has_submodule
 from gcp_pilot.pubsub import CloudSubscriber
 from gcp_pilot.scheduler import CloudScheduler
 
@@ -123,4 +124,10 @@ class DjangoCloudTasksAppConfig(AppConfig):
         return to_add, to_update, to_remove
 
     def ready(self):
-        from django_cloud_tasks import signals  # pylint: disable=import-outside-toplevel, unused-import
+        self.import_signals()
+
+    def import_signals(self) -> None:
+        # Same strategy that AppConfig.import_models uses to load app's models
+        if module_has_submodule(self.module, "signals"):
+            full_module_name = "%s.%s" % (self.name, "signals")
+            importlib.import_module(full_module_name)
