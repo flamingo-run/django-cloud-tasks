@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 
-from django_cloud_tasks import exceptions, models
+from django_cloud_tasks import models
 from django_cloud_tasks.tests import factories
 
 
@@ -34,7 +34,7 @@ class RoutineModelTest(TestCase):
     @freeze_time("2020-01-01")
     def tests_enqueue(self):
         routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.sync") as task:
             routine.enqueue()
             routine.refresh_from_db()
             self.assertEqual("scheduled", routine.status)
@@ -43,7 +43,7 @@ class RoutineModelTest(TestCase):
 
     def tests_revert_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(status="completed", output="{'id': 42}")
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as revert_task:
+        with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as revert_task:
             routine.revert()
             routine.refresh_from_db()
             self.assertEqual("reverting", routine.status)
@@ -51,8 +51,9 @@ class RoutineModelTest(TestCase):
 
     def tests_ensure_valid_task_name(self):
         task_name = "InvalidTaskName"
-        with self.assertRaises(exceptions.TaskNotFound, msg=f"Task {task_name} not registered."):
-            factories.RoutineFactory(task_name=task_name)
+        with self.assertRaises(ValidationError, msg=f"Task {task_name} not registered."):
+            x = factories.RoutineFactory(task_name=task_name)
+            print(x)
 
     def tests_enqueue_next_routines_after_completed(self):
         pipeline = factories.PipelineFactory()
@@ -66,7 +67,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
             first_routine.status = "completed"
             first_routine.save()
         calls = [call(routine_id=second_routine.pk), call(routine_id=third_routine.pk)]
@@ -84,7 +85,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
             first_routine.status = "completed"
             first_routine.save()
         task.assert_not_called()
@@ -101,7 +102,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -119,7 +120,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
             third_routine.status = "reverted"
             third_routine.save()
 
@@ -145,7 +146,7 @@ class PipelineModelTest(TestCase):
         leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
         pipeline.routines.add(leaf_already_reverted)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
             pipeline.start()
         task.assert_not_called()
 
@@ -162,7 +163,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
             pipeline.start()
         calls = [call(routine_id=first_routine.pk), call(routine_id=another_first_routine.pk)]
         task.assert_has_calls(calls, any_order=True)
@@ -173,7 +174,7 @@ class PipelineModelTest(TestCase):
         leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
         pipeline.routines.add(leaf_already_reverted)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
             pipeline.revert()
         task.assert_not_called()
 
@@ -192,7 +193,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=second_routine, next_routine=third_routine)
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
-        with patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay") as task:
+        with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
             pipeline.revert()
         calls = [
             call(routine_id=fourth_routine.pk),
@@ -214,8 +215,8 @@ class PipelineModelTest(TestCase):
 class RoutineStateMachineTest(TestCase):
     def setUp(self):
         super().setUp()
-        revert_routine_task = patch("django_cloud_tasks.tasks.PipelineRoutineRevertTask.delay")
-        routine_task = patch("django_cloud_tasks.tasks.PipelineRoutineTask.delay")
+        revert_routine_task = patch("django_cloud_tasks.tasks.RoutineReverterTask.asap")
+        routine_task = patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap")
         routine_task.start()
         revert_routine_task.start()
         self.addCleanup(routine_task.stop)

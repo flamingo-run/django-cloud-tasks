@@ -11,8 +11,9 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tasks import PipelineRoutineRevertTask, PipelineRoutineTask, PublisherTask, Task
+from django_cloud_tasks.tasks import RoutineExecutorTask, RoutineReverterTask, Task
 from django_cloud_tasks.tests import factories, tests_base
+from django_cloud_tasks.tests.tests_base import EagerTasksMixin, eager_tasks
 from sample_project.sample_app import tasks
 from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 
@@ -20,65 +21,75 @@ from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
 class TasksTest(SimpleTestCase):
     def setUp(self):
         super().setUp()
-        Task._Task__get_client.cache_clear()
+        Task._get_tasks_client.cache_clear()
+
+        patch_output = patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj")
+        patch_output.start()
+        self.addCleanup(patch_output.stop)
+
+        auth = patch_auth()
+        auth.start()
+        self.addCleanup(auth.stop)
 
     def tearDown(self):
         super().tearDown()
-        Task._Task__get_client.cache_clear()
+        Task._get_tasks_client.cache_clear()
 
     def patch_push(self, **kwargs):
         return patch("gcp_pilot.tasks.CloudTasks.push", **kwargs)
 
-    def test_registered_tasks(self):
-        app_config = apps.get_app_config("django_cloud_tasks")
+    @property
+    def app_config(self):
+        return apps.get_app_config("django_cloud_tasks")
 
+    def test_registered_tasks(self):
         expected_tasks = {
-            "PublisherTask",
             "CalculatePriceTask",
             "FailMiserablyTask",
             "OneBigDedicatedTask",
-            "PipelineRoutineTask",
+            "RoutineExecutorTask",
             "SayHelloTask",
             "SayHelloWithParamsTask",
             "DummyRoutineTask",
-            "RoutineLockTaskMixin",
-            "PipelineRoutineRevertTask",
+            "RoutineReverterTask",
         }
-        self.assertEqual(expected_tasks, set(app_config.on_demand_tasks))
+        self.assertEqual(expected_tasks, set(self.app_config.on_demand_tasks))
 
         expected_tasks = {"SaySomethingTask"}
-        self.assertEqual(expected_tasks, set(app_config.periodic_tasks))
+        self.assertEqual(expected_tasks, set(self.app_config.periodic_tasks))
 
         expected_tasks = {"PleaseNotifyMeTask"}
-        self.assertEqual(expected_tasks, set(app_config.subscriber_tasks))
+        self.assertEqual(expected_tasks, set(self.app_config.subscriber_tasks))
 
     def test_get_task(self):
-        app_config = apps.get_app_config("django_cloud_tasks")
+        self.assertEqual(tasks.SayHelloWithParamsTask, self.app_config.get_task(name="SayHelloWithParamsTask"))
 
-        self.assertEqual(PublisherTask, app_config.get_task(name="PublisherTask"))
+    def test_get_abstract_task(self):
+        with self.assertRaises(expected_exception=exceptions.TaskNotFound):
+            self.app_config.get_task(name="PublisherTask")
 
     def test_get_task_not_found(self):
-        app_config = apps.get_app_config("django_cloud_tasks")
-
         with self.assertRaises(exceptions.TaskNotFound):
-            app_config.get_task(name="PotatoTask")
+            self.app_config.get_task(name="PotatoTask")
 
     def test_task_async(self):
-        with self.patch_push() as push:
-            with patch_auth():
-                tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
+        with (
+            patch_auth(),
+            self.patch_push() as push,
+        ):
+            tasks.CalculatePriceTask.asap(price=30, quantity=4, discount=0.2)
 
         expected_call = dict(
             queue_name="tasks",
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         push.assert_called_once_with(**expected_call)
 
     def test_task_async_only_once(self):
         with self.patch_push() as push:
-            with patch_auth():
-                tasks.FailMiserablyTask().delay(magic_number=666)
+            tasks.FailMiserablyTask.asap(magic_number=666)
 
         expected_call = dict(
             task_name="FailMiserablyTask",
@@ -86,19 +97,20 @@ class TasksTest(SimpleTestCase):
             url="http://localhost:8080/tasks/FailMiserablyTask",
             payload=json.dumps({"magic_number": 666}),
             unique=False,
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         push.assert_called_once_with(**expected_call)
 
     def test_task_async_reused_queue(self):
         effects = [DeletedRecently("Queue tasks"), None]
         with self.patch_push(side_effect=effects) as push:
-            with patch_auth():
-                tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.asap(price=30, quantity=4, discount=0.2)
 
         expected_call = dict(
             queue_name="tasks",
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         expected_backup_call = expected_call
         expected_backup_call["queue_name"] += "--temp"
@@ -108,35 +120,36 @@ class TasksTest(SimpleTestCase):
         push.assert_called_with(**expected_backup_call)
 
     def test_task_eager(self):
-        with self.settings(EAGER_TASKS=True):
-            with patch_auth():
-                response = tasks.CalculatePriceTask().delay(price=30, quantity=4, discount=0.2)
+        with eager_tasks():
+            response = tasks.CalculatePriceTask.asap(price=30, quantity=4, discount=0.2)
         self.assertGreater(response, 0)
 
     def test_task_later_int(self):
         with self.patch_push() as push:
-            with patch_auth():
-                tasks.CalculatePriceTask().later(when=1800, price=30, quantity=4, discount=0.2)
+            task_kwargs = dict(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.later(eta=1800, task_kwargs=task_kwargs)
 
         expected_call = dict(
             delay_in_seconds=1800,
             queue_name="tasks",
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         push.assert_called_once_with(**expected_call)
 
     def test_task_later_delta(self):
         delta = timedelta(minutes=42)
         with self.patch_push() as push:
-            with patch_auth():
-                tasks.CalculatePriceTask().later(when=delta, price=30, quantity=4, discount=0.2)
+            task_kwargs = dict(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.later(eta=delta, task_kwargs=task_kwargs)
 
         expected_call = dict(
             delay_in_seconds=2520,
             queue_name="tasks",
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         push.assert_called_once_with(**expected_call)
 
@@ -144,45 +157,46 @@ class TasksTest(SimpleTestCase):
     def test_task_later_time(self):
         some_time = now() + timedelta(minutes=100)
         with self.patch_push() as push:
-            with patch_auth():
-                tasks.CalculatePriceTask().later(when=some_time, price=30, quantity=4, discount=0.2)
+            task_kwargs = dict(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.later(eta=some_time, task_kwargs=task_kwargs)
 
         expected_call = dict(
             delay_in_seconds=60 * 100,
             queue_name="tasks",
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
         )
         push.assert_called_once_with(**expected_call)
 
     def test_task_later_error(self):
         with self.patch_push() as push:
-            with patch_auth():
-                with self.assertRaisesRegex(expected_exception=ValueError, expected_regex="Unsupported schedule"):
-                    tasks.CalculatePriceTask().later(when="potato", price=30, quantity=4, discount=0.2)
+            with self.assertRaisesRegex(expected_exception=ValueError, expected_regex="Unsupported schedule"):
+                task_kwargs = dict(price=30, quantity=4, discount=0.2)
+                tasks.CalculatePriceTask.later(eta="potato", task_kwargs=task_kwargs)
 
         push.assert_not_called()
 
     def test_singleton_client_on_task(self):
         # we have a singleton if it calls the same task twice
-        with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
-            for _ in range(10):
-                tasks.CalculatePriceTask().delay()
+        with patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
+            with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
+                for _ in range(10):
+                    tasks.CalculatePriceTask.asap()
 
         client.assert_called_once_with()
         self.assertEqual(10, client().push.call_count)
 
     def test_singleton_client_creates_new_instance_on_new_task(self):
-        # but I am not sure how the client is coded, so each task
-        # has its own client
-        with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
-            tasks.SayHelloTask().delay()
-            tasks.CalculatePriceTask().delay()
+        with patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
+            with patch("django_cloud_tasks.tasks.task.CloudTasks") as client:
+                tasks.SayHelloTask.asap()
+                tasks.CalculatePriceTask.asap()
 
         self.assertEqual(2, client.call_count)
 
 
-class PipelineRoutineRevertTaskTest(TestCase):
+class RoutineReverterTaskTest(EagerTasksMixin, TestCase):
     _mock_lock = None
 
     def setUp(self):
@@ -202,28 +216,25 @@ class PipelineRoutineRevertTaskTest(TestCase):
             output={"spell": "Obliviate"},
         )
         with patch("sample_project.sample_app.tasks.SayHelloTask.revert") as revert:
-            PipelineRoutineRevertTask().delay(routine_id=routine.pk)
+            RoutineReverterTask.asap(routine_id=routine.pk)
             revert.assert_called_once_with(data=routine.output)
             routine.refresh_from_db()
             self.assertEqual(routine.status, "reverted")
 
 
-class PipelineRoutineTaskTest(TestCase):
+class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
     _mock_lock = None
 
     def setUp(self):
         super().setUp()
 
-        patched_settings = self.settings(EAGER_TASKS=True)
-        patched_settings.enable()
-        self.addCleanup(patched_settings.disable)
-
-        stack = ExitStack()
-        self.mock_lock = stack.enter_context(patch_cache_lock())
+        self.mock_lock = patch_cache_lock()
+        self.mock_lock.start()
+        self.addCleanup(self.mock_lock.stop)
 
     def assert_routine_lock(self, routine_id: int):
         self.mock_lock.assert_called_with(
-            key=f"lock-PipelineRoutineTask-{routine_id}",
+            key=f"lock-RoutineExecutorTask-{routine_id}",
             timeout=60,
             blocking_timeout=5,
         )
@@ -234,7 +245,7 @@ class PipelineRoutineTaskTest(TestCase):
             task_name="SayHelloTask",
         )
         with self.assertLogs(level="INFO") as context:
-            PipelineRoutineTask().delay(routine_id=routine.pk)
+            RoutineExecutorTask.asap(routine_id=routine.pk)
             self.assert_routine_lock(routine_id=routine.pk)
             self.assertEqual(context.output, [f"INFO:root:Routine #{routine.pk} is already completed"])
 
@@ -247,7 +258,7 @@ class PipelineRoutineTaskTest(TestCase):
         )
         with patch("django_cloud_tasks.models.Pipeline.revert") as revert:
             with self.assertLogs(level="INFO") as context:
-                PipelineRoutineTask().delay(routine_id=routine.pk)
+                RoutineExecutorTask.asap(routine_id=routine.pk)
                 self.assertEqual(
                     context.output,
                     [
@@ -265,7 +276,7 @@ class PipelineRoutineTaskTest(TestCase):
             attempt_count=1,
         )
         with self.assertLogs(level="INFO") as context:
-            PipelineRoutineTask().run(routine_id=routine.pk)
+            RoutineExecutorTask.sync(routine_id=routine.pk)
             self.assert_routine_lock(routine_id=routine.pk)
             routine.refresh_from_db()
             self.assertEqual(
@@ -286,9 +297,9 @@ class PipelineRoutineTaskTest(TestCase):
             attempt_count=1,
         )
         with self.assertLogs(level="INFO") as context:
-            with patch("sample_project.sample_app.tasks.SayHelloTask.run", side_effect=Exception("any error")):
+            with patch("sample_project.sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")):
                 with patch("django_cloud_tasks.models.Routine.enqueue") as enqueue:
-                    PipelineRoutineTask().run(routine_id=routine.pk)
+                    RoutineExecutorTask.sync(routine_id=routine.pk)
                     self.assert_routine_lock(routine_id=routine.pk)
                     routine.refresh_from_db()
                     self.assertEqual(

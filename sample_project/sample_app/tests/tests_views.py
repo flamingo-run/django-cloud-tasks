@@ -14,7 +14,7 @@ class TaskViewTest(SimpleTestCase):
         url = self.url(name="CalculatePriceTask")
         response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual({"result": 960.0}, response.json())
+        self.assertEqual({"result": 960.0, "status": "executed"}, response.json())
 
     def test_task_called_with_internal_error(self):
         data = {
@@ -34,19 +34,6 @@ class TaskViewTest(SimpleTestCase):
 
         expected_response = {
             "error": "Task PotatoTask not found",
-            "available_tasks": [
-                "PublisherTask",
-                "RoutineLockTaskMixin",
-                "PipelineRoutineRevertTask",
-                "PipelineRoutineTask",
-                "CalculatePriceTask",
-                "FailMiserablyTask",
-                "SayHelloTask",
-                "SayHelloWithParamsTask",
-                "OneBigDedicatedTask",
-                "DummyRoutineTask",
-                "SaySomethingTask",
-            ],
         }
         self.assertEqual(expected_response, response.json())
 
@@ -73,4 +60,4 @@ class TaskViewTest(SimpleTestCase):
         url = self.url(name="OneBigDedicatedTask")
         response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual({"result": "Chuck Norris is better than you"}, response.json())
+        self.assertEqual({"result": "Chuck Norris is better than you", "status": "executed"}, response.json())
