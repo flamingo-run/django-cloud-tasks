@@ -1,64 +1,71 @@
-# pylint: disable=no-member
-from abc import abstractmethod
+import abc
+from urllib.parse import urljoin
 
-from gcp_pilot.pubsub import CloudSubscriber, Message
+from cachetools.func import lru_cache
+from django.urls import reverse
+from gcp_pilot.pubsub import CloudSubscriber
 
-from django_cloud_tasks.tasks.task import Task
+from django_cloud_tasks import UNSET
+from django_cloud_tasks.tasks.task import Task, get_config
 
 
-class SubscriberTask(Task):
-    abstract = True
+class SubscriberTask(Task, abc.ABC):
     _use_oidc_auth = True
-    _url_name = "subscriptions-endpoint"
-    enable_message_ordering: bool = False
-    max_retries: int | None = None
-    min_backoff: int | None = None
-    max_backoff: int | None = None
-    expiration_ttl: int | None = None
+    max_retries: int | None = UNSET
+    min_backoff: int | None = UNSET
+    max_backoff: int | None = UNSET
+    expiration_ttl: int | None = UNSET
+    use_cloud_tasks: bool = False
 
-    def _body_to_kwargs(self, request_body):
-        message = Message.load(body=request_body)
-        return {
-            "message": message.data,
-            "attributes": message.attributes,
-        }
-
-    @abstractmethod
-    def run(self, message, attributes):
+    @abc.abstractmethod
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
         raise NotImplementedError()
 
-    def register(self):
-        return self.__client.create_or_update_subscription(
-            topic_id=self.topic_name,
-            subscription_id=self.subscription_name,
-            enable_message_ordering=self.enable_message_ordering,
-            push_to_url=self.url(),
-            use_oidc_auth=self._use_oidc_auth,
-            dead_letter_topic_id=self.dead_letter_topic_name,
-            dead_letter_subscription_id=self.dead_letter_subscription_name,
-            max_retries=self.max_retries,
-            min_backoff=self.min_backoff,
-            max_backoff=self.max_backoff,
-            expiration_ttl=self.expiration_ttl,
+    @classmethod
+    def set_up(cls):
+        return cls._get_subscriber_client().create_or_update_subscription(
+            topic_id=cls.topic_name(),
+            subscription_id=cls.subscription_name(),
+            push_to_url=cls.subscription_url(),
+            use_oidc_auth=cls._use_oidc_auth,
+            dead_letter_topic_id=cls.dead_letter_topic_name(),
+            dead_letter_subscription_id=cls.dead_letter_subscription_name(),
+            max_retries=cls.max_retries or get_config("subscribers_max_retries"),
+            min_backoff=cls.min_backoff or get_config("subscribers_min_backoff"),
+            max_backoff=cls.max_backoff or get_config("subscribers_max_backoff"),
+            expiration_ttl=cls.expiration_ttl or get_config("subscribers_expiration"),
         )
 
-    @property
-    @abstractmethod
-    def topic_name(self):
+    @classmethod
+    @abc.abstractmethod
+    def topic_name(cls) -> str:
         raise NotImplementedError()
 
-    @property
-    def dead_letter_topic_name(self):
+    @classmethod
+    def dead_letter_topic_name(cls) -> str | None:
         return None
 
-    @property
-    def dead_letter_subscription_name(self):
-        return self.dead_letter_topic_name
+    @classmethod
+    def dead_letter_subscription_name(cls) -> str:
+        return cls.dead_letter_topic_name()
 
-    @property
-    def subscription_name(self):
-        return f"{self.topic_name}{self._delimiter}{self._app_name or self.name()}"
+    @classmethod
+    def subscription_name(cls) -> str:
+        name = cls.name()
+        if app_name := get_config(name="app_name"):
+            delimiter = get_config(name="delimiter")
+            name = f"{app_name}{delimiter}{name}"
+        return name
 
-    @property
-    def __client(self):
+    @classmethod
+    @lru_cache()
+    def subscription_url(cls) -> str:
+        domain = get_config(name="domain")
+        url_name = get_config(name="subscribers_url_name")
+        path = reverse(url_name, args=(cls.name(),))
+        return urljoin(domain, path)
+
+    @classmethod
+    @lru_cache()
+    def _get_subscriber_client(cls) -> CloudSubscriber:
         return CloudSubscriber()
