@@ -67,9 +67,10 @@ class DjangoCloudTasksAppConfig(AppConfig):
         }
 
         for parent_klass, container in containers.items():
-            if issubclass(task_class, parent_klass) and not getattr(task_class, "abstract", False):
-                container[task_class.name()] = task_class
-                break
+            if issubclass(task_class, parent_klass):
+                container[str(task_class)] = task_class
+                return
+        raise ValueError(f"Unable to defined the task type of {task_class}")
 
     def schedule_tasks(self) -> Tuple[Iterable[str], Iterable[str], Iterable[str]]:
         client = CloudScheduler()
