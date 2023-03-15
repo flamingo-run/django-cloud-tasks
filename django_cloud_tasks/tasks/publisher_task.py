@@ -1,6 +1,7 @@
 import abc
 
 from cachetools.func import lru_cache
+from django.db.models import Model
 from gcp_pilot.pubsub import CloudPublisher
 
 from django_cloud_tasks.serializers import serialize
@@ -40,6 +41,67 @@ class PublisherTask(Task, abc.ABC):
             delimiter = get_config(name="delimiter")
             name = f"{app_name}{delimiter}{name}"
         return name
+
+    @classmethod
+    @lru_cache()
+    def _get_publisher_client(cls) -> CloudPublisher:
+        return CloudPublisher()
+
+
+class ModelPublisherTask(PublisherTask, abc.ABC):
+    # Just a specialized Task that publishes a Django model to PubSub
+    # Since it cannot accept any random parameters, all its signatures have fixed arguments
+    @classmethod
+    def sync(cls, obj: Model, **kwargs):
+        message = cls.build_message_content(obj=obj, **kwargs)
+        attributes = cls.build_message_attributes(obj=obj, **kwargs)
+        topic_name = cls.topic_name(obj=obj, **kwargs)
+        return cls().run(message=message, attributes=attributes, topic_name=topic_name)
+
+    @classmethod
+    def asap(cls, obj: Model, **kwargs):
+        message = cls.build_message_content(obj=obj, **kwargs)
+        attributes = cls.build_message_attributes(obj=obj, **kwargs)
+        topic_name = cls.topic_name(obj=obj, **kwargs)
+        task_kwargs = {
+            "message": message,
+            "attributes": attributes,
+            "topic_name": topic_name,
+        }
+        return cls.push(task_kwargs=task_kwargs)
+
+    def run(self, message: dict, topic_name: str, attributes: dict[str, str]):
+        return self._get_publisher_client().publish(
+            message=serialize(value=message),
+            topic_id=topic_name,
+            attributes=attributes,
+        )
+
+    @classmethod
+    def set_up(cls) -> None:
+        ...  # TODO: run over all models?
+
+    @classmethod
+    def topic_name(cls, obj: Model, **kwargs) -> str:
+        name = cls.extract_model_name(obj=obj)
+        if app_name := get_config(name="app_name"):
+            delimiter = get_config(name="delimiter")
+            name = f"{app_name}{delimiter}{name}"
+        return name
+
+    @classmethod
+    def extract_model_name(cls, obj: Model) -> str:
+        app_name = str(obj.__class__._meta.app_label).lower()
+        model_name = str(obj.__class__._meta.model_name).lower()
+        return f"{app_name}-{model_name}"
+
+    @classmethod
+    def build_message_content(cls, obj: Model, **kwargs) -> dict:
+        raise NotImplementedError()
+
+    @classmethod
+    def build_message_attributes(cls, obj: Model, **kwargs) -> dict:
+        raise NotImplementedError()
 
     @classmethod
     @lru_cache()
