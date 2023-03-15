@@ -1,36 +1,49 @@
-from typing import Any
+from typing import Type, Any
 
 from django.apps import apps
 from django.http import JsonResponse
 from django.views.generic import View
+from gcp_pilot.pubsub import Message
+
+from django_cloud_tasks import exceptions
+from django_cloud_tasks.exceptions import TaskNotFound
+from django_cloud_tasks.serializers import deserialize
+from django_cloud_tasks.tasks import Task, SubscriberTask
+from django_cloud_tasks.tasks.task import TaskMetadata
 
 
 class GoogleCloudTaskView(View):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.tasks = self._get_available_tasks()
-
-    def _get_available_tasks(self):
-        app = apps.get_app_config("django_cloud_tasks")
-        all_tasks = app.on_demand_tasks.copy()
-        all_tasks.update(app.periodic_tasks.copy())
-        return all_tasks
-
     def post(self, request, task_name, *args, **kwargs):
         try:
-            task_class = self.tasks[task_name]
-        except KeyError:
-            status = 404
-            result = {"error": f"Task {task_name} not found", "available_tasks": list(self.tasks)}
-            return self._prepare_response(status=status, payload=result)
+            task_class = self.get_task(name=task_name)
+        except TaskNotFound:
+            result = {"error": f"Task {task_name} not found"}
+            return JsonResponse(status=404, data=result)
 
-        output = task_class().execute(request_body=request.body)
-        result = {"result": output}
+        task_kwargs = self.parse_input(request=request)
+        task_metadata = self.parse_metadata(request=request)
+        try:
+            output = self.execute_task(task_class=task_class, task_metadata=task_metadata, task_kwargs=task_kwargs)
+            data = {"result": output, "status": "executed"}
+            status = 200
+        except exceptions.DiscardTaskException:
+            data = {"status": "discarded"}
+            status = 202
 
-        return self._prepare_response(status=200, payload=result)
+        return JsonResponse(status=status, data=data)
 
-    def _prepare_response(self, status: int, payload: dict[str, Any]):
-        return JsonResponse(status=status, data=payload)
+    def get_task(self, name: str) -> Type[Task]:
+        app = apps.get_app_config("django_cloud_tasks")
+        return app.get_task(name=name)
+
+    def execute_task(self, task_class: type[Task], task_metadata: TaskMetadata, task_kwargs: dict) -> Any:
+        return task_class(metadata=task_metadata).process(**task_kwargs)
+
+    def parse_input(self, request) -> dict:
+        return deserialize(value=request.body)
+
+    def parse_metadata(self, request) -> TaskMetadata:
+        return TaskMetadata.from_headers(headers=dict(request.headers))
 
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages

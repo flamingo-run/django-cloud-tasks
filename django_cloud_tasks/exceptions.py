@@ -8,3 +8,7 @@ class TaskNotFound(Exception):
     def __init__(self, name: str):
         message = f"Task {name} not registered."
         super().__init__(message)
+
+
+class DiscardTaskException(Exception):
+    ...
