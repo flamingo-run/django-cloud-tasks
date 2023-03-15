@@ -48,5 +48,23 @@ class GoogleCloudTaskView(View):
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
 class GoogleCloudSubscribeView(GoogleCloudTaskView):
-    def _get_available_tasks(self):
-        return apps.get_app_config("django_cloud_tasks").subscriber_tasks.copy()
+    def parse_input(self, request) -> dict:
+        message = Message.load(body=request.body)
+        return {
+            "content": message.data,
+            "attributes": message.attributes,
+        }
+
+    def get_task(self, name: str) -> Type[SubscriberTask]:
+        app = apps.get_app_config("django_cloud_tasks")
+        try:
+            return app.subscriber_tasks[name]
+        except KeyError:
+            raise TaskNotFound(name=name)
+
+    def execute_task(self, task_class: type[SubscriberTask], task_metadata: TaskMetadata, task_kwargs: dict) -> Any:
+        if task_class.use_cloud_tasks:
+            metadata = task_class.push(task_kwargs=task_kwargs, headers=task_metadata.custom_headers)
+            return {"cloud-tasks-forwarded": {"queue_name": metadata.queue_name, "task_id": metadata.task_id}}
+        else:
+            return super().execute_task(task_class=task_class, task_metadata=task_metadata, task_kwargs=task_kwargs)
