@@ -7,7 +7,6 @@ import django_cloud_tasks.serializers
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []

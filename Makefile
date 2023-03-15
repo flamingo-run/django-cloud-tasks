@@ -20,14 +20,13 @@ check:
 
 lint:
 	@echo "Checking code style ..."
-	DJANGO_SETTINGS_MODULE=sample_project.settings ENV=test poetry run pylint ./django_cloud_tasks ./sample_project
 	poetry run black --check .
-	poetry run isort --check .
+	poetry run ruff check .
 
 style:
 	@echo "Applying code style ..."
 	poetry run black .
-	poetry run isort .
+	poetry run ruff . --fix
 
 unit:
 	@echo "Running unit tests ..."
