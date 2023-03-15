@@ -1,5 +1,6 @@
+import importlib
 import os
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Any
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -8,6 +9,9 @@ from gcp_pilot.pubsub import CloudSubscriber
 from gcp_pilot.scheduler import CloudScheduler
 
 from django_cloud_tasks import exceptions
+
+
+PREFIX = "DJANGO_CLOUD_TASKS_"
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
@@ -20,9 +24,17 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.on_demand_tasks = {}
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
-        self.domain = self._fetch_config(name="GOOGLE_CLOUD_TASKS_ENDPOINT", default="http://localhost:8080")
-        self.app_name = self._fetch_config(name="GOOGLE_CLOUD_TASKS_APP_NAME", default=os.environ.get("APP_NAME", None))
-        self.delimiter = self._fetch_config(name="GOOGLE_CLOUD_TASKS_DELIMITER", default="--")
+        self.domain = self._fetch_config(name="ENDPOINT", default="http://localhost:8080")
+        self.app_name = self._fetch_config(name="APP_NAME", default=os.environ.get("APP_NAME", None))
+        self.delimiter = self._fetch_config(name="DELIMITER", default="--")
+        self.eager = self._fetch_config(name="EAGER", default=False)
+        self.tasks_url_name = self._fetch_config(name="URL_NAME", default="tasks-endpoint")
+        self.subscribers_url_name = self._fetch_config(name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint")
+
+        self.subscribers_max_retries = self._fetch_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
+        self.subscribers_min_backoff = self._fetch_config(name="SUBSCRIBER_MIN_BACKOFF", default=None)
+        self.subscribers_max_backoff = self._fetch_config(name="SUBSCRIBER_MAX_BACKOFF", default=None)
+        self.subscribers_expiration = self._fetch_config(name="SUBSCRIBER_EXPIRATION", default=None)
 
     def get_task(self, name: str):
         if name in self.on_demand_tasks:
@@ -35,23 +47,25 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
     def get_backup_queue_name(self, original_name: str) -> str:
         return self._fetch_config(
-            name="GOOGLE_CLOUD_TASKS_BACKUP_QUEUE_NAME",
+            name="BACKUP_QUEUE_NAME",
             default=f"{original_name}{self.delimiter}temp",
         )
 
-    def _fetch_config(self, name, default):
-        return getattr(settings, name, os.environ.get(name, default))
+    def _fetch_config(self, name: str, default: Any) -> Any:
+        config_name = f"{PREFIX}{name.upper()}"
+        return getattr(settings, config_name, os.environ.get(config_name, default))
 
     def register_task(self, task_class):
-        from django_cloud_tasks.tasks.periodic_task import PeriodicTask  # pylint: disable=import-outside-toplevel
-        from django_cloud_tasks.tasks.subscriber_task import SubscriberTask  # pylint: disable=import-outside-toplevel
-        from django_cloud_tasks.tasks.task import Task  # pylint: disable=import-outside-toplevel
+        from django_cloud_tasks.tasks.periodic_task import PeriodicTask
+        from django_cloud_tasks.tasks.subscriber_task import SubscriberTask
+        from django_cloud_tasks.tasks.task import Task
 
         containers = {
-            SubscriberTask: self.subscriber_tasks,
             PeriodicTask: self.periodic_tasks,
+            SubscriberTask: self.subscriber_tasks,
             Task: self.on_demand_tasks,
         }
+
         for parent_klass, container in containers.items():
             if issubclass(task_class, parent_klass) and not getattr(task_class, "abstract", False):
                 container[task_class.name()] = task_class
