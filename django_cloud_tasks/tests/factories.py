@@ -16,7 +16,8 @@ class DummyRoutineTask(RoutineTask):
     def run(self, **kwargs):
         ...
 
-    def revert(self, **kwargs):
+    @classmethod
+    def revert(cls, **kwargs):
         ...
 
 
