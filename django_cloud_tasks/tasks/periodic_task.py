@@ -1,39 +1,39 @@
-# pylint: disable=no-member
-from abc import abstractmethod
+import abc
+from functools import lru_cache
 
-from django.conf import settings
 from gcp_pilot.scheduler import CloudScheduler
 
 from django_cloud_tasks.serializers import deserialize, serialize
-from django_cloud_tasks.tasks.task import Task
+from django_cloud_tasks.tasks.task import Task, get_config, TaskMetadata
 
 
-class PeriodicTask(Task):
-    run_every = None
+class PeriodicTask(Task, abc.ABC):
+    run_every: str = None
 
-    @abstractmethod
-    def run(self, **kwargs):
-        raise NotImplementedError()
-
-    def schedule(self, **kwargs):
+    @classmethod
+    def schedule(cls, **kwargs):
         payload = serialize(kwargs)
 
-        if getattr(settings, "EAGER_TASKS", False):
-            return self.run(**deserialize(payload))
+        if cls.eager():
+            eager_metadata = TaskMetadata.build_eager(task_class=cls)
+            return cls(metadata=eager_metadata).run(**deserialize(value=payload))
 
-        return self.__client.put(
-            name=self.schedule_name,
-            url=self.url(),
+        return cls._get_scheduler_client().put(
+            name=cls.schedule_name(),
+            url=cls.url(),
             payload=payload,
-            cron=self.run_every,
+            cron=cls.run_every,
         )
 
-    @property
-    def schedule_name(self):
-        if self._app_name:
-            return f"{self._app_name}{self._delimiter}{self.name()}"
-        return self.name()
+    @classmethod
+    def schedule_name(cls) -> str:
+        name = cls.name()
+        if app_name := get_config(name="app_name"):
+            delimiter = get_config(name="delimiter")
+            name = f"{app_name}{delimiter}{name}"
+        return name
 
-    @property
-    def __client(self):
+    @classmethod
+    @lru_cache()
+    def _get_scheduler_client(cls) -> CloudScheduler:
         return CloudScheduler()
