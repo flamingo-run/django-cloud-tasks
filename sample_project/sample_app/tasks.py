@@ -1,16 +1,14 @@
+import abc
+
 from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task
 
 
-class BaseAbstractTask(Task):
-    abstract = True
-
+class BaseAbstractTask(Task, abc.ABC):
     def run(self, **kwargs):
         raise NotImplementedError()  # TODO Allow inheriting from ABC
 
 
-class AnotherBaseAbstractTask(BaseAbstractTask):
-    abstract = True
-
+class AnotherBaseAbstractTask(BaseAbstractTask, abc.ABC):
     def run(self, **kwargs):
         raise NotImplementedError()
 
@@ -37,15 +35,15 @@ class SaySomethingTask(PeriodicTask):
 class PleaseNotifyMeTask(SubscriberTask):
     enable_message_ordering = True
 
-    @property
-    def topic_name(self):
+    @classmethod
+    def topic_name(cls):
         return "potato"
 
-    @property
-    def dead_letter_topic_name(self):
+    @classmethod
+    def dead_letter_topic_name(cls):
         return None
 
-    def run(self, message, attributes):
+    def run(self, message: dict, attributes: dict[str, str] | None = None):
         return print(message)
 
 
@@ -53,7 +51,8 @@ class SayHelloTask(RoutineTask):
     def run(self, **kwargs):
         return {"message": "hello"}
 
-    def revert(self, data: dict):
+    @classmethod
+    def revert(cls, data: dict):
         return {"message": "goodbye"}
 
 
@@ -61,5 +60,6 @@ class SayHelloWithParamsTask(RoutineTask):
     def run(self, spell: str):
         return {"message": spell}
 
-    def revert(self, data: dict):
+    @classmethod
+    def revert(cls, data: dict):
         return {"message": "goodbye"}
