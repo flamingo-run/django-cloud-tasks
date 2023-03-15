@@ -1,11 +1,10 @@
-# pylint: disable=no-member
-from typing import Type
+from typing import Self
 
-from django.apps import apps
 from django.db import models, transaction
 from django.utils import timezone
 
 from django_cloud_tasks import serializers
+from django_cloud_tasks.field import TaskField
 
 
 class Pipeline(models.Model):
@@ -41,9 +40,7 @@ class Routine(models.Model):
         REVERTING = ("reverting", "Reverting")
         REVERTED = ("reverted", "Reverted")
 
-    # TODO: We have a signal to check if task_name defined does exists.
-    # We can do it with Django Field Validators
-    task_name = models.CharField(max_length=100)
+    task_name = TaskField()
     pipeline = models.ForeignKey(
         to="django_cloud_tasks.Pipeline",
         related_name="routines",
@@ -80,38 +77,35 @@ class Routine(models.Model):
         related_name="dependent_routines",
     )
 
-    def fail(self, output: dict):
+    def fail(self, output: dict) -> None:
         self.output = output
         self.status = self.Statuses.FAILED
         self.ends_at = timezone.now()
-        self.save()
+        self.save(update_fields=("output", "status", "ends_at", "updated_at"))
 
-    def complete(self, output: dict):
+    def complete(self, output: dict) -> None:
         self.output = output
         self.status = self.Statuses.COMPLETED
         self.ends_at = timezone.now()
-        self.save()
+        self.save(update_fields=("output", "status", "ends_at", "updated_at"))
 
-    def enqueue(self):
+    def enqueue(self) -> None:
         with transaction.atomic():
             self.status = self.Statuses.SCHEDULED
             self.starts_at = timezone.now()
-            self.save()
+            self.save(update_fields=("status", "starts_at", "updated_at"))
 
-    def revert(self):
+    def revert(self) -> None:
         with transaction.atomic():
             if self.status not in [self.Statuses.REVERTED, self.Statuses.REVERTING]:
                 self.status = self.Statuses.REVERTING
-                self.save()
+                self.save(update_fields=("status", "updated_at"))
 
-    def add_next(self, routine: dict) -> "Routine":
+    def add_next(self, routine: dict) -> Self:
         routine["pipeline_id"] = self.pipeline_id
-        return self.next_routines.create(**routine)
-
-    @property
-    def task(self) -> Type["django_cloud_tasks.tasks.Task"] | None:
-        app = apps.get_app_config("django_cloud_tasks")
-        return app.get_task(name=self.task_name)
+        next_routine = self.__class__.objects.create(**routine)
+        RoutineVertex.objects.create(routine=self, next_routine=next_routine)
+        return next_routine
 
 
 class RoutineVertex(models.Model):
