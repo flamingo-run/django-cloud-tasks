@@ -12,7 +12,7 @@ from django_cloud_tasks.tests import factories
 
 class RoutineModelTest(TestCase):
     @freeze_time("2020-01-01")
-    def tests_fail(self):
+    def test_fail(self):
         routine = factories.RoutineWithoutSignalFactory(status="running", output=None, ends_at=None)
         error = {"error": "something went wrong"}
         routine.fail(output=error)
@@ -22,7 +22,7 @@ class RoutineModelTest(TestCase):
         self.assertEqual(timezone.now(), routine.ends_at)
 
     @freeze_time("2020-01-01")
-    def tests_complete(self):
+    def test_complete(self):
         routine = factories.RoutineWithoutSignalFactory(status="running", output=None, ends_at=None)
         output = {"id": 42}
         routine.complete(output=output)
@@ -32,16 +32,16 @@ class RoutineModelTest(TestCase):
         self.assertEqual(timezone.now(), routine.ends_at)
 
     @freeze_time("2020-01-01")
-    def tests_enqueue(self):
+    def test_enqueue(self):
         routine = factories.RoutineFactory()
-        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.sync") as task:
+        with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
             routine.enqueue()
             routine.refresh_from_db()
             self.assertEqual("scheduled", routine.status)
             self.assertEqual(timezone.now(), routine.starts_at)
         task.assert_called_once_with(routine_id=routine.pk)
 
-    def tests_revert_completed_routine(self):
+    def test_revert_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(status="completed", output="{'id': 42}")
         with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as revert_task:
             routine.revert()
@@ -49,13 +49,13 @@ class RoutineModelTest(TestCase):
             self.assertEqual("reverting", routine.status)
         revert_task.assert_called_once_with(routine_id=routine.pk)
 
-    def tests_ensure_valid_task_name(self):
+    def test_ensure_valid_task_name(self):
         task_name = "InvalidTaskName"
         with self.assertRaises(ValidationError, msg=f"Task {task_name} not registered."):
             x = factories.RoutineFactory(task_name=task_name)
             print(x)
 
-    def tests_enqueue_next_routines_after_completed(self):
+    def test_enqueue_next_routines_after_completed(self):
         pipeline = factories.PipelineFactory()
         first_routine = factories.RoutineWithoutSignalFactory(status="running")
         pipeline.routines.add(first_routine)
@@ -73,7 +73,7 @@ class RoutineModelTest(TestCase):
         calls = [call(routine_id=second_routine.pk), call(routine_id=third_routine.pk)]
         task.assert_has_calls(calls, any_order=True)
 
-    def tests_dont_enqueue_next_routines_after_completed_when_status_dont_change(self):
+    def test_dont_enqueue_next_routines_after_completed_when_status_dont_change(self):
         pipeline = factories.PipelineFactory()
         first_routine = factories.RoutineWithoutSignalFactory(status="completed")
         pipeline.routines.add(first_routine)
@@ -90,7 +90,7 @@ class RoutineModelTest(TestCase):
             first_routine.save()
         task.assert_not_called()
 
-    def tests_enqueue_previously_routines_after_reverted(self):
+    def test_enqueue_previously_routines_after_reverted(self):
         pipeline = factories.PipelineFactory()
         first_routine = factories.RoutineWithoutSignalFactory(status="completed")
         pipeline.routines.add(first_routine)
@@ -108,7 +108,7 @@ class RoutineModelTest(TestCase):
 
         task.assert_called_once_with(routine_id=first_routine.pk)
 
-    def tests_dont_enqueue_previously_routines_after_reverted_completed_when_status_dont_change(self):
+    def test_dont_enqueue_previously_routines_after_reverted_completed_when_status_dont_change(self):
         pipeline = factories.PipelineFactory()
         first_routine = factories.RoutineWithoutSignalFactory(status="completed")
         pipeline.routines.add(first_routine)
@@ -138,7 +138,7 @@ class RoutineModelTest(TestCase):
 
 
 class PipelineModelTest(TestCase):
-    def tests_start_pipeline(self):
+    def test_start_pipeline(self):
         pipeline = factories.PipelineFactory()
         leaf_already_completed = factories.RoutineWithoutSignalFactory(status="completed")
         pipeline.routines.add(leaf_already_completed)
@@ -168,7 +168,7 @@ class PipelineModelTest(TestCase):
         calls = [call(routine_id=first_routine.pk), call(routine_id=another_first_routine.pk)]
         task.assert_has_calls(calls, any_order=True)
 
-    def tests_revert_pipeline(self):
+    def test_revert_pipeline(self):
         pipeline = factories.PipelineFactory()
 
         leaf_already_reverted = factories.RoutineWithoutSignalFactory(status="reverted")
