@@ -127,14 +127,14 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
         for task_to_add in to_add:
             task_klass = expected[task_to_add]
-            task_klass().register()
+            task_klass.set_up()
 
         for task_to_remove in to_remove:
             client.delete_subscription(subscription_id=existing[task_to_remove])
 
         for task_to_update in to_update:
             task_klass = expected[task_to_update]
-            task_klass().register()
+            task_klass().set_up()
 
         return to_add, to_update, to_remove
 
