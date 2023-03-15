@@ -1,25 +1,15 @@
-# pylint: disable=no-member
 from django.core.exceptions import ValidationError
-from django.db.models import Model
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from django_cloud_tasks import models
 
 
-@receiver(pre_save, sender=models.Routine)
-def ensure_valid_task_name(sender, instance, **kwargs):
-    # TODO: validate this field with to Django Field Validation
-    # A exception is raised when the task is not found
-    instance.task  # pylint: disable=pointless-statement
-
-
-def _is_status_changing(instance: Model) -> bool:
+def _is_status_changing(instance: models.Routine) -> bool:
     if not instance.pk:
         return False
 
     current_routine = models.Routine.objects.get(pk=instance.pk)
-
     return current_routine.status != instance.status
 
 
@@ -34,15 +24,15 @@ def revert_previous_routines(instance: models.Routine):
 
 
 def enqueue_routine_scheduled(instance: models.Routine):
-    from django_cloud_tasks.tasks import PipelineRoutineTask  # pylint: disable=import-outside-toplevel
+    from django_cloud_tasks.tasks import RoutineExecutorTask
 
-    PipelineRoutineTask().delay(routine_id=instance.pk)
+    RoutineExecutorTask.asap(routine_id=instance.pk)
 
 
 def enqueue_revert_task(instance: models.Routine):
-    from django_cloud_tasks.tasks import PipelineRoutineRevertTask  # pylint: disable=import-outside-toplevel
+    from django_cloud_tasks.tasks import RoutineReverterTask
 
-    PipelineRoutineRevertTask().delay(routine_id=instance.pk)
+    RoutineReverterTask.asap(routine_id=instance.pk)
 
 
 STATUS_ACTION = {
@@ -54,7 +44,7 @@ STATUS_ACTION = {
 
 
 @receiver(pre_save, sender=models.Routine)
-def handle_status_changed(sender, instance, **kwargs):
+def handle_status_changed(sender, instance: models.Routine, **kwargs):
     if not _is_status_changing(instance=instance):
         return
 
@@ -63,7 +53,7 @@ def handle_status_changed(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=models.Routine)
-def ensure_status_machine(sender, instance, **kwargs):
+def ensure_status_machine(sender, instance: models.Routine, **kwargs):
     if not instance.pk and instance.status != models.Routine.Statuses.PENDING:
         raise ValidationError(f"The initial routine's status must be 'pending' not '{instance.status}'")
 
