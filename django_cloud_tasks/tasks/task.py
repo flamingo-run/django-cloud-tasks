@@ -1,157 +1,272 @@
-# pylint: disable=no-member
-from abc import abstractmethod
-from datetime import datetime, timedelta
+import abc
+import inspect
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from random import randint
+from typing import Any, Self
+from urllib.parse import urljoin
 
 from django.apps import apps
-from django.conf import settings
 from django.urls import reverse
 from django.utils.timezone import now
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.tasks import CloudTasks
+from google.cloud.tasks_v2 import Task as GoogleCloudTask
 
+from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
 from django_cloud_tasks.serializers import deserialize, serialize
+
+
+def register(task_class) -> None:
+    app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
+    app.register_task(task_class=task_class)
+
+
+@dataclass
+class TaskMetadata:
+    task_id: str
+    queue_name: str
+    dispatch_number: int  # number of dispatches (0 means first attempt)
+    execution_number: int  # number of responses received (excluding 5XX)
+    eta: datetime
+    previous_response: str | None = None
+    previous_failure: str | None = None
+    project_id: str | None = None
+    custom_headers: dict | None = None
+
+    @classmethod
+    def from_headers(cls, headers: dict) -> Self:
+        # Available data: https://cloud.google.com/tasks/docs/creating-http-target-tasks#handler
+        cloud_tasks_prefix = "X-Cloudtasks-"
+
+        if attempt_str := headers.get(f"{cloud_tasks_prefix}Taskexecutioncount"):
+            execution_number = int(attempt_str)
+        else:
+            execution_number = None
+
+        if retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount"):
+            dispatch_number = int(retry_str)
+        else:
+            dispatch_number = None
+
+        if eta_epoch := headers.get(f"{cloud_tasks_prefix}Tasketa"):
+            eta = datetime.fromtimestamp(int(eta_epoch.split(".")[0]), tz=timezone.utc)
+        else:
+            eta = None
+
+        custom_headers = {key: value for key, value in headers.items() if not key.lower().startswith("x-cloudtasks")}
+
+        return cls(
+            project_id=headers.get(f"{cloud_tasks_prefix}Projectname"),
+            queue_name=headers.get(f"{cloud_tasks_prefix}Queuename"),
+            task_id=headers.get(f"{cloud_tasks_prefix}Taskname"),
+            dispatch_number=dispatch_number,
+            execution_number=execution_number,
+            eta=eta,
+            previous_response=headers.get(f"{cloud_tasks_prefix}TaskPreviousResponse"),
+            previous_failure=headers.get(f"{cloud_tasks_prefix}TaskRetryReason"),
+            custom_headers=custom_headers,
+        )
+
+    @classmethod
+    def from_task_obj(cls, task_obj: GoogleCloudTask) -> Self:
+        _, project_id, _, _, _, queue_name, _, task_id = task_obj.name.split("/")  # TODO: use regex
+        return cls(
+            project_id=project_id,
+            queue_name=queue_name,
+            task_id=task_id,
+            dispatch_number=task_obj.dispatch_count,
+            execution_number=task_obj.response_count,
+            eta=task_obj.schedule_time,
+            previous_response=None,
+            previous_failure=None,
+            custom_headers=dict(task_obj.http_request.headers),
+        )
+
+    @classmethod
+    def build_eager(cls, task_class) -> Self:
+        return cls(
+            project_id=None,
+            queue_name=task_class.queue(),
+            task_id="--SYNC--",
+            dispatch_number=0,
+            execution_number=0,
+            eta=now(),
+            previous_response=None,
+            previous_failure=None,
+        )
+
+    @property
+    def max_retries(self) -> int:
+        queue = CloudTasks(project_id=self.project_id).get_queue(queue_name=self.queue_name)
+        return queue.retry_config.max_attempts
+
+    @property
+    def first_attempt(self) -> bool:
+        return self.dispatch_number == 0
+
+    @property
+    def last_attempt(self) -> bool:
+        return self.dispatch_number == self.max_retries
+
+    @property
+    def eager(self) -> bool:
+        return self.task_id == "--SYNC--"
 
 
 class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
-        app = apps.get_app_config("django_cloud_tasks")
-        attrs["_app_name"] = app.app_name
-        attrs["_delimiter"] = app.delimiter
-
         klass = type.__new__(cls, name, bases, attrs)
-        if getattr(klass, "abstract", False) and "abstract" not in attrs:
-            setattr(klass, "abstract", False)  # TODO Removing the attribute would be better
-        TaskMeta._register_task(app=app, task_class=klass)
+        if not inspect.isabstract(klass) and abc.ABC not in bases:
+            register(task_class=klass)
         return klass
 
-    def __call__(cls, *args, **kwargs):
-        if cls.__name__ not in ["Task", "PeriodicTask", "SubscriberTask"]:
-            return super().__call__(*args, **kwargs)
-        raise NotImplementedError(f"Do not instantiate a {cls.__name__}. Inherit and create your own.")
-
-    @staticmethod
-    def _register_task(app, task_class):
-        if task_class.__name__ not in ["Task", "PeriodicTask", "SubscriberTask"]:
-            app.register_task(task_class=task_class)
+    def __str__(self):
+        return self.__name__
 
 
-class Task(metaclass=TaskMeta):
-    _url_name = "tasks-endpoint"
-    only_once = False
+class DjangoCloudTask(abc.ABCMeta, TaskMeta):
+    ...
 
-    @abstractmethod
+
+class Task(abc.ABC, metaclass=DjangoCloudTask):
+    only_once: bool = False
+
+    def __init__(self, metadata: TaskMetadata | None = None):
+        self._metadata = metadata or TaskMetadata.build_eager(task_class=self.__class__)
+
+    @abc.abstractmethod
     def run(self, **kwargs):
         raise NotImplementedError()
 
-    def _body_to_kwargs(self, request_body):
-        data = deserialize(request_body)
-        return data
+    def process(self, **task_kwargs) -> Any:
+        return self.run(**task_kwargs)
 
-    def execute(self, request_body):
-        task_kwargs = self._body_to_kwargs(request_body=request_body)
-        output = self.run(**task_kwargs)
-        return output
+    @classmethod
+    def sync(cls, **kwargs):
+        return cls().run(**kwargs)
 
-    # Celery-compatible signature
-    def delay(self, queue: str | None = None, **kwargs):
-        return self._send(
-            task_kwargs=kwargs,
-            queue=queue,
-        )
+    @classmethod
+    def asap(cls, **kwargs):
+        return cls.push(task_kwargs=kwargs)
 
-    def asap(self, **kwargs):
-        return self._send(
-            task_kwargs=kwargs,
-        )
-
-    def later(self, when, queue=None, **kwargs):
-        if isinstance(when, int):
-            delay_in_seconds = when
-        elif isinstance(when, timedelta):
-            delay_in_seconds = when.total_seconds()
-        elif isinstance(when, datetime):
-            delay_in_seconds = (when - now()).total_seconds()
+    @classmethod
+    def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
+        if isinstance(eta, int):
+            delay_in_seconds = eta
+        elif isinstance(eta, timedelta):
+            delay_in_seconds = eta.total_seconds()
+        elif isinstance(eta, datetime):
+            delay_in_seconds = (eta - now()).total_seconds()
         else:
-            raise ValueError(f"Unsupported schedule {when} of type {when.__class__.__name__}")
+            raise ValueError(
+                f"Unsupported schedule {eta} of type {eta.__class__.__name__}. " "Must be int, timedelta or datetime."
+            )
 
-        return self._send(
-            task_kwargs=kwargs,
-            api_kwargs=dict(delay_in_seconds=int(delay_in_seconds)),
+        return cls.push(
+            task_kwargs=task_kwargs,
             queue=queue,
+            headers=headers,
+            delay_in_seconds=delay_in_seconds,
         )
 
-    def until(self, max_date, queue=None, **kwargs):
-        if not isinstance(max_date, datetime):
+    @classmethod
+    def until(cls, task_kwargs: dict, max_eta: datetime, queue: str = None, headers: dict | None = None):
+        if not isinstance(max_eta, datetime):
             raise ValueError("max_date must be a datetime")
-        if max_date < now():
+        if max_eta < now():
             raise ValueError("max_date must be in the future")
 
-        max_seconds = (max_date - now()).total_seconds()
+        max_seconds = (max_eta - now()).total_seconds()
         delay_in_seconds = randint(0, int(max_seconds))
-        return self._send(
-            task_kwargs=kwargs,
-            api_kwargs=dict(delay_in_seconds=delay_in_seconds),
+        return cls.push(
+            task_kwargs=task_kwargs,
             queue=queue,
+            headers=headers,
+            delay_in_seconds=delay_in_seconds,
         )
 
-    def _send(self, task_kwargs: dict, api_kwargs: dict | None = None, queue: str | None = None):
-        payload = serialize(task_kwargs)
+    @classmethod
+    def push(
+        cls,
+        task_kwargs: dict,
+        headers: dict | None = None,
+        queue: str | None = None,
+        delay_in_seconds: int | None = None,
+    ):
+        payload = serialize(value=task_kwargs)
 
-        if getattr(settings, "EAGER_TASKS", False):
-            return self.run(**deserialize(payload))
+        if cls.eager():
+            return cls.sync(**deserialize(value=payload))
 
-        api_kwargs = api_kwargs or {}
-        api_kwargs.update(
-            dict(
-                queue_name=queue or self.queue,
-                url=self.url(),
-                payload=payload,
-            )
-        )
+        client = cls._get_tasks_client()
 
-        if self.only_once:
+        headers = headers or {}
+        headers.setdefault("X-CloudTasks-Projectname", client.project_id)
+
+        api_kwargs = {
+            "queue_name": queue or cls.queue(),
+            "url": cls.url(),
+            "payload": payload,
+            "headers": headers,
+        }
+
+        if delay_in_seconds:
+            api_kwargs["delay_in_seconds"] = delay_in_seconds
+
+        if cls.only_once:
             api_kwargs.update(
-                dict(
-                    task_name=self.name(),
-                    unique=False,
-                )
+                {
+                    "task_name": cls.name(),
+                    "unique": False,
+                }
             )
 
         try:
-            return self.__client.push(**api_kwargs)
+            outcome = client.push(**api_kwargs)
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
             # so we'll use a temporary queue (defined in settings) for some time
             backup_queue_name = apps.get_app_config("django_cloud_tasks").get_backup_queue_name(
-                original_name=self.queue,
+                original_name=cls.queue(),
             )
             if not backup_queue_name:
                 raise
 
             api_kwargs["queue_name"] = backup_queue_name
-            return self.__client.push(**api_kwargs)
+            outcome = cls._get_tasks_client().push(**api_kwargs)
+
+        return TaskMetadata.from_task_obj(task_obj=outcome)
 
     @classmethod
-    def name(cls):
-        return cls.__name__
-
-    @property
-    def queue(self):
-        return self._app_name or "tasks"
+    def name(cls) -> str:
+        return str(cls)
 
     @classmethod
-    def url(cls):
-        domain = apps.get_app_config("django_cloud_tasks").domain
-        path = reverse(cls._url_name, args=(cls.name(),))
-        return f"{domain}{path}"
-
-    @property
-    def __client(self):
-        return self.__get_client()
+    def queue(cls) -> str:
+        app_name = get_config(name="app_name")
+        return app_name or "tasks"
 
     @classmethod
     @lru_cache()
-    def __get_client(cls):
+    def url(cls) -> str:
+        domain = get_config(name="domain")
+        url_name = get_config(name="tasks_url_name")
+        path = reverse(url_name, args=(cls.name(),))
+        return urljoin(domain, path)
+
+    @classmethod
+    @lru_cache()
+    def eager(cls) -> bool:
+        return get_config(name="eager")
+
+    @classmethod
+    @lru_cache()
+    def _get_tasks_client(cls) -> CloudTasks:
         return CloudTasks()
+
+
+def get_config(name: str) -> Any:
+    app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
+    return getattr(app, name)
