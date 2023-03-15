@@ -23,7 +23,7 @@ jobs:
       - name: Install Python dependencies
         run: make dependencies
 
-      - name: Lint with pylint
+      - name: Lint code style
         run: |
           make lint
   security:

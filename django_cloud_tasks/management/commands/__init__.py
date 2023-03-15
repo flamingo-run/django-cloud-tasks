@@ -25,4 +25,4 @@ class BaseInitCommand(BaseCommand, abc.ABC):
         report_str = "\n".join([f"- {name}" for name in report])
 
         message = f"Successfully {self.action}d {n} {self.name} to domain {app_config.domain}\n{report_str}"
-        self.stdout.write(self.style.SUCCESS(message))  # pylint: disable=no-member
+        self.stdout.write(self.style.SUCCESS(message))
