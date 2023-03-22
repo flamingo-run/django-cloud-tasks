@@ -1,6 +1,6 @@
 from contextvars import ContextVar, Token
 
-_headers_token = ContextVar("auth_token", default={})
+_headers_token = ContextVar("DJANGO_CLOUD_TASKS_HEADERS_TOKEN", default={})
 
 
 def set_current_headers(value: dict) -> Token[dict]:
