@@ -1,9 +1,12 @@
 import abc
 
 from cachetools.func import lru_cache
+from django.apps import apps
 from django.db.models import Model
 from gcp_pilot.pubsub import CloudPublisher
 
+from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
+from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import serialize
 from django_cloud_tasks.tasks.task import Task, get_config
 
@@ -23,12 +26,22 @@ class PublisherTask(Task, abc.ABC):
         }
         return cls.push(task_kwargs=task_kwargs)
 
-    def run(self, message: dict, attributes: dict[str, str] | None = None):
+    def run(self, message: dict, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
+        # Cloud PubSub does not support headers, but we simulate them with prefixed attributes
+        all_attributes = self._build_attributes(attributes=attributes, headers=headers)
+
         return self._get_publisher_client().publish(
             message=serialize(value=message),
             topic_id=self.topic_name(),
-            attributes=attributes,
+            attributes=all_attributes,
         )
+
+    def _build_attributes(self, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
+        headers = get_current_headers() | (headers or {})
+
+        app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
+        pubsub_headers = {f"{app.pubsub_header_prefix}{key}": value for key, value in headers.items()}
+        return (attributes or {}) | pubsub_headers
 
     @classmethod
     def set_up(cls) -> None:
@@ -70,11 +83,14 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         }
         return cls.push(task_kwargs=task_kwargs)
 
-    def run(self, message: dict, topic_name: str, attributes: dict[str, str]):
+    def run(
+        self, message: dict, topic_name: str, attributes: dict[str, str] | None, headers: dict[str, str] | None = None
+    ):
+        all_attributes = self._build_attributes(attributes=attributes, headers=headers)
         return self._get_publisher_client().publish(
             message=serialize(value=message),
             topic_id=topic_name,
-            attributes=attributes,
+            attributes=all_attributes,
         )
 
     @classmethod
@@ -100,7 +116,7 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         raise NotImplementedError()
 
     @classmethod
-    def build_message_attributes(cls, obj: Model, **kwargs) -> dict:
+    def build_message_attributes(cls, obj: Model, **kwargs) -> dict[str, str]:
         raise NotImplementedError()
 
     @classmethod
