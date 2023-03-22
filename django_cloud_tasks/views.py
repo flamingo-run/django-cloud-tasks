@@ -63,7 +63,7 @@ class GoogleCloudSubscribeView(GoogleCloudTaskView):
             raise TaskNotFound(name=name)
 
     def execute_task(self, task_class: type[SubscriberTask], task_metadata: TaskMetadata, task_kwargs: dict) -> Any:
-        if task_class.use_cloud_tasks:
+        if task_class.use_cloud_tasks and not task_class.eager():
             metadata = task_class.push(task_kwargs=task_kwargs, headers=task_metadata.custom_headers)
             return {"cloud-tasks-forwarded": {"queue_name": metadata.queue_name, "task_id": metadata.task_id}}
         else:
