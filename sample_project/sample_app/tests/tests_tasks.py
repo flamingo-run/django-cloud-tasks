@@ -14,8 +14,8 @@ from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import RoutineExecutorTask, RoutineReverterTask, Task
 from django_cloud_tasks.tests import factories, tests_base
 from django_cloud_tasks.tests.tests_base import EagerTasksMixin, eager_tasks
-from sample_project.sample_app import tasks
-from sample_project.sample_app.tests.tests_base_tasks import patch_cache_lock
+from sample_app import tasks
+from sample_app.tests.tests_base_tasks import patch_cache_lock
 
 
 class TasksTest(SimpleTestCase):
@@ -64,7 +64,9 @@ class TasksTest(SimpleTestCase):
         self.assertEqual(expected_tasks, set(self.app_config.subscriber_tasks))
 
     def test_get_task(self):
-        self.assertEqual(tasks.SayHelloWithParamsTask, self.app_config.get_task(name="SayHelloWithParamsTask"))
+        received_task = self.app_config.get_task(name="SayHelloWithParamsTask")
+        expected_task = tasks.SayHelloWithParamsTask
+        self.assertEqual(expected_task, received_task)
 
     def test_get_abstract_task(self):
         with self.assertRaises(expected_exception=exceptions.TaskNotFound):
@@ -217,7 +219,7 @@ class RoutineReverterTaskTest(EagerTasksMixin, TestCase):
             task_name="SayHelloTask",
             output={"spell": "Obliviate"},
         )
-        with patch("sample_project.sample_app.tasks.SayHelloTask.revert") as revert:
+        with patch("sample_app.tasks.SayHelloTask.revert") as revert:
             RoutineReverterTask.asap(routine_id=routine.pk)
             revert.assert_called_once_with(data=routine.output)
             routine.refresh_from_db()
@@ -299,7 +301,7 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             attempt_count=1,
         )
         with self.assertLogs(level="INFO") as context:
-            with patch("sample_project.sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")):
+            with patch("sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")):
                 with patch("django_cloud_tasks.models.Routine.enqueue") as enqueue:
                     RoutineExecutorTask.sync(routine_id=routine.pk)
                     self.assert_routine_lock(routine_id=routine.pk)
