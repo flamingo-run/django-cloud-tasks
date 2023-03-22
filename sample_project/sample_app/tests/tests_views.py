@@ -1,3 +1,5 @@
+from unittest.mock import patch, ANY
+
 from django.test import SimpleTestCase
 
 
@@ -61,3 +63,43 @@ class TaskViewTest(SimpleTestCase):
         response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertEqual({"result": "Chuck Norris is better than you", "status": "executed"}, response.json())
+
+    def test_propagate_headers(self):
+        data = {
+            "price": 10,
+            "quantity": 42,
+        }
+        headers = {
+            "traceparent": "trace-this-potato",
+            "another-random-header": "please-do-not-propagate-this",
+        }
+
+        url = self.url(name="ParentCallingChildTask")
+        django_headers = {f"HTTP_{key.upper()}": value for key, value in headers.items()}
+
+        with patch("gcp_pilot.tasks.CloudTasks.push") as push:
+            with patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
+                self.client.post(path=url, data=data, content_type="application/json", **django_headers)
+
+        expected_kwargs = {
+            "queue_name": "tasks",
+            "url": "http://localhost:8080/tasks/CalculatePriceTask",
+            "payload": '{"price": 10, "quantity": 42, "discount": 0}',
+            "headers": {"Traceparent": "trace-this-potato", "X-CloudTasks-Projectname": ANY},
+        }
+        push.assert_called_once_with(**expected_kwargs)
+
+    def test_absorb_headers(self):
+        data = {}
+        headers = {
+            "traceparent": "trace-this-potato",
+            "another-random-header": "please-do-not-propagate-this",
+        }
+
+        url = self.url(name="ExposeCustomHeadersTask")
+        django_headers = {f"HTTP_{key.upper()}": value for key, value in headers.items()}
+
+        response = self.client.post(path=url, data=data, content_type="application/json", **django_headers)
+
+        expected_content = {"Traceparent": "trace-this-potato"}
+        self.assertEqual(expected_content, response.json()["result"])

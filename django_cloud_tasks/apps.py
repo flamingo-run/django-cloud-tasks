@@ -12,6 +12,7 @@ from django_cloud_tasks import exceptions
 
 
 PREFIX = "DJANGO_CLOUD_TASKS_"
+DEFAULT_PROPAGATION_HEADERS = ["traceparent"]
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
@@ -36,6 +37,12 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.subscribers_max_backoff = self._fetch_config(name="SUBSCRIBER_MAX_BACKOFF", default=None)
         self.subscribers_expiration = self._fetch_config(name="SUBSCRIBER_EXPIRATION", default=None)
 
+        self.propagated_headers = self._fetch_config(
+            name="PROPAGATED_HEADERS",
+            default=DEFAULT_PROPAGATION_HEADERS,
+            as_list=True,
+        )
+
     def get_task(self, name: str):
         if name in self.on_demand_tasks:
             return self.on_demand_tasks[name]
@@ -51,9 +58,13 @@ class DjangoCloudTasksAppConfig(AppConfig):
             default=f"{original_name}{self.delimiter}temp",
         )
 
-    def _fetch_config(self, name: str, default: Any) -> Any:
+    def _fetch_config(self, name: str, default: Any, as_list: bool = False) -> Any:
         config_name = f"{PREFIX}{name.upper()}"
-        return getattr(settings, config_name, os.environ.get(config_name, default))
+
+        value = getattr(settings, config_name, os.environ.get(config_name, default))
+        if as_list and not isinstance(value, list):
+            value = value.split(",")
+        return value
 
     def register_task(self, task_class):
         from django_cloud_tasks.tasks.periodic_task import PeriodicTask

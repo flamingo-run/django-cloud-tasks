@@ -18,6 +18,16 @@ class CalculatePriceTask(Task):
         return price * quantity * (1 - discount)
 
 
+class ParentCallingChildTask(Task):
+    def run(self, price, quantity):
+        CalculatePriceTask.asap(price=price, quantity=quantity, discount=0)
+
+
+class ExposeCustomHeadersTask(Task):
+    def run(self):
+        return self._metadata.custom_headers
+
+
 class FailMiserablyTask(AnotherBaseAbstractTask):
     only_once = True
 

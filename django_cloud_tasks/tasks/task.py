@@ -15,6 +15,7 @@ from gcp_pilot.tasks import CloudTasks
 from google.cloud.tasks_v2 import Task as GoogleCloudTask
 
 from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
+from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import deserialize, serialize
 
 
@@ -34,6 +35,9 @@ class TaskMetadata:
     previous_failure: str | None = None
     project_id: str | None = None
     custom_headers: dict | None = None
+
+    def __post_init__(self):
+        self.custom_headers = get_current_headers()
 
     @classmethod
     def from_headers(cls, headers: dict) -> Self:
@@ -55,8 +59,6 @@ class TaskMetadata:
         else:
             eta = None
 
-        custom_headers = {key: value for key, value in headers.items() if not key.lower().startswith("x-cloudtasks")}
-
         return cls(
             project_id=headers.get(f"{cloud_tasks_prefix}Projectname"),
             queue_name=headers.get(f"{cloud_tasks_prefix}Queuename"),
@@ -66,7 +68,6 @@ class TaskMetadata:
             eta=eta,
             previous_response=headers.get(f"{cloud_tasks_prefix}TaskPreviousResponse"),
             previous_failure=headers.get(f"{cloud_tasks_prefix}TaskRetryReason"),
-            custom_headers=custom_headers,
         )
 
     @classmethod
@@ -202,7 +203,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
         client = cls._get_tasks_client()
 
-        headers = headers or {}
+        headers = get_current_headers() | (headers or {})
         headers.setdefault("X-CloudTasks-Projectname", client.project_id)
 
         api_kwargs = {

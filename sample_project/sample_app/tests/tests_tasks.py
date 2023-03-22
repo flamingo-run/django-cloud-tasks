@@ -52,6 +52,8 @@ class TasksTest(SimpleTestCase):
             "SayHelloWithParamsTask",
             "DummyRoutineTask",
             "RoutineReverterTask",
+            "ParentCallingChildTask",
+            "ExposeCustomHeadersTask",
         }
         self.assertEqual(expected_tasks, set(self.app_config.on_demand_tasks))
 
