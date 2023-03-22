@@ -1,6 +1,8 @@
 import abc
 
-from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task
+from django.db.models import Model
+
+from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task, ModelPublisherTask
 
 
 class BaseAbstractTask(Task, abc.ABC):
@@ -43,8 +45,6 @@ class SaySomethingTask(PeriodicTask):
 
 
 class PleaseNotifyMeTask(SubscriberTask):
-    enable_message_ordering = True
-
     @classmethod
     def topic_name(cls):
         return "potato"
@@ -53,8 +53,22 @@ class PleaseNotifyMeTask(SubscriberTask):
     def dead_letter_topic_name(cls):
         return None
 
-    def run(self, message: dict, attributes: dict[str, str] | None = None):
-        return print(message)
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        return content
+
+
+class ParentSubscriberTask(SubscriberTask):
+    @classmethod
+    def topic_name(cls):
+        return "parent"
+
+    @classmethod
+    def dead_letter_topic_name(cls):
+        return None
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        CalculatePriceTask.asap(**content)
+        return self._metadata.custom_headers
 
 
 class SayHelloTask(RoutineTask):
@@ -73,3 +87,13 @@ class SayHelloWithParamsTask(RoutineTask):
     @classmethod
     def revert(cls, data: dict):
         return {"message": "goodbye"}
+
+
+class PublishPersonTask(ModelPublisherTask):
+    @classmethod
+    def build_message_content(cls, obj: Model, **kwargs) -> dict:
+        return {"name": obj.name}
+
+    @classmethod
+    def build_message_attributes(cls, obj: Model, **kwargs) -> dict[str, str]:
+        return {"any-custom-attribute": "yay!"}

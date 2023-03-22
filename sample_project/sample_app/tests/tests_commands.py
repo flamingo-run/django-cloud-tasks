@@ -49,7 +49,7 @@ class CommandsTest(SimpleTestCase):
         self._assert_command(
             command="initialize_tasks",
             expected_schedule_calls=1,
-            expected_subscribe_calls=1,
+            expected_subscribe_calls=2,
         )
 
     def test_schedule_tasks(self):
@@ -82,10 +82,12 @@ class CommandsTest(SimpleTestCase):
 
     def test_initialize_subscribers(self):
         expected_output = (
-            "Successfully initialized 1 subscribers to domain http://localhost:8080\n- [+] PleaseNotifyMeTask\n"
+            "Successfully initialized 2 subscribers to domain http://localhost:8080\n"
+            "- [+] ParentSubscriberTask\n"
+            "- [+] PleaseNotifyMeTask\n"
         )
         self._assert_command(
             command="initialize_subscribers",
-            expected_subscribe_calls=1,
+            expected_subscribe_calls=2,
             expected_output=expected_output,
         )

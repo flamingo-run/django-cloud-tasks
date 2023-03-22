@@ -54,13 +54,14 @@ class TasksTest(SimpleTestCase):
             "RoutineReverterTask",
             "ParentCallingChildTask",
             "ExposeCustomHeadersTask",
+            "PublishPersonTask",
         }
         self.assertEqual(expected_tasks, set(self.app_config.on_demand_tasks))
 
         expected_tasks = {"SaySomethingTask"}
         self.assertEqual(expected_tasks, set(self.app_config.periodic_tasks))
 
-        expected_tasks = {"PleaseNotifyMeTask"}
+        expected_tasks = {"PleaseNotifyMeTask", "ParentSubscriberTask"}
         self.assertEqual(expected_tasks, set(self.app_config.subscriber_tasks))
 
     def test_get_task(self):
