@@ -29,10 +29,13 @@ class PubSubHeadersMiddleware:
         return self.get_response(request)
 
     def is_subscriber_route(self, request) -> bool:
-        if "/" not in request.path:
+        parts = request.path.removesuffix("/").rsplit("/", 1)
+        if len(parts) != 2:
             return False
 
-        prefix, task_name = request.path.rsplit("/", 1)
+        prefix, task_name = parts
+        if not task_name:
+            return False
 
         expected_url = reverse(self.url_name, args=(task_name,))
         return request.path == expected_url
