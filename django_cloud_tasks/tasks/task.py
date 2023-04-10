@@ -104,12 +104,16 @@ class TaskMetadata:
         return queue.retry_config.max_attempts
 
     @property
+    def attempt_number(self) -> int:
+        return self.dispatch_number + 1
+
+    @property
     def first_attempt(self) -> bool:
         return self.dispatch_number == 0
 
     @property
     def last_attempt(self) -> bool:
-        return self.dispatch_number == self.max_retries
+        return self.attempt_number == self.max_retries
 
     @property
     def eager(self) -> bool:
