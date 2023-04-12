@@ -1,4 +1,5 @@
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from django.apps import apps
@@ -41,7 +42,11 @@ class PubSubHeadersMiddleware:
         return request.path == expected_url
 
     def extract_headers(self, request) -> dict[str, Any]:
-        message = Message.load(body=request.body)
+        try:
+            message = Message.load(body=request.body)
+        except JSONDecodeError:
+            logger.warning("Message received through PubSub is not a valid JSON. Ignoring PubSub headers feature.")
+            return {}
 
         headers = {}
         for key, value in message.attributes.items():

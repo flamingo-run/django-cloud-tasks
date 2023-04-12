@@ -20,7 +20,7 @@ class GoogleCloudTaskView(View):
             result = {"error": f"Task {task_name} not found"}
             return JsonResponse(status=404, data=result)
 
-        task_kwargs = self.parse_input(request=request)
+        task_kwargs = self.parse_input(request=request, task_class=task_class)
         task_metadata = self.parse_metadata(request=request)
         try:
             output = self.execute_task(task_class=task_class, task_metadata=task_metadata, task_kwargs=task_kwargs)
@@ -39,7 +39,7 @@ class GoogleCloudTaskView(View):
     def execute_task(self, task_class: type[Task], task_metadata: TaskMetadata, task_kwargs: dict) -> Any:
         return task_class(metadata=task_metadata).process(**task_kwargs)
 
-    def parse_input(self, request) -> dict:
+    def parse_input(self, request, task_class: Type[Task]) -> dict:
         return deserialize(value=request.body)
 
     def parse_metadata(self, request) -> TaskMetadata:
@@ -48,8 +48,8 @@ class GoogleCloudTaskView(View):
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
 class GoogleCloudSubscribeView(GoogleCloudTaskView):
-    def parse_input(self, request) -> dict:
-        message = Message.load(body=request.body)
+    def parse_input(self, request, task_class: Type[SubscriberTask]) -> dict:
+        message = Message.load(body=request.body, parser=task_class.message_parser())
         return {
             "content": message.data,
             "attributes": message.attributes,

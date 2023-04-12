@@ -1,5 +1,7 @@
 import abc
+import json
 from urllib.parse import urljoin
+from typing import Callable
 
 from cachetools.func import lru_cache
 from django.urls import reverse
@@ -20,6 +22,12 @@ class SubscriberTask(Task, abc.ABC):
     @abc.abstractmethod
     def run(self, content: dict, attributes: dict[str, str] | None = None):
         raise NotImplementedError()
+
+    @classmethod
+    def message_parser(cls) -> Callable:
+        # The callable used to parse the message content
+        # By default, we handle JSON messages
+        return json.loads
 
     @classmethod
     def set_up(cls):
