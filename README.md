@@ -51,6 +51,13 @@ MyTask.asap(x=10, y=3)  # run async (another instance will execute and print)
 MyTask.sync(x=10, y=5)  # run sync (the print happens right now)
 ```
 
+When a task if failing in Cloud Tasks and you want to debug locally with the same data, 
+you can get the task ID from Cloud Task UI (the big number in the column NAME) and run the task locally with the same parameters with:
+
+```python
+MyTask.debug(task_id="<the task number>")
+```
+
 ### Periodic Task
 
 Tasks can be executed recurrently, using a crontab syntax.

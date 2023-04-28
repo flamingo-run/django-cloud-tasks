@@ -245,6 +245,14 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return TaskMetadata.from_task_obj(task_obj=outcome)
 
     @classmethod
+    def debug(cls, task_id: str):
+        client = cls._get_tasks_client()
+        task_obj = client.get_task(queue_name=cls.queue(), task_name=task_id)
+        task_kwargs = json.loads(task_obj.http_request.body)
+        metadata = TaskMetadata.from_task_obj(task_obj=task_obj)
+        return cls(metadata=metadata).run(**task_kwargs)
+
+    @classmethod
     def name(cls) -> str:
         return str(cls)
 
