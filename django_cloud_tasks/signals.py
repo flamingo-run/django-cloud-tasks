@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
-from django.db.models.signals import pre_save
+from django.db.models import Model
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from django_cloud_tasks import models
@@ -40,7 +41,7 @@ STATUS_ACTION = {
 }
 
 
-@receiver(pre_save, sender=models.Routine)
+@receiver(post_save, sender=models.Routine)
 def handle_status_changed(sender, instance: models.Routine, **kwargs):
     if not _is_status_changing(instance=instance):
         return
