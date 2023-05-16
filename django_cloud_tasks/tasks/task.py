@@ -17,6 +17,7 @@ from google.cloud.tasks_v2 import Task as GoogleCloudTask
 from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
 from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import deserialize, serialize
+import json
 
 
 def register(task_class) -> None:
