@@ -2,7 +2,7 @@ from typing import Self
 
 from django.db import models, transaction
 from django.utils import timezone
-
+from drf_kit.models import ModelDiffMixin
 from django_cloud_tasks import serializers
 from django_cloud_tasks.field import TaskField
 
@@ -30,7 +30,7 @@ class Pipeline(models.Model):
         return self.routines.create(**routine)
 
 
-class Routine(models.Model):
+class Routine(models.Model, ModelDiffMixin):
     class Statuses(models.TextChoices):
         PENDING = ("pending", "Pending")
         SCHEDULED = ("scheduled", "Scheduled")

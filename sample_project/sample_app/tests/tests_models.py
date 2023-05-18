@@ -15,7 +15,7 @@ class RoutineModelTest(TestCase):
     def test_fail(self):
         routine = factories.RoutineWithoutSignalFactory(status="running", output=None, ends_at=None)
         error = {"error": "something went wrong"}
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(1):
             routine.fail(output=error)
         routine.refresh_from_db()
         self.assertEqual("failed", routine.status)
@@ -26,7 +26,7 @@ class RoutineModelTest(TestCase):
     def test_complete(self):
         routine = factories.RoutineWithoutSignalFactory(status="running", output=None, ends_at=None)
         output = {"id": 42}
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(2):
             routine.complete(output=output)
         routine.refresh_from_db()
         self.assertEqual("completed", routine.status)
@@ -38,7 +38,7 @@ class RoutineModelTest(TestCase):
     def test_enqueue(self):
         routine = factories.RoutineFactory()
         with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(3):
                 routine.enqueue()
             routine.refresh_from_db()
             self.assertEqual("scheduled", routine.status)
@@ -48,7 +48,7 @@ class RoutineModelTest(TestCase):
     def test_revert_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(status="completed", output="{'id': 42}")
         with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as revert_task:
-            with self.assertNumQueries(6):
+            with self.assertNumQueries(3):
                 routine.revert()
             routine.refresh_from_db()
             self.assertEqual("reverting", routine.status)
@@ -73,7 +73,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
-            with self.assertNumQueries(17):
+            with self.assertNumQueries(8):
                 first_routine.status = "completed"
                 first_routine.save()
         calls = [call(routine_id=second_routine.pk), call(routine_id=third_routine.pk)]
@@ -92,7 +92,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
-            with self.assertNumQueries(3):
+            with self.assertNumQueries(1):
                 first_routine.status = "completed"
                 first_routine.save()
         task.assert_not_called()
@@ -110,7 +110,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
-            with self.assertNumQueries(11):
+            with self.assertNumQueries(5):
                 third_routine.status = "reverted"
                 third_routine.save()
 
@@ -129,7 +129,7 @@ class RoutineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=third_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
-            with self.assertNumQueries(3):
+            with self.assertNumQueries(1):
                 third_routine.status = "reverted"
                 third_routine.save()
 
@@ -174,7 +174,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineExecutorTask.asap") as task:
-            with self.assertNumQueries(13):
+            with self.assertNumQueries(7):
                 pipeline.start()
         calls = [call(routine_id=first_routine.pk), call(routine_id=another_first_routine.pk)]
         task.assert_has_calls(calls, any_order=True)
@@ -206,7 +206,7 @@ class PipelineModelTest(TestCase):
         factories.RoutineVertexFactory(routine=first_routine, next_routine=second_routine)
 
         with patch("django_cloud_tasks.tasks.RoutineReverterTask.asap") as task:
-            with self.assertNumQueries(13):
+            with self.assertNumQueries(7):
                 pipeline.revert()
         calls = [
             call(routine_id=fourth_routine.pk),
