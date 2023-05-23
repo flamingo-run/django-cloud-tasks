@@ -45,12 +45,12 @@ class TaskMetadata:
         # Available data: https://cloud.google.com/tasks/docs/creating-http-target-tasks#handler
         cloud_tasks_prefix = "X-Cloudtasks-"
 
-        if attempt_str := headers.get(f"{cloud_tasks_prefix}Taskexecutioncount"):
+        if (attempt_str := headers.get(f"{cloud_tasks_prefix}Taskexecutioncount")) is not None:
             execution_number = int(attempt_str)
         else:
             execution_number = None
 
-        if retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount"):
+        if retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount") is not None:
             dispatch_number = int(retry_str)
         else:
             dispatch_number = None
