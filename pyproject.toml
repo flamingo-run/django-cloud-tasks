@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-google-cloud-tasks"
-version = "2.2.2"
+version = "2.2.3"
 description = "Async Tasks with HTTP endpoints"
 authors = ["Joao Daher <joao@daher.dev>"]
 packages = [

@@ -50,7 +50,7 @@ class TaskMetadata:
         else:
             execution_number = None
 
-        if retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount") is not None:
+        if (retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount")) is not None:
             dispatch_number = int(retry_str)
         else:
             dispatch_number = None
