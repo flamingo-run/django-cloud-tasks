@@ -1,6 +1,6 @@
 import json
 from contextlib import ExitStack
-from datetime import timedelta
+from datetime import timedelta, datetime, UTC
 from unittest.mock import patch
 
 from django.apps import apps
@@ -11,7 +11,7 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tasks import RoutineExecutorTask, RoutineReverterTask, Task
+from django_cloud_tasks.tasks import RoutineExecutorTask, RoutineReverterTask, Task, TaskMetadata
 from django_cloud_tasks.tests import factories, tests_base
 from django_cloud_tasks.tests.tests_base import EagerTasksMixin, eager_tasks
 from sample_app import tasks
@@ -334,3 +334,63 @@ class SayHelloWithParamsTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
     @property
     def task_run_params(self):
         return {"spell": "Obliviate"}
+
+
+class TestTaskMetadata(TestCase):
+    some_date = datetime(1990, 7, 19, 15, 30, 42, tzinfo=UTC)
+
+    @property
+    def sample_headers(self) -> dict:
+        return {
+            "X-Cloudtasks-Taskexecutioncount": 7,
+            "X-Cloudtasks-Taskretrycount": 1,
+            "X-Cloudtasks-Tasketa": str(self.some_date.timestamp()),
+            "X-Cloudtasks-Projectname": "wizard-project",
+            "X-Cloudtasks-Queuename": "wizard-queue",
+            "X-Cloudtasks-Taskname": "hp-1234567",
+        }
+
+    @property
+    def sample_metadata(self) -> TaskMetadata:
+        return TaskMetadata(
+            project_id="wizard-project",
+            queue_name="wizard-queue",
+            task_id="hp-1234567",
+            execution_number=7,
+            dispatch_number=1,
+            eta=self.some_date,
+        )
+
+    def test_create_from_headers(self):
+        metadata = TaskMetadata.from_headers(headers=self.sample_headers)
+
+        self.assertEqual(7, metadata.execution_number)
+        self.assertEqual(1, metadata.dispatch_number)
+        self.assertEqual(2, metadata.attempt_number)
+        self.assertEqual(self.some_date, metadata.eta)
+        self.assertEqual("wizard-project", metadata.project_id)
+        self.assertEqual("wizard-queue", metadata.queue_name)
+        self.assertEqual("hp-1234567", metadata.task_id)
+
+    def test_build_headers(self):
+        headers = self.sample_metadata.to_headers()
+
+        self.assertEqual("7", headers["X-Cloudtasks-Taskexecutioncount"])
+        self.assertEqual("1", headers["X-Cloudtasks-Taskretrycount"])
+        self.assertEqual(str(int(self.some_date.timestamp())), headers["X-Cloudtasks-Tasketa"])
+        self.assertEqual("wizard-project", headers["X-Cloudtasks-Projectname"])
+        self.assertEqual("wizard-queue", headers["X-Cloudtasks-Queuename"])
+        self.assertEqual("hp-1234567", headers["X-Cloudtasks-Taskname"])
+
+    def test_comparable(self):
+        reference = self.sample_metadata
+
+        metadata_a = TaskMetadata.from_headers(self.sample_headers)
+        self.assertEqual(reference, metadata_a)
+
+        metadata_b = TaskMetadata.from_headers(self.sample_headers)
+        metadata_b.execution_number += 1
+        self.assertNotEqual(reference, metadata_b)
+
+        not_metadata = True
+        self.assertNotEqual(reference, not_metadata)

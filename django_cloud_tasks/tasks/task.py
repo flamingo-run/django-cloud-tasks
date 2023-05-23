@@ -1,6 +1,6 @@
 import abc
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from random import randint
@@ -71,6 +71,19 @@ class TaskMetadata:
             previous_failure=headers.get(f"{cloud_tasks_prefix}TaskRetryReason"),
         )
 
+    def to_headers(self) -> dict:
+        cloud_tasks_prefix = "X-Cloudtasks-"
+        return {
+            f"{cloud_tasks_prefix}Taskname": self.task_id,
+            f"{cloud_tasks_prefix}Queuename": self.queue_name,
+            f"{cloud_tasks_prefix}Projectname": self.project_id,
+            f"{cloud_tasks_prefix}Taskexecutioncount": str(self.execution_number),
+            f"{cloud_tasks_prefix}Taskretrycount": str(self.dispatch_number),
+            f"{cloud_tasks_prefix}Tasketa": str(int(self.eta.timestamp())),
+            f"{cloud_tasks_prefix}TaskPreviousResponse": self.previous_response,
+            f"{cloud_tasks_prefix}TaskRetryReason": self.previous_failure,
+        }
+
     @classmethod
     def from_task_obj(cls, task_obj: GoogleCloudTask) -> Self:
         _, project_id, _, _, _, queue_name, _, task_id = task_obj.name.split("/")  # TODO: use regex
@@ -119,6 +132,21 @@ class TaskMetadata:
     @property
     def eager(self) -> bool:
         return self.task_id == "--SYNC--"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, TaskMetadata):
+            return False
+
+        check_fields = [field.name for field in fields(TaskMetadata)]
+        for field in check_fields:
+            try:
+                value = getattr(self, field)
+                other_value = getattr(other, field)
+                if value != other_value:
+                    return False
+            except (AttributeError, ValueError):
+                return False
+        return True
 
 
 class TaskMeta(type):
