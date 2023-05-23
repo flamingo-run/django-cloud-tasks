@@ -15,7 +15,7 @@ The following APIs must be enabled in your project(s):
 - [Cloud Scheduler API](https://console.cloud.google.com/marketplace/product/google/cloudscheduler.googleapis.com)
 - [Admin SDK API](https://console.cloud.google.com/marketplace/product/google/admin.googleapis.com)
 
-## How it works
+## Configuration
 
 > Add ``DJANGO_GOOGLE_CLOUD_TASKS_ENDPOINT`` to your Django settings or as an environment variable
 
@@ -31,11 +31,11 @@ Additionally, you can configure with more settings or environment variables:
 - `DJANGO_GOOGLE_CLOUD_TASKS_PROPAGATED_HEADERS`: . Default: `["traceparent"]`.
 - `DJANGO_GOOGLE_CLOUD_TASKS_PUBSUB_HEADER_PREFIX`: when propagating headers in PubSub, use this prefix to store the values in the Message attributes. Default: `HTTP_`.
 
-### On Demand Task
+## On Demand Task
 
 Tasks can be executed on demand, asynchronously or synchronously.
 
-The backend used in Google Cloud Tasks.
+The service used is Google Cloud Tasks:
 
 ```python
 from django_cloud_tasks.tasks import Task
@@ -51,14 +51,49 @@ MyTask.asap(x=10, y=3)  # run async (another instance will execute and print)
 MyTask.sync(x=10, y=5)  # run sync (the print happens right now)
 ```
 
-When a task if failing in Cloud Tasks and you want to debug locally with the same data, 
+It's also possible to execute asynchronously, but not immediatelly:
+```python
+MyTask.later(task_kwargs=dict(x=10, y=5), eta=3600)  # run async in 1 hour (int, timedelta and datetime are accepted)
+
+MyTask.until(task_kwargs=dict(x=10, y=5), eta=3600)  # run async up to 1 hour, decided randomly (int, timedelta and datetime are accepted)
+```
+
+All of these call methods are wrappers to the fully customizable method `push`, which supports overriding queue name, headers and more:
+```python
+MyTask.push(task_kwargs=dict(x=10, y=5), **kwargs)  # run async, but deeper customization is available
+```
+
+### Queue
+
+When executing an async task, a new job will be added to a queue in Cloud Tasks to be processed by another Cloud Run instance.
+
+You can choose this queue's name in the following order:
+- Overriding manually when scheduling with `push`, `until` or `later`
+- Defining `DJANGO_GOOGLE_CLOUD_TASKS_APP_NAME` in Django settings
+- otherwise, `tasks` will be used as queue name
+
+It's also possible to set dynamically with:
+
+```python
+from django_cloud_tasks.tasks import Task
+
+
+class MyTask(Task):
+    @classmethod
+    def queue(cls) -> str:
+        return "my-queue-name-here"
+```
+
+### Throublehsooting
+
+When a task if failing in Cloud Tasks and you want to debug **locally** with the same data, 
 you can get the task ID from Cloud Task UI (the big number in the column NAME) and run the task locally with the same parameters with:
 
 ```python
 MyTask.debug(task_id="<the task number>")
 ```
 
-### Periodic Task
+## Periodic Task
 
 Tasks can be executed recurrently, using a crontab syntax.
 
@@ -84,14 +119,14 @@ For these tasks to be registered in Cloud Scheduler, you must execute the setup 
 python manage.py schedule_tasks
 ```
 
-If you need, you can also run these tasks synchronously or asynchronously on demand:
+If you need, you can also run these tasks synchronously or asynchronously, they will behave exactly as a task on demand:
 
 ```python
 RecurrentTask.asap()  # run async
 RecurrentTask.sync()  # run sync
 ```
 
-### Publisher
+## Publisher
 
 Messages can be sent to a Pub/Sub topic, synchronously or asynchronously.
 
@@ -136,7 +171,7 @@ MyModelPublisherTask.asap(obj=one_obj) # publish asynchronously, using Cloud Tas
 
 ```
 
-### Subscriber
+## Subscriber
 
 Messages can be received in a Pub/Sub subscription, synchronously or asynchronously.
 
@@ -160,7 +195,9 @@ class MySubscriber(SubscriberTask):
 
 ```
 
-## Setup
+## Contributing
+
+When contributing to this repository, you can setup:
 
 ### As an application (when contributing)
 
@@ -171,7 +208,7 @@ class MySubscriber(SubscriberTask):
 ```
 
 
-- If you have changed the package dependencies in Pipfile:
+- If you have changed the package dependencies in poetry.lock:
 
 ```
     make update
@@ -188,17 +225,21 @@ django-google-cloud-tasks = {version="<version>"}
 - During development, if you wish to install from a local source (in order to test integration with ease):
 ```
     # inside the application
-    poetry run pip install /<path>/<to>/<django-cloud-tasks>
+    poetry add -e /path/to/this/lib
 ```
 
-## Tests
+## Testing
 
 To run tests:
 
-```
+```shell
 make test
 ```
 
+To fix linter issues:
+```shell
+make style
+```
 
 ## Version
 
