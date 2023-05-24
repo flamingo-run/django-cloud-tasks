@@ -20,6 +20,13 @@ coverage = "*"
 factory-boy = "*"
 freezegun = "*"
 safety = "*"
+pytest-cov = "*"
+pytest-django = "*"
+pytest-rerunfailures = "*"
+pytest-xdist = "*"
+pytest-sugar = "*"
+pytest-random-order = "*"
+pytest-timeout = "*"
 
 
 [tool.black]
@@ -30,6 +37,13 @@ target-version = ['py311']
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+
+
+[tool.pytest.ini_options]
+addopts = "-n auto --reruns 2 --random-order --timeout 100 --cov"
+python_files = ["tests_*.py"]
+DJANGO_SETTINGS_MODULE = "sample_project.settings"
+pythonpath = [".", "sample_project", "django_cloud_tasks"]
 
 
 [tool.coverage.run]

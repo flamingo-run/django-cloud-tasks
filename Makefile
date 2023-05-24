@@ -30,7 +30,7 @@ style:
 
 unit:
 	@echo "Running unit tests ..."
-	ENV=test poetry run coverage run sample_project/manage.py test --no-input
+	ENV=test poetry run pytest test
 
 clean:
 	@rm -rf .coverage coverage.xml dist/ build/ *.egg-info/
