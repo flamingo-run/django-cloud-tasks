@@ -42,6 +42,7 @@ class SubscriberTask(Task, abc.ABC):
             min_backoff=cls.min_backoff or get_config("subscribers_min_backoff"),
             max_backoff=cls.max_backoff or get_config("subscribers_max_backoff"),
             expiration_ttl=cls.expiration_ttl or get_config("subscribers_expiration"),
+            message_filter=cls.subscription_filter(),
         )
 
     @classmethod
@@ -77,3 +78,8 @@ class SubscriberTask(Task, abc.ABC):
     @lru_cache()
     def _get_subscriber_client(cls) -> CloudSubscriber:
         return CloudSubscriber()
+
+    @classmethod
+    def subscription_filter(cls) -> str | None:
+        # Reference: https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax
+        return None
