@@ -2,9 +2,18 @@ from unittest.mock import patch, ANY
 
 from django.test import SimpleTestCase, TransactionTestCase
 from gcp_pilot.pubsub import Message
+from gcp_pilot.mocker import patch_auth
 
 
-class TaskViewTest(SimpleTestCase):
+class AuthenticationMixin(SimpleTestCase):
+    def setUp(self) -> None:
+        auth = patch_auth()
+        auth.start()
+        self.addCleanup(auth.stop)
+        super().setUp()
+
+
+class TaskViewTest(AuthenticationMixin):
     def url(self, name):
         return f"/tasks/{name}"
 
@@ -106,7 +115,7 @@ class TaskViewTest(SimpleTestCase):
         self.assertEqual(expected_content, response.json()["result"])
 
 
-class SubscriberTaskViewTest(SimpleTestCase):
+class SubscriberTaskViewTest(AuthenticationMixin):
     def url(self, name):
         return f"/subscriptions/{name}"
 
@@ -144,7 +153,13 @@ class SubscriberTaskViewTest(SimpleTestCase):
 
 
 class PublisherTaskTest(TransactionTestCase):
-    def test_propagate_headers(self):
+    def setUp(self) -> None:
+        auth = patch_auth()
+        auth.start()
+        self.addCleanup(auth.stop)
+        super().setUp()
+
+    def test_propagate_headerss(self):
         url = "/create-person"
         data = {"name": "Harry Potter"}
         headers = {
