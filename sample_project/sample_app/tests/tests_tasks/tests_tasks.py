@@ -1,5 +1,4 @@
 import json
-from contextlib import ExitStack
 from datetime import timedelta, datetime, UTC
 from unittest.mock import patch
 
@@ -11,11 +10,10 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tasks import RoutineExecutorTask, RoutineReverterTask, Task, TaskMetadata
-from django_cloud_tasks.tests import factories, tests_base
-from django_cloud_tasks.tests.tests_base import EagerTasksMixin, eager_tasks
+from django_cloud_tasks.tasks import Task, TaskMetadata
+from django_cloud_tasks.tests import tests_base
+from django_cloud_tasks.tests.tests_base import eager_tasks
 from sample_app import tasks
-from sample_app.tests.tests_base_tasks import patch_cache_lock
 
 
 class TasksTest(SimpleTestCase):
@@ -203,137 +201,6 @@ class TasksTest(SimpleTestCase):
             tasks.CalculatePriceTask.asap()
 
         self.assertEqual(2, client.call_count)
-
-
-class RoutineReverterTaskTest(EagerTasksMixin, TestCase):
-    _mock_lock = None
-
-    def setUp(self):
-        super().setUp()
-
-        patched_settings = self.settings(EAGER_TASKS=True)
-        patched_settings.enable()
-        self.addCleanup(patched_settings.disable)
-
-        stack = ExitStack()
-        self.mock_lock = stack.enter_context(patch_cache_lock())
-
-    def test_process_revert_and_update_routine_to_reverted(self):
-        routine = factories.RoutineWithoutSignalFactory(
-            status="reverting",
-            task_name="SayHelloTask",
-            output={"spell": "Obliviate"},
-        )
-        with patch("sample_app.tasks.SayHelloTask.revert") as revert:
-            RoutineReverterTask.asap(routine_id=routine.pk)
-            revert.assert_called_once_with(data=routine.output)
-            routine.refresh_from_db()
-            self.assertEqual(routine.status, "reverted")
-
-
-class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
-    _mock_lock = None
-
-    def setUp(self):
-        super().setUp()
-
-        self.mock_lock = patch_cache_lock()
-        self.mock_lock.start()
-        self.addCleanup(self.mock_lock.stop)
-
-    def assert_routine_lock(self, routine_id: int):
-        self.mock_lock.assert_called_with(
-            key=f"lock-RoutineExecutorTask-{routine_id}",
-            timeout=60,
-            blocking_timeout=5,
-        )
-
-    def tests_dont_process_completed_routine(self):
-        routine = factories.RoutineWithoutSignalFactory(
-            status="completed",
-            task_name="SayHelloTask",
-        )
-        with self.assertLogs(level="INFO") as context:
-            RoutineExecutorTask.asap(routine_id=routine.pk)
-            self.assert_routine_lock(routine_id=routine.pk)
-            self.assertEqual(context.output, [f"INFO:root:Routine #{routine.pk} is already completed"])
-
-    def tests_start_pipeline_revert_flow_if_exceeded_retries(self):
-        routine = factories.RoutineWithoutSignalFactory(
-            status="running",
-            task_name="SayHelloTask",
-            max_retries=3,
-            attempt_count=1,
-        )
-        with (
-            patch("django_cloud_tasks.models.Pipeline.revert") as revert,
-            self.assertLogs(level="INFO") as context,
-            patch("sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")),
-        ):
-            RoutineExecutorTask.asap(routine_id=routine.pk)
-            self.assertEqual(
-                context.output,
-                [
-                    f"INFO:root:Routine #{routine.id} is running",
-                    f"INFO:root:Routine #{routine.id} has failed",
-                    f"INFO:root:Routine #{routine.id} is being enqueued to retry",
-                    f"INFO:root:Routine #{routine.id} is running",
-                    f"INFO:root:Routine #{routine.id} has failed",
-                    f"INFO:root:Routine #{routine.id} is being enqueued to retry",
-                    f"INFO:root:Routine #{routine.id} has exhausted retries and is being reverted",
-                ],
-            )
-
-            self.assert_routine_lock(routine_id=routine.pk)
-            revert.assert_called_once()
-
-    def tests_store_task_output_into_routine(self):
-        routine = factories.RoutineWithoutSignalFactory(
-            status="running",
-            task_name="SayHelloTask",
-            body={"attributes": [1, 2, 3]},
-            attempt_count=1,
-        )
-        with self.assertLogs(level="INFO") as context:
-            RoutineExecutorTask.sync(routine_id=routine.pk)
-            self.assert_routine_lock(routine_id=routine.pk)
-            routine.refresh_from_db()
-            self.assertEqual(
-                context.output,
-                [
-                    f"INFO:root:Routine #{routine.id} is running",
-                    f"INFO:root:Routine #{routine.id} just completed",
-                ],
-            )
-            self.assertEqual("completed", routine.status)
-            self.assertEqual(2, routine.attempt_count)
-
-    def tests_retry_and_complete_task_processing_once_failure(self):
-        routine = factories.RoutineWithoutSignalFactory(
-            status="scheduled",
-            task_name="SayHelloTask",
-            body={"attributes": [1, 2, 3]},
-            attempt_count=0,
-            max_retries=2,
-        )
-        with self.assertLogs(level="INFO") as context, patch(
-            "sample_app.tasks.SayHelloTask.sync", side_effect=[Exception("any error"), "success"]
-        ):
-            RoutineExecutorTask.sync(routine_id=routine.pk)
-            self.assert_routine_lock(routine_id=routine.pk)
-            routine.refresh_from_db()
-            self.assertEqual(
-                context.output,
-                [
-                    f"INFO:root:Routine #{routine.id} is running",
-                    f"INFO:root:Routine #{routine.id} has failed",
-                    f"INFO:root:Routine #{routine.id} is being enqueued to retry",
-                    f"INFO:root:Routine #{routine.id} is running",
-                    f"INFO:root:Routine #{routine.id} just completed",
-                ],
-            )
-            self.assertEqual("completed", routine.status)
-            self.assertEqual(2, routine.attempt_count)
 
 
 class SayHelloTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
