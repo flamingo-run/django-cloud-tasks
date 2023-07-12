@@ -51,7 +51,7 @@ class Routine(ModelDiffMixin, models.Model):
         encoder=serializers.JSONEncoder,
     )
     attempt_count = models.PositiveIntegerField(default=0)
-    max_retries = models.PositiveIntegerField(null=True)
+    max_retries = models.PositiveIntegerField(default=20)
     output = models.JSONField(
         null=True,
         blank=True,
@@ -76,6 +76,14 @@ class Routine(ModelDiffMixin, models.Model):
         through_fields=("routine", "next_routine"),
         related_name="dependent_routines",
     )
+
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                name="max_retries_less_than_attempt_count",
+                check=models.Q(max_retries__gte=models.F("attempt_count")),
+            ),
+        )
 
     def fail(self, output: dict) -> None:
         self.output = output
