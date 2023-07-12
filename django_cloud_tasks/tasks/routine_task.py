@@ -45,7 +45,7 @@ class RoutineExecutorTask(PipelineDispatcherTask):
             logger.info(f"Routine #{routine.pk} is already completed")
             return
 
-        if routine.max_retries and routine.attempt_count >= routine.max_retries:
+        if routine.attempt_count >= routine.max_retries:
             error_message = f"Routine #{routine.pk} has exhausted retries and is being reverted"
             logger.info(error_message)
             routine.fail(output={"error": error_message})

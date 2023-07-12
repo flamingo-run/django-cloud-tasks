@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
-
+from django.db import IntegrityError
 from django_cloud_tasks import models
 from django_cloud_tasks.tests import factories
 
@@ -144,6 +144,12 @@ class RoutineModelTest(TestCase):
         next_routine = routine.add_next(expected_routine_1)
         self.assertEqual(expected_routine_1["body"], next_routine.body)
         self.assertEqual(expected_routine_1["task_name"], next_routine.task_name)
+
+    def test_ensure_max_retries_greater_than_attempt_count(self):
+        with self.assertRaisesRegex(
+            expected_exception=IntegrityError, expected_regex="constraint failed: max_retries_less_than_attempt_count"
+        ):
+            factories.RoutineFactory(max_retries=1, attempt_count=5)
 
 
 class PipelineModelTest(TestCase):
