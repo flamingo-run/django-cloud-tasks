@@ -1,10 +1,19 @@
 import inspect
 from contextlib import contextmanager
 from typing import Callable, Type
-
+from django.test import SimpleTestCase
 from django.utils.connection import ConnectionProxy
+from gcp_pilot.mocker import patch_auth
 
 LockType = (Callable | Exception | Type[Exception]) | None
+
+
+class AuthenticationMixin(SimpleTestCase):
+    def setUp(self) -> None:
+        auth = patch_auth()
+        auth.start()
+        self.addCleanup(auth.stop)
+        super().setUp()
 
 
 def patch_cache_lock(
