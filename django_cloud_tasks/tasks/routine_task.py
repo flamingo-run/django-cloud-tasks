@@ -56,22 +56,15 @@ class RoutineExecutorTask(PipelineDispatcherTask):
         routine.status = models.Routine.Statuses.RUNNING
         routine.save(update_fields=("attempt_count", "status", "updated_at"))
 
-        # we are adding this to re-instantiate this object due to
-        # a bug that are happening with _diff field from ModelDiffMixin.
-        # the complete method called below is triggering the ensure_status_machine
-        # with wrong previous_status. when we call complete(), we had previous status
-        # scheduled, but we just changed it to running. this was raising an error:
-        # changing from scheduled to complete is not allowed.
-        routine = models.Routine(**routine._dict)
-
         try:
             logger.info(f"Routine #{routine.pk} is running")
             task_response = routine.task_class(metadata=self._metadata).sync(**routine.body)
         except Exception as error:
             logger.info(f"Routine #{routine.pk} has failed")
+
             routine.fail(output={"error": str(error)})
+            logger.info(f"Routine #{routine.pk} is being enqueued to retry")
             routine.enqueue()
-            logger.info(f"Routine #{routine.pk} has been enqueued for retry")
             return
 
         routine.complete(output=task_response)

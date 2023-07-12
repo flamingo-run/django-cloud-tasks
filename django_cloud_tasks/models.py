@@ -30,7 +30,7 @@ class Pipeline(models.Model):
         return self.routines.create(**routine)
 
 
-class Routine(models.Model, ModelDiffMixin):
+class Routine(ModelDiffMixin, models.Model):
     class Statuses(models.TextChoices):
         PENDING = ("pending", "Pending")
         SCHEDULED = ("scheduled", "Scheduled")
