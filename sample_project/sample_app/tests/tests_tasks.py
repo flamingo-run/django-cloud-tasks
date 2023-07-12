@@ -258,20 +258,28 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
         routine = factories.RoutineWithoutSignalFactory(
             status="running",
             task_name="SayHelloTask",
-            max_retries=1,
-            attempt_count=2,
+            max_retries=3,
+            attempt_count=1,
         )
         with patch("django_cloud_tasks.models.Pipeline.revert") as revert:
             with self.assertLogs(level="INFO") as context:
-                RoutineExecutorTask.asap(routine_id=routine.pk)
-                self.assertEqual(
-                    context.output,
-                    [
-                        f"INFO:root:Routine #{routine.id} has exhausted retries and is being reverted",
-                    ],
-                )
-                self.assert_routine_lock(routine_id=routine.pk)
-                revert.assert_called_once()
+                with patch("sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")):
+                    RoutineExecutorTask.asap(routine_id=routine.pk)
+                    self.assertEqual(
+                        context.output,
+                        [
+                            f"INFO:root:Routine #{routine.id} is running",
+                            f"INFO:root:Routine #{routine.id} has failed",
+                            f"INFO:root:Routine #{routine.id} is being enqueued to retry",
+                            f"INFO:root:Routine #{routine.id} is running",
+                            f"INFO:root:Routine #{routine.id} has failed",
+                            f"INFO:root:Routine #{routine.id} is being enqueued to retry",
+                            f"INFO:root:Routine #{routine.id} has exhausted retries and is being reverted",
+                        ],
+                    )
+
+                    self.assert_routine_lock(routine_id=routine.pk)
+                    revert.assert_called_once()
 
     def tests_store_task_output_into_routine(self):
         routine = factories.RoutineWithoutSignalFactory(
@@ -294,30 +302,31 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             self.assertEqual("completed", routine.status)
             self.assertEqual(2, routine.attempt_count)
 
-    def tests_fail_routine_if_task_has_failed(self):
+    def tests_retry_and_complete_task_processing_once_failure(self):
         routine = factories.RoutineWithoutSignalFactory(
-            status="running",
+            status="scheduled",
             task_name="SayHelloTask",
             body={"attributes": [1, 2, 3]},
-            attempt_count=1,
+            attempt_count=0,
+            max_retries=2,
         )
         with self.assertLogs(level="INFO") as context:
-            with patch("sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")):
-                with patch("django_cloud_tasks.models.Routine.enqueue") as enqueue:
-                    RoutineExecutorTask.sync(routine_id=routine.pk)
-                    self.assert_routine_lock(routine_id=routine.pk)
-                    routine.refresh_from_db()
-                    self.assertEqual(
-                        context.output,
-                        [
-                            f"INFO:root:Routine #{routine.id} is running",
-                            f"INFO:root:Routine #{routine.id} has failed",
-                            f"INFO:root:Routine #{routine.id} has been enqueued for retry",
-                        ],
-                    )
-                    self.assertEqual("failed", routine.status)
-                    enqueue.assert_called_once()
-                    self.assertEqual(2, routine.attempt_count)
+            with patch("sample_app.tasks.SayHelloTask.sync", side_effect=[Exception("any error"), "success"]):
+                RoutineExecutorTask.sync(routine_id=routine.pk)
+                self.assert_routine_lock(routine_id=routine.pk)
+                routine.refresh_from_db()
+                self.assertEqual(
+                    context.output,
+                    [
+                        f"INFO:root:Routine #{routine.id} is running",
+                        f"INFO:root:Routine #{routine.id} has failed",
+                        f"INFO:root:Routine #{routine.id} is being enqueued to retry",
+                        f"INFO:root:Routine #{routine.id} is running",
+                        f"INFO:root:Routine #{routine.id} just completed",
+                    ],
+                )
+                self.assertEqual("completed", routine.status)
+                self.assertEqual(2, routine.attempt_count)
 
 
 class SayHelloTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
