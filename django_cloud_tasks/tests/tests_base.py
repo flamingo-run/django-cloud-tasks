@@ -15,11 +15,11 @@ class EagerTasksMixin:
 
 
 class RoutineTaskTestMixin(EagerTasksMixin):
-    def tests_revert_should_revert_routine(self):
+    def test_revert_should_revert_routine(self):
         # When not implemented this method raises an Error
         self.task.revert(data=self.task_revert_data_params)
 
-    def tests_run_expects_return_dict(self):
+    def test_run_expects_return_dict(self):
         output = self.task.sync(**self.task_run_params)
         self.assertIsInstance(output, dict)
 

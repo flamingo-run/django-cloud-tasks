@@ -20,14 +20,14 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
         self.mock_lock.start()
         self.addCleanup(self.mock_lock.stop)
 
-    def assert_routine_lock(self, routine_id: int):
+    def assert_routine_lock(self, routine_id: int, task_name: str = "RoutineExecutorTask"):
         self.mock_lock.assert_called_with(
-            key=f"lock-RoutineExecutorTask-{routine_id}",
+            key=f"lock-{task_name}-{routine_id}",
             timeout=60,
             blocking_timeout=5,
         )
 
-    def tests_dont_process_completed_routine(self):
+    def test_dont_process_completed_routine(self):
         routine = factories.RoutineWithoutSignalFactory(
             status="completed",
             task_name="SayHelloTask",
@@ -37,7 +37,7 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             self.assert_routine_lock(routine_id=routine.pk)
             self.assertEqual(context.output, [f"INFO:root:Routine #{routine.pk} is already completed"])
 
-    def tests_start_pipeline_revert_flow_if_exceeded_retries(self):
+    def test_start_pipeline_revert_flow_if_exceeded_retries(self):
         routine = factories.RoutineWithoutSignalFactory(
             status="running",
             task_name="SayHelloTask",
@@ -45,7 +45,6 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             attempt_count=1,
         )
         with (
-            patch("django_cloud_tasks.models.Pipeline.revert") as revert,
             self.assertLogs(level="INFO") as context,
             patch("sample_app.tasks.SayHelloTask.sync", side_effect=Exception("any error")),
         ):
@@ -63,10 +62,9 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
                 ],
             )
 
-            self.assert_routine_lock(routine_id=routine.pk)
-            revert.assert_called_once()
+            self.assert_routine_lock(routine_id=routine.pk, task_name="RoutineReverterTask")
 
-    def tests_store_task_output_into_routine(self):
+    def test_store_task_output_into_routine(self):
         routine = factories.RoutineWithoutSignalFactory(
             status="running",
             task_name="SayHelloTask",
@@ -87,7 +85,7 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             self.assertEqual("completed", routine.status)
             self.assertEqual(2, routine.attempt_count)
 
-    def tests_retry_and_complete_task_processing_once_failure(self):
+    def test_retry_and_complete_task_processing_once_failure(self):
         routine = factories.RoutineWithoutSignalFactory(
             status="scheduled",
             task_name="SayHelloTask",
