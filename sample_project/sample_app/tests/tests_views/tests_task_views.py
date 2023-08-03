@@ -1,5 +1,7 @@
 from unittest.mock import patch, ANY
 
+from another_app.tasks.deep_down_tasks.one_dedicated_task import NonCompliantTask
+from django_cloud_tasks.tasks import TaskMetadata
 from sample_app.tests.tests_base_tasks import AuthenticationMixin
 
 
@@ -103,3 +105,14 @@ class TaskViewTest(AuthenticationMixin):
 
         expected_content = {"Traceparent": "trace-this-potato"}
         self.assertEqual(expected_content, response.json()["result"])
+
+    def test_non_compliant_task_called(self):
+        data = {
+            "name": "you",
+        }
+        url = self.url(name="NonCompliantTask")
+        task_path = "another_app.tasks.deep_down_tasks.one_dedicated_task.OneBigDedicatedTask.asap"
+        with patch(task_path, return_value=TaskMetadata.build_eager(NonCompliantTask)):
+            response = self.client.post(path=url, data=data, content_type="application/json")
+        self.assertEqual(200, response.status_code)
+        self.assertEqual({"result": ANY, "status": "executed"}, response.json())

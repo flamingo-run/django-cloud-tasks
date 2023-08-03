@@ -53,6 +53,7 @@ class TasksTest(SimpleTestCase):
             "ParentCallingChildTask",
             "ExposeCustomHeadersTask",
             "PublishPersonTask",
+            "NonCompliantTask",
         }
         self.assertEqual(expected_tasks, set(self.app_config.on_demand_tasks))
 

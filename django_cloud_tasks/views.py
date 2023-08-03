@@ -1,3 +1,4 @@
+import logging
 from typing import Type, Any
 
 from django.apps import apps
@@ -12,6 +13,9 @@ from django_cloud_tasks.tasks import Task, SubscriberTask
 from django_cloud_tasks.tasks.task import TaskMetadata
 
 
+logger = logging.getLogger("django_cloud_tasks")
+
+
 class GoogleCloudTaskView(View):
     def post(self, request, task_name, *args, **kwargs):
         try:
@@ -24,13 +28,19 @@ class GoogleCloudTaskView(View):
         task_metadata = self.parse_metadata(request=request)
         try:
             output = self.execute_task(task_class=task_class, task_metadata=task_metadata, task_kwargs=task_kwargs)
-            data = {"result": output, "status": "executed"}
-            status = 200
+            status = "executed"
+            status_code = 200
         except exceptions.DiscardTaskException:
-            data = {"status": "discarded"}
-            status = 202
+            output = None
+            status = "discarded"
+            status_code = 202
 
-        return JsonResponse(status=status, data=data)
+        data = {"result": output, "status": status}
+        try:
+            return JsonResponse(status=status_code, data=data)
+        except TypeError:
+            logger.warning(f"Unable to serialize task output from {request.path}: {str(output)}")
+            return JsonResponse(status=status_code, data={"result": str(output), "status": "executed"})
 
     def get_task(self, name: str) -> Type[Task]:
         app = apps.get_app_config("django_cloud_tasks")
