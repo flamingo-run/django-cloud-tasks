@@ -21,7 +21,7 @@ class TaskField(CharField):
         self.validate_task = validate_task
 
     def get_db_prep_value(self, value, connection, prepared=False):
-        if self.validate_task:
+        if self.validate_task and value is not None:
             validate_task_name(value=value)
         return super().get_db_prep_value(value, connection, prepared)
 
