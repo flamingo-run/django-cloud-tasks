@@ -8,45 +8,45 @@ class SubscriberTaskViewTest(AuthenticationMixin):
     def url(self, name):
         return f"/subscriptions/{name}"
 
-    def trigger_subscriber(self, content, attributes):
+    @property
+    def propagated_headers_key(self):
+        return "_http_headers"
+
+    def make_content(self, headers: dict):
+        return {"price": 10, "quantity": 42, self.propagated_headers_key: headers}
+
+    def trigger_subscriber(self, content):
         url = "/subscriptions/ParentSubscriberTask"
         message = Message(
             id="i-dont-care",
             data=content,
-            attributes=attributes,
+            attributes={},
             subscription="potato",
         )
         return self.client.post(path=url, data=message.dump(), content_type="application/json")
 
     def test_propagate_headers(self):
-        content = {
-            "price": 10,
-            "quantity": 42,
-        }
-        attributes = {
+        headers = {
             "HTTP_traceparent": "trace-this-potato",
-            "HTTP_another-random-header": "please-do-not-propagate-this",
         }
+        content = self.make_content(headers=headers)
 
         with patch("gcp_pilot.tasks.CloudTasks.push") as push:
             with patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
-                self.trigger_subscriber(content=content, attributes=attributes)
+                self.trigger_subscriber(content=content)
 
         expected_kwargs = {
             "queue_name": "tasks",
             "url": "http://localhost:8080/tasks/CalculatePriceTask",
-            "payload": '{"price": 10, "quantity": 42}',
+            "payload": '{"price": 10, "quantity": 42, "_http_headers": {"HTTP_traceparent": "trace-this-potato"}}',
             "headers": {"Traceparent": "trace-this-potato", "X-CloudTasks-Projectname": ANY},
         }
         push.assert_called_once_with(**expected_kwargs)
 
     def test_propagate_headers_as_uppercase(self):
-        content = {
-            "price": 10,
-            "quantity": 42,
-        }
-        attributes = {"HTTP_X-Forwarded-Authorization": "user-token"}
+        headers = {"HTTP_X-Forwarded-Authorization": "user-token"}
+        content = self.make_content(headers=headers)
 
         with patch("gcp_pilot.tasks.CloudTasks.push"), patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
-            response = self.trigger_subscriber(content=content, attributes=attributes)
+            response = self.trigger_subscriber(content=content)
         assert response.wsgi_request.META.get("HTTP_X_FORWARDED_AUTHORIZATION") == "user-token"

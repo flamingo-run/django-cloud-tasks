@@ -15,9 +15,6 @@ class PublisherTaskTest(TransactionTestCase):
         with patch("django_cloud_tasks.tasks.publisher_task.CloudPublisher") as publisher:
             self.client.post(path=url, data=data, content_type="application/json", **django_headers)
 
-        expected_attributes = {
-            "any-custom-attribute": "yay!",
-            "HTTP_Traceparent": "trace-this-potato",
-        }
+        expected_message = '{"name": "Harry Potter", "_http_headers": {"Traceparent": "trace-this-potato"}}'
         publisher_instance = publisher.return_value
-        publisher_instance.publish.assert_called_once_with(message=ANY, topic_id=ANY, attributes=expected_attributes)
+        publisher_instance.publish.assert_called_once_with(message=expected_message, topic_id=ANY, attributes=ANY)
