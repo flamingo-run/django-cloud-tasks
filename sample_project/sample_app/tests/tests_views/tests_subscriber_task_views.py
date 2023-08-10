@@ -39,3 +39,14 @@ class SubscriberTaskViewTest(AuthenticationMixin):
             "headers": {"Traceparent": "trace-this-potato", "X-CloudTasks-Projectname": ANY},
         }
         push.assert_called_once_with(**expected_kwargs)
+
+    def test_propagate_headers_as_uppercase(self):
+        content = {
+            "price": 10,
+            "quantity": 42,
+        }
+        attributes = {"HTTP_X-Forwarded-Authorization": "user-token"}
+
+        with patch("gcp_pilot.tasks.CloudTasks.push"), patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):
+            response = self.trigger_subscriber(content=content, attributes=attributes)
+        assert response.wsgi_request.META.get("HTTP_X_FORWARDED_AUTHORIZATION") == "user-token"
