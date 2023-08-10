@@ -27,7 +27,7 @@ class SubscriberTaskViewTest(AuthenticationMixin):
 
     def test_propagate_headers(self):
         headers = {
-            "HTTP_traceparent": "trace-this-potato",
+            "traceparent": "trace-this-potato",
         }
         content = self.make_content(headers=headers)
 
@@ -38,13 +38,13 @@ class SubscriberTaskViewTest(AuthenticationMixin):
         expected_kwargs = {
             "queue_name": "tasks",
             "url": "http://localhost:8080/tasks/CalculatePriceTask",
-            "payload": '{"price": 10, "quantity": 42, "_http_headers": {"HTTP_traceparent": "trace-this-potato"}}',
+            "payload": '{"price": 10, "quantity": 42, "_http_headers": {"traceparent": "trace-this-potato"}}',
             "headers": {"Traceparent": "trace-this-potato", "X-CloudTasks-Projectname": ANY},
         }
         push.assert_called_once_with(**expected_kwargs)
 
     def test_propagate_headers_as_uppercase(self):
-        headers = {"HTTP_X-Forwarded-Authorization": "user-token"}
+        headers = {"X-Forwarded-Authorization": "user-token"}
         content = self.make_content(headers=headers)
 
         with patch("gcp_pilot.tasks.CloudTasks.push"), patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj"):

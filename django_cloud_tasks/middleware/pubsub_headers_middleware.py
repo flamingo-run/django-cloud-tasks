@@ -20,7 +20,6 @@ class PubSubHeadersMiddleware:
         self.get_response = get_response
         app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
         self.url_name = app.subscribers_url_name
-        self.pubsub_header_prefix = app.pubsub_header_prefix
         self.propagated_headers_key = app.propagated_headers_key
 
     def __call__(self, request):
@@ -54,5 +53,5 @@ class PubSubHeadersMiddleware:
         headers = {}
         message_headers = message.data.get(self.propagated_headers_key) or {}
         for key, value in message_headers.items():
-            headers[key.removeprefix(self.pubsub_header_prefix)] = value
+            headers[key] = value
         return headers

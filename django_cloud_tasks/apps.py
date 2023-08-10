@@ -32,7 +32,6 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.eager = self._fetch_config(name="EAGER", default=False)
         self.tasks_url_name = self._fetch_config(name="URL_NAME", default="tasks-endpoint")
         self.subscribers_url_name = self._fetch_config(name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint")
-        self.pubsub_header_prefix = self._fetch_config(name="PUBSUB_HEADER_PREFIX", default="HTTP_")
 
         self.subscribers_max_retries = self._fetch_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
         self.subscribers_min_backoff = self._fetch_config(name="SUBSCRIBER_MIN_BACKOFF", default=None)
