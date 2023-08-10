@@ -13,6 +13,7 @@ from django_cloud_tasks import exceptions
 
 PREFIX = "DJANGO_CLOUD_TASKS_"
 DEFAULT_PROPAGATION_HEADERS = ["traceparent"]
+DEFAULT_PROPAGATION_HEADERS_KEY = "_http_headers"
 
 
 class DjangoCloudTasksAppConfig(AppConfig):
@@ -42,6 +43,9 @@ class DjangoCloudTasksAppConfig(AppConfig):
             name="PROPAGATED_HEADERS",
             default=DEFAULT_PROPAGATION_HEADERS,
             as_list=True,
+        )
+        self.propagated_headers_key = self._fetch_config(
+            name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
         )
 
     def get_task(self, name: str):

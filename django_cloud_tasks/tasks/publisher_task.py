@@ -27,21 +27,19 @@ class PublisherTask(Task, abc.ABC):
         return cls.push(task_kwargs=task_kwargs)
 
     def run(self, message: dict, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
-        # Cloud PubSub does not support headers, but we simulate them with prefixed attributes
-        all_attributes = self._build_attributes(attributes=attributes, headers=headers)
+        # Cloud PubSub does not support headers, but we simulate them with a key in the data property
+        self._set_message_headers(message=message, headers=headers)
 
         return self._get_publisher_client().publish(
             message=serialize(value=message),
             topic_id=self.topic_name(),
-            attributes=all_attributes,
+            attributes=attributes,
         )
 
-    def _build_attributes(self, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
+    def _set_message_headers(self, message: dict, headers: dict | None = None):
         headers = get_current_headers() | (headers or {})
-
-        app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
-        pubsub_headers = {f"{app.pubsub_header_prefix}{key}": value for key, value in headers.items()}
-        return (attributes or {}) | pubsub_headers
+        if headers:
+            message[self._app.propagated_headers_key] = headers
 
     @classmethod
     def set_up(cls) -> None:
@@ -59,6 +57,11 @@ class PublisherTask(Task, abc.ABC):
     @lru_cache()
     def _get_publisher_client(cls) -> CloudPublisher:
         return CloudPublisher()
+
+    @property
+    @lru_cache()
+    def _app(self) -> DjangoCloudTasksAppConfig:
+        return apps.get_app_config("django_cloud_tasks")
 
 
 class ModelPublisherTask(PublisherTask, abc.ABC):
@@ -86,11 +89,11 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
     def run(
         self, message: dict, topic_name: str, attributes: dict[str, str] | None, headers: dict[str, str] | None = None
     ):
-        all_attributes = self._build_attributes(attributes=attributes, headers=headers)
+        self._set_message_headers(message=message, headers=headers)
         return self._get_publisher_client().publish(
             message=serialize(value=message),
             topic_id=topic_name,
-            attributes=all_attributes,
+            attributes=attributes,
         )
 
     @classmethod
