@@ -21,6 +21,7 @@ class PubSubHeadersMiddleware:
         app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
         self.url_name = app.subscribers_url_name
         self.pubsub_header_prefix = app.pubsub_header_prefix
+        self.propagated_headers_key = app.propagated_headers_key
 
     def __call__(self, request):
         if self.is_subscriber_route(request=request):
@@ -51,7 +52,7 @@ class PubSubHeadersMiddleware:
             return {}
 
         headers = {}
-        for key, value in message.attributes.items():
-            if key.startswith(self.pubsub_header_prefix):
-                headers[key.removeprefix(self.pubsub_header_prefix)] = value
+        message_headers = message.data.get(self.propagated_headers_key) or {}
+        for key, value in message_headers.items():
+            headers[key.removeprefix(self.pubsub_header_prefix)] = value
         return headers
