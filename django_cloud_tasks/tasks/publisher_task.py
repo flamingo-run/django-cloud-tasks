@@ -28,7 +28,7 @@ class PublisherTask(Task, abc.ABC):
 
     def run(self, message: dict, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
         # Cloud PubSub does not support headers, but we simulate them with a key in the data property
-        self._set_message_headers(message=message, headers=headers)
+        message = self._build_message_with_headers(message=message, headers=headers)
 
         return self._get_publisher_client().publish(
             message=serialize(value=message),
@@ -36,10 +36,12 @@ class PublisherTask(Task, abc.ABC):
             attributes=attributes,
         )
 
-    def _set_message_headers(self, message: dict, headers: dict | None = None):
+    def _build_message_with_headers(self, message: dict, headers: dict | None = None):
+        message = message.copy()
         headers = get_current_headers() | (headers or {})
         if headers:
             message[self._app.propagated_headers_key] = headers
+        return message
 
     @classmethod
     def set_up(cls) -> None:
@@ -89,7 +91,7 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
     def run(
         self, message: dict, topic_name: str, attributes: dict[str, str] | None, headers: dict[str, str] | None = None
     ):
-        self._set_message_headers(message=message, headers=headers)
+        message = self._build_message_with_headers(message=message, headers=headers)
         return self._get_publisher_client().publish(
             message=serialize(value=message),
             topic_id=topic_name,
