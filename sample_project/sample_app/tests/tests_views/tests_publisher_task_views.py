@@ -12,9 +12,12 @@ class PublisherTaskTest(TransactionTestCase):
             "another-random-header": "please-do-not-propagate-this",
         }
         django_headers = {f"HTTP_{key.upper()}": value for key, value in headers.items()}
-
-        with patch("gcp_pilot.pubsub.CloudPublisher.publish") as publish:
+        with patch("django_cloud_tasks.tasks.publisher_task.CloudPublisher") as publisher:
             self.client.post(path=url, data=data, content_type="application/json", **django_headers)
 
-        expected_attributes = {"HTTP_Traceparent": "trace-this-potato", "any-custom-attribute": "yay!"}
-        publish.assert_called_once_with(message=ANY, topic_id=ANY, attributes=expected_attributes)
+        expected_attributes = {
+            "any-custom-attribute": "yay!",
+            "HTTP_Traceparent": "trace-this-potato",
+        }
+        publisher_instance = publisher.return_value
+        publisher_instance.publish.assert_called_once_with(message=ANY, topic_id=ANY, attributes=expected_attributes)
