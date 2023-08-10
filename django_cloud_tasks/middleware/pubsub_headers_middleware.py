@@ -25,7 +25,9 @@ class PubSubHeadersMiddleware:
     def __call__(self, request):
         if self.is_subscriber_route(request=request):
             headers = self.extract_headers(request=request)
-            request.META.update({f"{DJANGO_HEADER_PREFIX}{key}": value for key, value in headers.items()})
+            request.META.update(
+                {f"{DJANGO_HEADER_PREFIX}{key.upper().replace('-', '_')}": value for key, value in headers.items()}
+            )
 
         return self.get_response(request)
 
