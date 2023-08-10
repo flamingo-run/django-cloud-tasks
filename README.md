@@ -29,7 +29,7 @@ Additionally, you can configure with more settings or environment variables:
 - `DJANGO_GOOGLE_CLOUD_TASKS_URL_NAME`: Django URL-name that process On Demand tasks. We provide a view for that, but if you want to create your own, set this value. Default: `tasks-endpoint`.
 - `DJANGO_GOOGLE_CLOUD_TASKS_SUBSCRIBERS_URL_NAME`: Django URL-name that process Subscribers. We provide a view for that, but if you want to create your own, set this value. Default: `subscriptions-endpoint`.
 - `DJANGO_GOOGLE_CLOUD_TASKS_PROPAGATED_HEADERS`: . Default: `["traceparent"]`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_PUBSUB_HEADER_PREFIX`: when propagating headers in PubSub, use this prefix to store the values in the Message attributes. Default: `HTTP_`.
+- `DJANGO_GOOGLE_CLOUD_TASKS_PROPAGATED_HEADERS_KEY`: when propagating headers in PubSub, use a key to store the values in the Message data. Default: `_http_headers`.
 
 ## On Demand Task
 
