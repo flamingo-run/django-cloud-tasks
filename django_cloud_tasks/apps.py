@@ -47,6 +47,24 @@ class DjangoCloudTasksAppConfig(AppConfig):
             name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
         )
 
+    def get_tasks(self, only_subscriber: bool = False, only_periodic: bool = False, only_demand: bool = False):
+        all_tasks = {
+            "demand": list(self.on_demand_tasks.values()),
+            "periodic": list(self.periodic_tasks.values()),
+            "subscriber": list(self.subscriber_tasks.values()),
+        }
+
+        if only_demand:
+            return all_tasks["demand"]
+
+        if only_periodic:
+            return all_tasks["periodic"]
+
+        if only_subscriber:
+            return all_tasks["subscriber"]
+
+        return all_tasks["demand"] + all_tasks["subscriber"] + all_tasks["periodic"]
+
     def get_task(self, name: str):
         if name in self.on_demand_tasks:
             return self.on_demand_tasks[name]
