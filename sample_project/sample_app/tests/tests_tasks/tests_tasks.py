@@ -11,7 +11,7 @@ from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import Task, TaskMetadata
-from django_cloud_tasks.tests import tests_base, factories
+from django_cloud_tasks.tests import tests_base
 from django_cloud_tasks.tests.tests_base import eager_tasks
 from sample_app import tasks
 
@@ -82,9 +82,9 @@ class TasksTest(SimpleTestCase):
             tasks.SayHelloTask,
             tasks.SayHelloWithParamsTask,
             tasks.PublishPersonTask,
+            tasks.DummyRoutineTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.OneBigDedicatedTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.NonCompliantTask,
-            factories.DummyRoutineTask,
         ]
         subscriber_tasks = [
             tasks.PleaseNotifyMeTask,

@@ -2,7 +2,6 @@ import factory
 from django.db.models.signals import post_save, pre_save
 
 from django_cloud_tasks.models import Pipeline, Routine, RoutineVertex
-from django_cloud_tasks.tasks import RoutineTask
 
 
 class PipelineFactory(factory.django.DjangoModelFactory):
@@ -10,15 +9,6 @@ class PipelineFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Pipeline
-
-
-class DummyRoutineTask(RoutineTask):
-    def run(self, **kwargs):
-        ...
-
-    @classmethod
-    def revert(cls, **kwargs):
-        ...
 
 
 class RoutineFactory(factory.django.DjangoModelFactory):
