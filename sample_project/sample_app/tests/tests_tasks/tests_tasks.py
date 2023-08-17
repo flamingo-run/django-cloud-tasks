@@ -11,7 +11,7 @@ from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import Task, TaskMetadata
-from django_cloud_tasks.tests import tests_base
+from django_cloud_tasks.tests import tests_base, factories
 from django_cloud_tasks.tests.tests_base import eager_tasks
 from sample_app import tasks
 
@@ -67,6 +67,42 @@ class TasksTest(SimpleTestCase):
         received_task = self.app_config.get_task(name="SayHelloWithParamsTask")
         expected_task = tasks.SayHelloWithParamsTask
         self.assertEqual(expected_task, received_task)
+
+    def test_get_tasks(self):
+        from another_app import tasks as another_app_tasks
+        from django_cloud_tasks import tasks as djc_tasks
+
+        demand_tasks = [
+            djc_tasks.RoutineReverterTask,
+            djc_tasks.RoutineExecutorTask,
+            tasks.CalculatePriceTask,
+            tasks.ParentCallingChildTask,
+            tasks.ExposeCustomHeadersTask,
+            tasks.FailMiserablyTask,
+            tasks.SayHelloTask,
+            tasks.SayHelloWithParamsTask,
+            tasks.PublishPersonTask,
+            another_app_tasks.deep_down_tasks.one_dedicated_task.OneBigDedicatedTask,
+            another_app_tasks.deep_down_tasks.one_dedicated_task.NonCompliantTask,
+            factories.DummyRoutineTask,
+        ]
+        subscriber_tasks = [
+            tasks.PleaseNotifyMeTask,
+            tasks.ParentSubscriberTask,
+        ]
+        periodic_tasks = [tasks.SaySomethingTask]
+        expected_task = demand_tasks + subscriber_tasks + periodic_tasks
+        received_task = self.app_config.get_tasks()
+        self.assertEqual(expected_task, received_task)
+
+        received_task = self.app_config.get_tasks(only_periodic=True)
+        self.assertEqual(periodic_tasks, received_task)
+
+        received_task = self.app_config.get_tasks(only_subscriber=True)
+        self.assertEqual(subscriber_tasks, received_task)
+
+        received_task = self.app_config.get_tasks(only_demand=True)
+        self.assertEqual(demand_tasks, received_task)
 
     def test_get_abstract_task(self):
         with self.assertRaises(expected_exception=exceptions.TaskNotFound):
