@@ -97,3 +97,12 @@ class PublishPersonTask(ModelPublisherTask):
     @classmethod
     def build_message_attributes(cls, obj: Model, **kwargs) -> dict[str, str]:
         return {"any-custom-attribute": "yay!"}
+
+
+class DummyRoutineTask(RoutineTask):
+    def run(self, **kwargs):
+        ...
+
+    @classmethod
+    def revert(cls, **kwargs):
+        ...
