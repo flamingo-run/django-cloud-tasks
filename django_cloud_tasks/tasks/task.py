@@ -182,9 +182,20 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return cls().run(**kwargs)
 
     @classmethod
-    def asap(cls, **kwargs):
-        return cls.push(task_kwargs=kwargs)
-
+    def asap(
+        cls,
+        headers: dict | None = None,
+        queue: str | None = None,
+        delay_in_seconds: int | None = None,
+        **kwargs,
+    ):
+        return cls.push(
+            task_kwargs=kwargs,
+            queue=queue,
+            headers=headers,
+            delay_in_seconds=delay_in_seconds,
+        )
+        
     @classmethod
     def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
         if isinstance(eta, int):
