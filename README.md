@@ -7,6 +7,10 @@
 
 Powered by [GCP Pilot](https://github.com/flamingo-run/gcp-pilot).
 
+## Installation
+
+`pip install django-google-cloud-tasks`
+
 ## APIs
 
 The following APIs must be enabled in your project(s):
