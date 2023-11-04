@@ -36,6 +36,9 @@ class TaskMetadata:
     previous_failure: str | None = None
     project_id: str | None = None
     custom_headers: dict | None = None
+    is_cloud_scheduler: bool | None = None
+    cloud_scheduler_schedule_time: datetime | None = None
+    cloud_scheduler_job_name: str | None = None
 
     def __post_init__(self):
         self.custom_headers = get_current_headers()
@@ -44,6 +47,7 @@ class TaskMetadata:
     def from_headers(cls, headers: dict) -> Self:
         # Available data: https://cloud.google.com/tasks/docs/creating-http-target-tasks#handler
         cloud_tasks_prefix = "X-Cloudtasks-"
+        cloud_scheduler_prefix = "X-Cloudscheduler"
 
         if (attempt_str := headers.get(f"{cloud_tasks_prefix}Taskexecutioncount")) is not None:
             execution_number = int(attempt_str)
@@ -60,6 +64,18 @@ class TaskMetadata:
         else:
             eta = None
 
+        cloud_scheduler_job_name = headers.get(f"{cloud_scheduler_prefix}-Jobname")
+
+        if schedule_time_str := headers.get(f"{cloud_scheduler_prefix}-Scheduletime"):
+            try:
+                schedule_time = datetime.fromisoformat(schedule_time_str)
+            except ValueError:
+                schedule_time = None
+        else:
+            schedule_time = None
+
+        is_cloud_scheduler = headers.get(cloud_scheduler_prefix) == "true"
+
         return cls(
             project_id=headers.get(f"{cloud_tasks_prefix}Projectname"),
             queue_name=headers.get(f"{cloud_tasks_prefix}Queuename"),
@@ -69,11 +85,14 @@ class TaskMetadata:
             eta=eta,
             previous_response=headers.get(f"{cloud_tasks_prefix}TaskPreviousResponse"),
             previous_failure=headers.get(f"{cloud_tasks_prefix}TaskRetryReason"),
+            is_cloud_scheduler=is_cloud_scheduler,
+            cloud_scheduler_schedule_time=schedule_time,
+            cloud_scheduler_job_name=cloud_scheduler_job_name,
         )
 
     def to_headers(self) -> dict:
         cloud_tasks_prefix = "X-Cloudtasks-"
-        return {
+        cloud_tasks_headers = {
             f"{cloud_tasks_prefix}Taskname": self.task_id,
             f"{cloud_tasks_prefix}Queuename": self.queue_name,
             f"{cloud_tasks_prefix}Projectname": self.project_id,
@@ -83,6 +102,17 @@ class TaskMetadata:
             f"{cloud_tasks_prefix}TaskPreviousResponse": self.previous_response,
             f"{cloud_tasks_prefix}TaskRetryReason": self.previous_failure,
         }
+
+        if self.is_cloud_scheduler:
+            cloud_scheduler_prefix = "X-Cloudscheduler"
+            cloud_scheduler_headers = {
+                f"{cloud_scheduler_prefix}-Jobname": self.cloud_scheduler_job_name,
+                f"{cloud_scheduler_prefix}-Scheduletime": self.cloud_scheduler_schedule_time.isoformat(),
+                f"{cloud_scheduler_prefix}": "true",
+            }
+            return cloud_tasks_headers | cloud_scheduler_headers
+
+        return cloud_tasks_headers
 
     @classmethod
     def from_task_obj(cls, task_obj: GoogleCloudTask) -> Self:
