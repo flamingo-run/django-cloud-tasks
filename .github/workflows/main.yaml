@@ -15,7 +15,7 @@ jobs:
       matrix:
         python-version: [ '3.11.x', '3.12.x' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python
@@ -35,7 +35,7 @@ jobs:
       matrix:
         python-version: [ '3.11.x', '3.12.x' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python
@@ -67,7 +67,7 @@ jobs:
       matrix:
         python-version: [ '3.11.x', '3.12.x' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python
