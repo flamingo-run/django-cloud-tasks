@@ -11,6 +11,9 @@ on:
 jobs:
   linter:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.11.x', '3.12.x' ]
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -18,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.x'
+          python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install Python dependencies
         run: make dependencies
@@ -30,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.11.x' ]
+        python-version: [ '3.11.x', '3.12.x' ]
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -62,7 +65,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '3.11.x' ]
+        python-version: [ '3.11.x', '3.12.x' ]
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
