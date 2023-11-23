@@ -16,7 +16,6 @@ drf-kit = "^1.21.6"
 
 [tool.poetry.dev-dependencies]
 ruff = "*"
-black = "*"
 coverage = "*"
 factory-boy = "*"
 freezegun = "*"
@@ -28,11 +27,6 @@ pytest-xdist = "*"
 pytest-sugar = "*"
 pytest-random-order = "*"
 pytest-timeout = "*"
-
-
-[tool.black]
-line-length = 120
-target-version = ['py311']
 
 
 [tool.ruff]
