@@ -318,17 +318,17 @@ djangorestframework = ">=3.9.3"
 
 [[package]]
 name = "drf-kit"
-version = "1.29.0"
+version = "1.29.1"
 description = "DRF Toolkit"
 optional = false
-python-versions = ">=3.10,<=3.12"
+python-versions = ">=3.11,<3.13"
 files = [
-    {file = "drf_kit-1.29.0-py3-none-any.whl", hash = "sha256:eab85706aab78520d37d5b55aa766ed374be655dab6a1ec18a4458649f6c1459"},
-    {file = "drf_kit-1.29.0.tar.gz", hash = "sha256:5cae1c420c553517839a82744927643a1f37c7c8e0c46871a93b9867c93bc005"},
+    {file = "drf_kit-1.29.1-py3-none-any.whl", hash = "sha256:aae590d5b78931e9cfe4b705389585c7416492db299fc91962f742e5910e20cc"},
+    {file = "drf_kit-1.29.1.tar.gz", hash = "sha256:d50cd7a0452dd3009ba64d7af165199ff31a3dadd6627e5290f5ceee7d5d66bc"},
 ]
 
 [package.dependencies]
-Django = ">=3,<6"
+Django = ">=4,<6"
 django-filter = ">=23,<24"
 django-ordered-model = "<3.7.2"
 djangorestframework = ">=3,<4"
@@ -397,13 +397,13 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "gcp-pilot"
-version = "1.21.0"
+version = "1.21.1"
 description = "Google Cloud Platform Friendly Pilot"
 optional = false
-python-versions = ">=3.11,<=3.12"
+python-versions = ">=3.11,<3.13"
 files = [
-    {file = "gcp_pilot-1.21.0-py3-none-any.whl", hash = "sha256:0dac29950107956da0234950b49f766b04128fb8246e81edbfba071f36cb5367"},
-    {file = "gcp_pilot-1.21.0.tar.gz", hash = "sha256:3d660b0c3d6c33637b087a5ba74dcc35bdea8879d1ebb787cb667554afa1e214"},
+    {file = "gcp_pilot-1.21.1-py3-none-any.whl", hash = "sha256:550843729358dd67961c18f2e8e81c28629bc670c707c80de493772d68d63906"},
+    {file = "gcp_pilot-1.21.1.tar.gz", hash = "sha256:4ac81552e1e0b1524df2252a5069f97153b9bc9c23824d6c8f3e07c976b948b5"},
 ]
 
 [package.dependencies]
@@ -474,13 +474,13 @@ uritemplate = ">=3.0.1,<5"
 
 [[package]]
 name = "google-auth"
-version = "2.25.0"
+version = "2.25.1"
 description = "Google Authentication Library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google-auth-2.25.0.tar.gz", hash = "sha256:cabc5c6fd327d71baa820f745118ecb2b709412d153419a43173d91495ef8715"},
-    {file = "google_auth-2.25.0-py2.py3-none-any.whl", hash = "sha256:2e7d37702e617ea9f4ac2568625a9fc2cdea910dcdca90e378db09ac94ee9ab3"},
+    {file = "google-auth-2.25.1.tar.gz", hash = "sha256:d5d66b8f4f6e3273740d7bb73ddefa6c2d1ff691704bd407d51c6b5800e7c97b"},
+    {file = "google_auth-2.25.1-py2.py3-none-any.whl", hash = "sha256:dfd7b44935d498e106c08883b2dac0ad36d8aa10402a6412e9a1c9d74b4773f1"},
 ]
 
 [package.dependencies]
@@ -1338,5 +1338,5 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.11,<=3.12"
-content-hash = "a559324aac725bada371eace8ad7a38e632eb5834ee01b00617e32e021f2da4e"
+python-versions = "~3.11||~3.12"
+content-hash = "7e62a7d6fe414534e9e89c68e0b52da1892f97def51ec78eb9afcbbbcc9ec329"
