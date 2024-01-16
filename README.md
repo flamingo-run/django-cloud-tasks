@@ -22,19 +22,19 @@ The following APIs must be enabled in your project(s):
 
 ## Configuration
 
-> Add ``DJANGO_GOOGLE_CLOUD_TASKS_ENDPOINT`` to your Django settings or as an environment variable
+> Add ``DJANGO_CLOUD_TASKS_ENDPOINT`` to your Django settings or as an environment variable
 
 ![image](https://user-images.githubusercontent.com/9717144/100749131-00cce780-33c3-11eb-8f2a-b465bc0a45bb.png)
 
 Additionally, you can configure with more settings or environment variables:
 
-- `DJANGO_GOOGLE_CLOUD_TASKS_APP_NAME`: uses this name as the queue name, prefix to topics and subscriptions. Default: `None`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_DELIMITER`: uses this name as delimiter to the `APP_NAME` and the topic/subscription name. Default: `--`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_EAGER`: force the tasks to always run synchronously. Useful for local development. Default: `False`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_URL_NAME`: Django URL-name that process On Demand tasks. We provide a view for that, but if you want to create your own, set this value. Default: `tasks-endpoint`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_SUBSCRIBERS_URL_NAME`: Django URL-name that process Subscribers. We provide a view for that, but if you want to create your own, set this value. Default: `subscriptions-endpoint`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_PROPAGATED_HEADERS`: . Default: `["traceparent"]`.
-- `DJANGO_GOOGLE_CLOUD_TASKS_PROPAGATED_HEADERS_KEY`: when propagating headers in PubSub, use a key to store the values in the Message data. Default: `_http_headers`.
+- `DJANGO_CLOUD_TASKS_APP_NAME`: uses this name as the queue name, prefix to topics and subscriptions. Default: `None`.
+- `DJANGO_CLOUD_TASKS_DELIMITER`: uses this name as delimiter to the `APP_NAME` and the topic/subscription name. Default: `--`.
+- `DJANGO_CLOUD_TASKS_EAGER`: force the tasks to always run synchronously. Useful for local development. Default: `False`.
+- `DJANGO_CLOUD_TASKS_URL_NAME`: Django URL-name that process On Demand tasks. We provide a view for that, but if you want to create your own, set this value. Default: `tasks-endpoint`.
+- `DJANGO_CLOUD_TASKS_SUBSCRIBERS_URL_NAME`: Django URL-name that process Subscribers. We provide a view for that, but if you want to create your own, set this value. Default: `subscriptions-endpoint`.
+- `DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS`: . Default: `["traceparent"]`.
+- `DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS_KEY`: when propagating headers in PubSub, use a key to store the values in the Message data. Default: `_http_headers`.
 
 ## On Demand Task
 
@@ -74,7 +74,7 @@ When executing an async task, a new job will be added to a queue in Cloud Tasks 
 
 You can choose this queue's name in the following order:
 - Overriding manually when scheduling with `push`, `until` or `later`
-- Defining `DJANGO_GOOGLE_CLOUD_TASKS_APP_NAME` in Django settings
+- Defining `DJANGO_CLOUD_TASKS_APP_NAME` in Django settings
 - otherwise, `tasks` will be used as queue name
 
 It's also possible to set dynamically with:
