@@ -312,6 +312,28 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return cls(metadata=metadata).run(**task_kwargs)
 
     @classmethod
+    def discard(cls, task_id: str | None = None, min_retries: int = 0):
+        client = cls._get_tasks_client()
+        if task_id:
+            task_objects = [client.get_task(queue_name=cls.queue(), task_name=task_id)]
+        else:
+            task_objects = client.list_tasks(queue_name=cls.queue())
+
+        outputs = []
+        for task_obj in task_objects:
+            task_name = task_obj.http_request.url.rsplit("/", 1)[-1]
+            if task_name != cls.name():
+                continue
+
+            if task_obj.dispatch_count < min_retries:
+                continue
+
+            task_id = task_obj.name.split("/")[-1]
+            client.delete_task(queue_name=cls.queue(), task_name=task_id)
+            outputs.append(f"{task_name}/{task_id}")
+        return outputs
+
+    @classmethod
     def name(cls) -> str:
         return str(cls)
 
