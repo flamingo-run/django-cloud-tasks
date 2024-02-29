@@ -6,7 +6,7 @@ from functools import lru_cache
 from random import randint
 from typing import Any, Self
 from urllib.parse import urljoin
-
+from concurrent.futures import ThreadPoolExecutor
 from django.apps import apps
 from django.urls import reverse
 from django.utils.timezone import now
@@ -319,18 +319,23 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         else:
             task_objects = client.list_tasks(queue_name=cls.queue())
 
-        outputs = []
-        for task_obj in task_objects:
+        def process(task_obj):
             task_name = task_obj.http_request.url.rsplit("/", 1)[-1]
-            if task_name != cls.name():
-                continue
-
-            if task_obj.dispatch_count < min_retries:
-                continue
-
             task_id = task_obj.name.split("/")[-1]
             client.delete_task(queue_name=cls.queue(), task_name=task_id)
-            outputs.append(f"{task_name}/{task_id}")
+            return f"{task_name}/{task_id}"
+
+        def jobs():
+            for task_obj in task_objects:
+                task_name = task_obj.http_request.url.rsplit("/", 1)[-1]
+                if task_name == cls.name() and task_obj.dispatch_count >= min_retries:
+                    yield task_obj
+
+        pool = ThreadPoolExecutor()
+
+        outputs = []
+        for output in pool.map(process, jobs()):
+            outputs.append(output)
         return outputs
 
     @classmethod
