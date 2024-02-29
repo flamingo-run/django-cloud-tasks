@@ -56,7 +56,7 @@ MyTask.asap(x=10, y=3)  # run async (another instance will execute and print)
 MyTask.sync(x=10, y=5)  # run sync (the print happens right now)
 ```
 
-It's also possible to execute asynchronously, but not immediatelly:
+It's also possible to execute asynchronously, but not immediately:
 ```python
 MyTask.later(task_kwargs=dict(x=10, y=5), eta=3600)  # run async in 1 hour (int, timedelta and datetime are accepted)
 
@@ -89,13 +89,39 @@ class MyTask(Task):
         return "my-queue-name-here"
 ```
 
-### Throublehsooting
+### Troubleshooting
 
 When a task if failing in Cloud Tasks and you want to debug **locally** with the same data, 
 you can get the task ID from Cloud Task UI (the big number in the column NAME) and run the task locally with the same parameters with:
 
 ```python
 MyTask.debug(task_id="<the task number>")
+```
+
+### Cleanup
+
+Google Cloud Tasks will automatically discard any jobs after the max-retries.
+
+If by any reason you need to discard jobs manually, you can provide the Task ID:
+
+
+```python
+MyTask.discard(task_id="<the task number>")
+```
+
+Or you can batch discard many tasks at once:
+
+
+```python
+MyTask.discard()
+```
+
+
+You can also provide `min_retries` parameter to filter the tasks that have retried at least some amount 
+(so tasks have some chance to execute):
+
+```python
+MyTask.discard(min_retries=5)
 ```
 
 ## Periodic Task
