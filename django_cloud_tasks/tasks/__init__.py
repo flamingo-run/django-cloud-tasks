@@ -7,7 +7,7 @@ from django_cloud_tasks.tasks.routine_task import (
     RoutineTask,
 )
 from django_cloud_tasks.tasks.subscriber_task import SubscriberTask
-from django_cloud_tasks.tasks.task import Task, TaskMetadata
+from django_cloud_tasks.tasks.task import Task, TaskMetadata, is_task_route
 
 __all__ = (
     "Task",
@@ -20,4 +20,5 @@ __all__ = (
     "PipelineDispatcherTask",
     "RoutineExecutorTask",
     "RoutineReverterTask",
+    "is_task_route",
 )

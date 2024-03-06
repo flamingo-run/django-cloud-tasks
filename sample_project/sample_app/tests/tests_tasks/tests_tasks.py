@@ -10,10 +10,11 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
-from django_cloud_tasks.tasks import Task, TaskMetadata
+from django_cloud_tasks.tasks import Task, TaskMetadata, is_task_route
 from django_cloud_tasks.tests import tests_base
 from django_cloud_tasks.tests.tests_base import eager_tasks
 from sample_app import tasks
+from django.http import HttpRequest
 
 
 class TasksTest(SimpleTestCase):
@@ -238,6 +239,17 @@ class TasksTest(SimpleTestCase):
             tasks.CalculatePriceTask.asap()
 
         self.assertEqual(2, client.call_count)
+
+    def test_is_task_route(self):
+        request = HttpRequest()
+        request.path = tasks.SayHelloWithParamsTask.url().removeprefix(self.app_config.domain)
+        self.assertTrue(is_task_route(request=request))
+
+        request.path = f"{request.path}/sub-path"
+        self.assertFalse(is_task_route(request=request))
+
+        request.path = "/wrong-task-path/SayHelloWithParamsTask"
+        self.assertFalse(is_task_route(request=request))
 
 
 class SayHelloTaskTest(TestCase, tests_base.RoutineTaskTestMixin):
