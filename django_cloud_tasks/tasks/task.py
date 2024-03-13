@@ -191,8 +191,7 @@ class TaskMeta(type):
         return self.__name__
 
 
-class DjangoCloudTask(abc.ABCMeta, TaskMeta):
-    ...
+class DjangoCloudTask(abc.ABCMeta, TaskMeta): ...
 
 
 class Task(abc.ABC, metaclass=DjangoCloudTask):

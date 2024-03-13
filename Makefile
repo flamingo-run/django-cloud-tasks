@@ -26,7 +26,7 @@ lint:
 style:
 	@echo "Applying code style ..."
 	poetry run ruff format .
-	poetry run ruff . --fix
+	poetry run ruff check . --fix
 
 unit:
 	@echo "Running unit tests ..."

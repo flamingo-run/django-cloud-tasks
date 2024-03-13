@@ -93,8 +93,9 @@ class RoutineExecutorTaskTest(EagerTasksMixin, TestCase):
             attempt_count=0,
             max_retries=2,
         )
-        with self.assertLogs(level="INFO") as context, patch(
-            "sample_app.tasks.SayHelloTask.sync", side_effect=[Exception("any error"), "success"]
+        with (
+            self.assertLogs(level="INFO") as context,
+            patch("sample_app.tasks.SayHelloTask.sync", side_effect=[Exception("any error"), "success"]),
         ):
             RoutineExecutorTask.sync(routine_id=routine.pk)
             self.assert_routine_lock(routine_id=routine.pk)

@@ -99,8 +99,7 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         )
 
     @classmethod
-    def set_up(cls) -> None:
-        ...  # TODO: run over all models?
+    def set_up(cls) -> None: ...  # TODO: run over all models?
 
     @classmethod
     def topic_name(cls, obj: Model, **kwargs) -> str:

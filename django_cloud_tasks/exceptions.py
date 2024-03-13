@@ -10,5 +10,4 @@ class TaskNotFound(Exception):
         super().__init__(message)
 
 
-class DiscardTaskException(Exception):
-    ...
+class DiscardTaskException(Exception): ...

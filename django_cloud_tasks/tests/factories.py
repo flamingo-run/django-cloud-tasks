@@ -20,8 +20,7 @@ class RoutineFactory(factory.django.DjangoModelFactory):
 
 
 @factory.django.mute_signals(post_save, pre_save)
-class RoutineWithoutSignalFactory(RoutineFactory):
-    ...
+class RoutineWithoutSignalFactory(RoutineFactory): ...
 
 
 class RoutineVertexFactory(factory.django.DjangoModelFactory):
