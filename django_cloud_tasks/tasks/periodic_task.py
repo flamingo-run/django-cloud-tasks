@@ -23,7 +23,22 @@ class PeriodicTask(Task, abc.ABC):
             url=cls.url(),
             payload=payload,
             cron=cls.run_every,
+            headers=cls.schedule_headers(),
+            use_oidc_auth=cls.schedule_use_oidc(),
+            retry_count=cls.schedule_retries(),
         )
+
+    @classmethod
+    def schedule_headers(cls) -> dict:
+        return {}
+
+    @classmethod
+    def schedule_use_oidc(cls) -> bool:
+        return True
+
+    @classmethod
+    def schedule_retries(cls) -> int:
+        return 0
 
     @classmethod
     def schedule_name(cls) -> str:
