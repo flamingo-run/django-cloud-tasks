@@ -11,10 +11,13 @@ from gcp_pilot.mocker import patch_auth
 
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import Task, TaskMetadata, is_task_route
+from django_cloud_tasks.tasks.task import get_config
 from django_cloud_tasks.tests import tests_base
 from django_cloud_tasks.tests.tests_base import eager_tasks
 from sample_app import tasks
 from django.http import HttpRequest
+
+from sample_app.tasks import MyMetadata
 
 
 class TasksTest(SimpleTestCase):
@@ -374,3 +377,23 @@ class TestTaskMetadata(TestCase):
 
         not_metadata = True
         self.assertNotEqual(reference, not_metadata)
+
+    def test_custom_class(self):
+        with self.settings(DJANGO_CLOUD_TASKS_TASK_METADATA_CLASS="sample_app.tasks.MyMetadata"):
+            metadata_class = get_config("task_metadata_class")
+
+        self.assertTrue(issubclass(metadata_class, MyMetadata))
+
+    def test_custom_class_not_found(self):
+        with (
+            self.settings(DJANGO_CLOUD_TASKS_TASK_METADATA_CLASS="potato.tasks.MyMetadata"),
+            self.assertRaisesRegex(ImportError, "Unable to import"),
+        ):
+            get_config("task_metadata_class")
+
+    def test_custom_class_unsupported(self):
+        with (
+            self.settings(DJANGO_CLOUD_TASKS_TASK_METADATA_CLASS="sample_app.tasks.MyUnsupportedMetadata"),
+            self.assertRaisesRegex(ImportError, "must be a subclass of TaskMetadata"),
+        ):
+            get_config("task_metadata_class")

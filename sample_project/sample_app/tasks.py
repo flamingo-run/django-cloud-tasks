@@ -2,7 +2,7 @@ import abc
 
 from django.db.models import Model
 
-from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task, ModelPublisherTask
+from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task, ModelPublisherTask, TaskMetadata
 
 
 class BaseAbstractTask(Task, abc.ABC):
@@ -104,3 +104,9 @@ class DummyRoutineTask(RoutineTask):
 
     @classmethod
     def revert(cls, **kwargs): ...
+
+
+class MyMetadata(TaskMetadata): ...
+
+
+class MyUnsupportedMetadata: ...

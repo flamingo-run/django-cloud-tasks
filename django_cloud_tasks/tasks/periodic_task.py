@@ -4,7 +4,7 @@ from functools import lru_cache
 from gcp_pilot.scheduler import CloudScheduler
 
 from django_cloud_tasks.serializers import deserialize, serialize
-from django_cloud_tasks.tasks.task import Task, get_config, TaskMetadata
+from django_cloud_tasks.tasks.task import Task, get_config
 
 
 class PeriodicTask(Task, abc.ABC):
@@ -15,7 +15,8 @@ class PeriodicTask(Task, abc.ABC):
         payload = serialize(kwargs)
 
         if cls.eager():
-            eager_metadata = TaskMetadata.build_eager(task_class=cls)
+            task_metadata_class = get_config(name="task_metadata_class")
+            eager_metadata = task_metadata_class.build_eager(task_class=cls)
             return cls(metadata=eager_metadata).run(**deserialize(value=payload))
 
         return cls._get_scheduler_client().put(

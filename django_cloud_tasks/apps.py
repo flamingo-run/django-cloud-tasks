@@ -10,7 +10,6 @@ from gcp_pilot.scheduler import CloudScheduler
 
 from django_cloud_tasks import exceptions
 
-
 PREFIX = "DJANGO_CLOUD_TASKS_"
 DEFAULT_PROPAGATION_HEADERS = ["traceparent"]
 DEFAULT_PROPAGATION_HEADERS_KEY = "_http_headers"
@@ -47,6 +46,10 @@ class DjangoCloudTasksAppConfig(AppConfig):
             name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
         )
 
+    @property
+    def task_metadata_class(self):
+        return self.get_task_metadata_class()
+
     def get_tasks(self, only_subscriber: bool = False, only_periodic: bool = False, only_demand: bool = False):
         all_tasks = {
             "demand": list(self.on_demand_tasks.values()),
@@ -79,6 +82,26 @@ class DjangoCloudTasksAppConfig(AppConfig):
             name="BACKUP_QUEUE_NAME",
             default=f"{original_name}{self.delimiter}temp",
         )
+
+    def get_task_metadata_class(self):
+        from django_cloud_tasks.tasks import TaskMetadata
+
+        metadata_class_name = self._fetch_config(
+            name="TASK_METADATA_CLASS",
+            default="django_cloud_tasks.tasks.task.TaskMetadata",
+        )
+
+        try:
+            module_name, class_name = metadata_class_name.rsplit(".", 1)
+            module = __import__(module_name, fromlist=[class_name])
+            metadata_class = getattr(module, class_name)
+        except (AttributeError, ImportError, ValueError) as err:
+            raise ImportError(f"Unable to import {metadata_class_name}") from err
+
+        if not issubclass(metadata_class, TaskMetadata):
+            raise ImportError(f"Class {metadata_class_name} must be a subclass of TaskMetadata")
+
+        return metadata_class
 
     def _fetch_config(self, name: str, default: Any, as_list: bool = False) -> Any:
         config_name = f"{PREFIX}{name.upper()}"

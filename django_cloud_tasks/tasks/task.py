@@ -43,6 +43,7 @@ class TaskMetadata:
 
     def __post_init__(self):
         self.custom_headers = get_current_headers()
+        self._max_attempts = None
 
     @classmethod
     def from_headers(cls, headers: dict) -> Self:
@@ -301,14 +302,17 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             api_kwargs["queue_name"] = backup_queue_name
             outcome = cls._get_tasks_client().push(**api_kwargs)
 
-        return TaskMetadata.from_task_obj(task_obj=outcome)
+        task_metadata_class = get_config(name="task_metadata_class")
+        return task_metadata_class.from_task_obj(task_obj=outcome)
 
     @classmethod
     def debug(cls, task_id: str):
         client = cls._get_tasks_client()
         task_obj = client.get_task(queue_name=cls.queue(), task_name=task_id)
         task_kwargs = json.loads(task_obj.http_request.body)
-        metadata = TaskMetadata.from_task_obj(task_obj=task_obj)
+
+        task_metadata_class = get_config(name="task_metadata_class")
+        metadata = task_metadata_class.from_task_obj(task_obj=task_obj)
         return cls(metadata=metadata).run(**task_kwargs)
 
     @classmethod

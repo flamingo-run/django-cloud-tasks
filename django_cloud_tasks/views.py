@@ -10,8 +10,7 @@ from django_cloud_tasks import exceptions
 from django_cloud_tasks.exceptions import TaskNotFound
 from django_cloud_tasks.serializers import deserialize
 from django_cloud_tasks.tasks import Task, SubscriberTask
-from django_cloud_tasks.tasks.task import TaskMetadata
-
+from django_cloud_tasks.tasks.task import TaskMetadata, get_config
 
 logger = logging.getLogger("django_cloud_tasks")
 
@@ -53,7 +52,8 @@ class GoogleCloudTaskView(View):
         return deserialize(value=request.body)
 
     def parse_metadata(self, request) -> TaskMetadata:
-        return TaskMetadata.from_headers(headers=dict(request.headers))
+        task_metadata_class = get_config(name="task_metadata_class")
+        return task_metadata_class.from_headers(headers=dict(request.headers))
 
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
