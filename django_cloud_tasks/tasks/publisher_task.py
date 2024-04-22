@@ -1,4 +1,6 @@
 import abc
+from dataclasses import dataclass
+from typing import Type
 
 from cachetools.func import lru_cache
 from django.apps import apps
@@ -66,27 +68,63 @@ class PublisherTask(Task, abc.ABC):
         return apps.get_app_config("django_cloud_tasks")
 
 
+@dataclass
+class PreparedModelPublication:
+    """Stores the information needed to publish a model to PubSub.
+
+    Because models are mutable objects, in case we don't want to publish the event right away,
+    we need to store the information needed to publish right away.
+    """
+
+    task_klass: Type["ModelPublisherTask"]
+    message: dict
+    attributes: dict[str, str]
+    topic_name: str
+
+    def get_task_kwargs(self):
+        return {
+            "message": self.message,
+            "attributes": self.attributes,
+            "topic_name": self.topic_name,
+        }
+
+    def sync(self):
+        return self.task_klass().run(**self.get_task_kwargs())
+
+    def asap(self):
+        return self.push()
+
+    def push(self, **kwargs):
+        return self.task_klass._push_prepared(prepared=self, **kwargs)
+
+
 class ModelPublisherTask(PublisherTask, abc.ABC):
     # Just a specialized Task that publishes a Django model to PubSub
     # Since it cannot accept any random parameters, all its signatures have fixed arguments
     @classmethod
     def sync(cls, obj: Model, **kwargs):
-        message = cls.build_message_content(obj=obj, **kwargs)
-        attributes = cls.build_message_attributes(obj=obj, **kwargs)
-        topic_name = cls.topic_name(obj=obj, **kwargs)
-        return cls().run(message=message, attributes=attributes, topic_name=topic_name)
+        return cls.prepare(obj=obj, **kwargs).sync()
 
     @classmethod
     def asap(cls, obj: Model, **kwargs):
-        message = cls.build_message_content(obj=obj, **kwargs)
-        attributes = cls.build_message_attributes(obj=obj, **kwargs)
-        topic_name = cls.topic_name(obj=obj, **kwargs)
-        task_kwargs = {
-            "message": message,
-            "attributes": attributes,
-            "topic_name": topic_name,
-        }
-        return cls.push(task_kwargs=task_kwargs)
+        return cls.prepare(obj=obj, **kwargs).asap()
+
+    @classmethod
+    def push(cls, task_kwargs: dict, **kwargs):
+        return cls.prepare(**task_kwargs).push(**kwargs)
+
+    @classmethod
+    def _push_prepared(cls, prepared: PreparedModelPublication, **kwargs):
+        return super().push(task_kwargs=prepared.get_task_kwargs(), **kwargs)
+
+    @classmethod
+    def prepare(cls, obj: Model, **kwargs):
+        return PreparedModelPublication(
+            task_klass=cls,
+            message=cls.build_message_content(obj=obj, **kwargs),
+            attributes=cls.build_message_attributes(obj=obj, **kwargs),
+            topic_name=cls.topic_name(obj=obj, **kwargs),
+        )
 
     def run(
         self, message: dict, topic_name: str, attributes: dict[str, str] | None, headers: dict[str, str] | None = None

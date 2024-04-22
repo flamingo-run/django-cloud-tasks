@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta, datetime, UTC
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 
 from django.apps import apps
 from django.test import SimpleTestCase, TestCase
@@ -14,17 +14,14 @@ from django_cloud_tasks.tasks import Task, TaskMetadata, is_task_route
 from django_cloud_tasks.tasks.task import get_config
 from django_cloud_tasks.tests import tests_base
 from django_cloud_tasks.tests.tests_base import eager_tasks
-from sample_app import tasks
+from sample_app import models, tasks
 from django.http import HttpRequest
 
 from sample_app.tasks import MyMetadata
 
 
-class TasksTest(SimpleTestCase):
+class PatchOutputAndAuthMixin:
     def setUp(self):
-        super().setUp()
-        Task._get_tasks_client.cache_clear()
-
         patch_output = patch("django_cloud_tasks.tasks.TaskMetadata.from_task_obj")
         patch_output.start()
         self.addCleanup(patch_output.stop)
@@ -32,6 +29,12 @@ class TasksTest(SimpleTestCase):
         auth = patch_auth()
         auth.start()
         self.addCleanup(auth.stop)
+
+
+class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        Task._get_tasks_client.cache_clear()
 
     def tearDown(self):
         super().tearDown()
@@ -397,3 +400,92 @@ class TestTaskMetadata(TestCase):
             self.assertRaisesRegex(ImportError, "must be a subclass of TaskMetadata"),
         ):
             get_config("task_metadata_class")
+
+
+class TestModelPublisherTask(PatchOutputAndAuthMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        patch_run = patch("django_cloud_tasks.tasks.ModelPublisherTask.run")
+        self.patched_run = patch_run.start()
+        self.addCleanup(patch_run.stop)
+
+        patch_push = patch("gcp_pilot.tasks.CloudTasks.push")
+        self.patched_push = patch_push.start()
+        self.addCleanup(patch_push.stop)
+
+        self.person = models.Person(name="Harry Potter", pk=1)
+        self.expected_task_kwargs = dict(
+            message={"id": 1, "name": "Harry Potter"},
+            topic_name="sample_app-person",
+            attributes={"any-custom-attribute": "yay!", "event": "saved"},
+        )
+
+    def test_sync_forward_correct_parameters(self):
+        tasks.PublishPersonTask.sync(obj=self.person, event="saved")
+        self.patched_run.assert_called_once_with(**self.expected_task_kwargs)
+
+    def test_asap_forward_correct_parameters(self):
+        tasks.PublishPersonTask.asap(obj=self.person, event="saved")
+        self.patched_push.assert_called_once_with(**self._build_expected_push(payload=self.expected_task_kwargs))
+
+    def test_push_forward_correct_parameters(self):
+        tasks.PublishPersonTask.push(
+            {
+                "obj": self.person,
+                "event": "saved",
+            },
+            queue="tasks--low",
+        )
+        self.patched_push.assert_called_once_with(
+            **self._build_expected_push(
+                payload=self.expected_task_kwargs,
+                queue_name="tasks--low",
+            )
+        )
+
+    def test_delayed_sync_forward_correct_parameters(self):
+        prepared = tasks.PublishPersonTask.prepare(obj=self.person, event="saved")
+        self._mutate_person()
+
+        prepared.sync()
+        self.patched_run.assert_called_once_with(**self.expected_task_kwargs)
+
+    def test_delayed_asap_forward_correct_parameters(self):
+        prepared = tasks.PublishPersonTask.prepare(obj=self.person, event="saved")
+        self._mutate_person()
+
+        prepared.asap()
+        self.patched_push.assert_called_once_with(**self._build_expected_push(payload=self.expected_task_kwargs))
+
+    def test_delayed_push_forward_correct_parameters(self):
+        prepared = tasks.PublishPersonTask.prepare(obj=self.person, event="saved")
+        self._mutate_person()
+
+        prepared.push(queue="tasks--low")
+        self.patched_push.assert_called_once_with(
+            **self._build_expected_push(
+                payload=self.expected_task_kwargs,
+                queue_name="tasks--low",
+            )
+        )
+
+    def _mutate_person(self):
+        self.person.pk = None
+        self.person.name = "Mutated Name"
+
+    def _build_expected_push(self, payload: dict, **kwargs) -> dict:
+        return (
+            dict(
+                queue_name="tasks",
+                url=ANY,
+                headers=ANY,
+                payload=json.dumps(
+                    dict(
+                        message=payload["message"],
+                        attributes=payload["attributes"],
+                        topic_name=payload["topic_name"],
+                    )
+                ),
+            )
+            | kwargs
+        )
