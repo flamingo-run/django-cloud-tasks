@@ -91,12 +91,12 @@ class SayHelloWithParamsTask(RoutineTask):
 
 class PublishPersonTask(ModelPublisherTask):
     @classmethod
-    def build_message_content(cls, obj: Model, **kwargs) -> dict:
-        return {"name": obj.name}
+    def build_message_content(cls, obj: Model, event: str, **kwargs) -> dict:
+        return {"id": obj.pk, "name": obj.name}
 
     @classmethod
-    def build_message_attributes(cls, obj: Model, **kwargs) -> dict[str, str]:
-        return {"any-custom-attribute": "yay!"}
+    def build_message_attributes(cls, obj: Model, event: str, **kwargs) -> dict[str, str]:
+        return {"any-custom-attribute": "yay!", "event": event}
 
 
 class DummyRoutineTask(RoutineTask):
