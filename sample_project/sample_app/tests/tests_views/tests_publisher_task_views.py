@@ -32,7 +32,7 @@ class PublisherTaskTest(TransactionTestCase):
         expected_attributes = {"any-custom-attribute": "yay!", "event": "saved"}
         publish.assert_called_once_with(message=expected_message, topic_id=ANY, attributes=expected_attributes)
 
-    def test_usage_inside_transaction(self):
+    def test_usage_inside_transaction__success(self):
         with patch("django_cloud_tasks.tasks.publisher_task.CloudPublisher.publish"):
             existing = models.Person.objects.create(name="Potter Harry")
 
@@ -51,3 +51,13 @@ class PublisherTaskTest(TransactionTestCase):
         expected_message = json.dumps({"id": result.json()["pk"], "name": "Harry Potter"})
         expected_attributes = {"any-custom-attribute": "yay!", "event": "saved"}
         publish.assert_any_call(message=expected_message, topic_id=ANY, attributes=expected_attributes)
+
+    def test_usage_inside_transaction__rollback(self):
+        url = "/replace-person"
+        unexisting_pk = "1234"
+        data = {"name": "Harry Potter", "person_to_replace_id": unexisting_pk}
+        with patch("django_cloud_tasks.tasks.publisher_task.CloudPublisher.publish") as publish:
+            result = self.client.post(path=url, data=data, content_type="application/json")
+            self.assertEqual(404, result.status_code)
+
+        self.assertEqual(0, publish.call_count)

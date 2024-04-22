@@ -5,6 +5,7 @@ from typing import Type
 from cachetools.func import lru_cache
 from django.apps import apps
 from django.db.models import Model
+from django.db import transaction
 from gcp_pilot.pubsub import CloudPublisher
 
 from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
@@ -104,6 +105,11 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
     @classmethod
     def sync(cls, obj: Model, **kwargs):
         return cls.prepare(obj=obj, **kwargs).sync()
+
+    @classmethod
+    def sync_on_commit(cls, obj: Model, **kwargs):
+        prepared_publication = cls.prepare(obj=obj, **kwargs)
+        transaction.on_commit(lambda: prepared_publication.sync())
 
     @classmethod
     def asap(cls, obj: Model, **kwargs):
