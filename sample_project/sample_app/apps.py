@@ -6,3 +6,4 @@ class SampleAppConfig(AppConfig):
 
     def ready(self):
         from sample_project.sample_app import tasks  # noqa: F401
+        from sample_project.sample_app import signals  # noqa: F401
