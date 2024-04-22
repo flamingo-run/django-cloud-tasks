@@ -1,7 +1,7 @@
 import json
 from django.db import transaction
 
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views import View
 
 from sample_app import models
@@ -20,9 +20,13 @@ class PersonReplaceView(View):
         payload = json.loads(request.body)
         person_to_replace_id = payload.pop("person_to_replace_id")
 
-        to_delete = models.Person.objects.get(pk=person_to_replace_id)
-        to_delete.delete()
-
         person = models.Person(**payload)
         person.save()
+
+        try:
+            to_delete = models.Person.objects.get(pk=person_to_replace_id)
+            to_delete.delete()
+        except models.Person.DoesNotExist:
+            raise Http404()
+
         return JsonResponse(status=201, data={"status": "published", "pk": person.pk})
