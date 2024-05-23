@@ -218,23 +218,33 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
     @classmethod
     def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
-        if isinstance(eta, int):
-            delay_in_seconds = eta
-        elif isinstance(eta, timedelta):
-            delay_in_seconds = eta.total_seconds()
-        elif isinstance(eta, datetime):
-            delay_in_seconds = (eta - now()).total_seconds()
-        else:
-            raise ValueError(
-                f"Unsupported schedule {eta} of type {eta.__class__.__name__}. " "Must be int, timedelta or datetime."
-            )
-
+        delay_in_seconds = cls._calculate_delay_in_seconds(eta)
+        cls._validate_delay(delay_in_seconds)
         return cls.push(
             task_kwargs=task_kwargs,
             queue=queue,
             headers=headers,
             delay_in_seconds=delay_in_seconds,
         )
+
+    @staticmethod
+    def _calculate_delay_in_seconds(eta: int | timedelta | datetime) -> int:
+        if isinstance(eta, int):
+            return eta
+        elif isinstance(eta, timedelta):
+            return int(eta.total_seconds())
+        elif isinstance(eta, datetime):
+            return int((eta - now()).total_seconds())
+        else:
+            raise ValueError(
+                f"Unsupported schedule {eta} of type {eta.__class__.__name__}. Must be int, timedelta or datetime."
+            )
+
+    @staticmethod
+    def _validate_delay(delay_in_seconds: int):
+        max_eta_task = get_config("tasks_max_eta")
+        if max_eta_task is not None and delay_in_seconds > max_eta_task:
+            raise ValueError(f"Invalid delay time {delay_in_seconds}, maximum is {max_eta_task}")
 
     @classmethod
     def until(cls, task_kwargs: dict, max_eta: datetime, queue: str = None, headers: dict | None = None):

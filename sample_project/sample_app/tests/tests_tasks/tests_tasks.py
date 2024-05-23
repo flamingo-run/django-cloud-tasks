@@ -224,6 +224,16 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
 
         push.assert_not_called()
 
+    def test_task_later_delay_exceeds_maximum_eta(self):
+        task_kwargs = dict(price=30, quantity=4, discount=0.2)
+        excessive_delay = int(60 * 60 * 24 * 2)  # 2 days
+
+        with self.assertRaises(ValueError) as context:
+            tasks.CalculatePriceTask.later(eta=excessive_delay, task_kwargs=task_kwargs)
+
+        max_eta_task = get_config("tasks_max_eta")
+        self.assertEqual(f"Invalid delay time {excessive_delay}, maximum is {max_eta_task}", str(context.exception))
+
     def test_singleton_client_on_task(self):
         # we have a singleton if it calls the same task twice
         with (
