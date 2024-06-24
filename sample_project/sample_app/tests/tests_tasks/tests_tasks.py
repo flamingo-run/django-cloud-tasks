@@ -228,10 +228,13 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
         task_kwargs = dict(price=30, quantity=4, discount=0.2)
         excessive_delay = int(60 * 60 * 24 * 2)  # 2 days
 
-        with self.assertRaises(ValueError) as context:
+        max_eta_task = 60 * 60 * 24  # 1 day
+        with (
+            patch("django_cloud_tasks.tasks.task.get_config", return_value=max_eta_task),
+            self.assertRaises(ValueError) as context,
+        ):
             tasks.CalculatePriceTask.later(eta=excessive_delay, task_kwargs=task_kwargs)
 
-        max_eta_task = get_config("tasks_max_eta")
         self.assertEqual(f"Invalid delay time {excessive_delay}, maximum is {max_eta_task}", str(context.exception))
 
     def test_singleton_client_on_task(self):

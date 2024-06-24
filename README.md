@@ -35,7 +35,7 @@ Additionally, you can configure with more settings or environment variables:
 - `DJANGO_CLOUD_TASKS_SUBSCRIBERS_URL_NAME`: Django URL-name that process Subscribers. We provide a view for that, but if you want to create your own, set this value. Default: `subscriptions-endpoint`.
 - `DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS`: . Default: `["traceparent"]`.
 - `DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS_KEY`: when propagating headers in PubSub, use a key to store the values in the Message data. Default: `_http_headers`.
-- `DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK`: maximum time in seconds to schedule a task in the future. Default: `86400`.
+- `DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK`: maximum time in seconds to schedule a task in the future. Default: `None`. In [GCP documentation](https://cloud.google.com/tasks/docs/quotas) the maximum schedule time for a task is 30 days from current date and time.
 
 ## On Demand Task
 
