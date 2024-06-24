@@ -30,7 +30,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.delimiter = self._fetch_config(name="DELIMITER", default="--")
         self.eager = self._fetch_config(name="EAGER", default=False)
         self.tasks_url_name = self._fetch_config(name="URL_NAME", default="tasks-endpoint")
-        self.tasks_max_eta = self._fetch_config(name="MAXIMUM_ETA_TASK", default=60 * 60 * 24)  # 1 day
+        self.tasks_max_eta = self._fetch_config(name="MAXIMUM_ETA_TASK", default=None)
         self.subscribers_url_name = self._fetch_config(name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint")
 
         self.subscribers_max_retries = self._fetch_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
