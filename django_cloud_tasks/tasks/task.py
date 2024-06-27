@@ -228,20 +228,20 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         )
 
     @staticmethod
-    def _calculate_delay_in_seconds(eta: int | timedelta | datetime) -> int:
-        if isinstance(eta, int):
+    def _calculate_delay_in_seconds(eta: int | timedelta | datetime) -> float | int:
+        if isinstance(eta, int) or isinstance(eta, float):
             return eta
         elif isinstance(eta, timedelta):
-            return int(eta.total_seconds())
+            return eta.total_seconds()
         elif isinstance(eta, datetime):
-            return int((eta - now()).total_seconds())
+            return (eta - now()).total_seconds()
         else:
             raise ValueError(
                 f"Unsupported schedule {eta} of type {eta.__class__.__name__}. Must be int, timedelta or datetime."
             )
 
     @staticmethod
-    def _validate_delay(delay_in_seconds: int):
+    def _validate_delay(delay_in_seconds: int | float):
         max_eta_task = get_config("tasks_max_eta")
         if max_eta_task is not None and delay_in_seconds > max_eta_task:
             raise ValueError(f"Invalid delay time {delay_in_seconds}, maximum is {max_eta_task}")
@@ -268,7 +268,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         task_kwargs: dict,
         headers: dict | None = None,
         queue: str | None = None,
-        delay_in_seconds: int | None = None,
+        delay_in_seconds: int | float | None = None,
     ):
         payload = serialize(value=task_kwargs)
 

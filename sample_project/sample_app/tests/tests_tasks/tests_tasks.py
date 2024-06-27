@@ -216,6 +216,23 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
         )
         push.assert_called_once_with(**expected_call)
 
+    @freeze_time("2020-01-01T00:00:00.902728")
+    def test_task_later_time_with_milliseconds(self):
+        task_eta = now() + timedelta(seconds=10, milliseconds=100)
+
+        with self.patch_push() as push:
+            task_kwargs = dict(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.later(eta=task_eta, task_kwargs=task_kwargs)
+
+        expected_call = dict(
+            delay_in_seconds=10.1,
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
+        )
+        push.assert_called_once_with(**expected_call)
+
     def test_task_later_error(self):
         with self.patch_push() as push:
             with self.assertRaisesRegex(expected_exception=ValueError, expected_regex="Unsupported schedule"):
