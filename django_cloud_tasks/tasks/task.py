@@ -218,8 +218,8 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
     @classmethod
     def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
-        delay_in_seconds = cls._calculate_delay_in_seconds(eta)
-        cls._validate_delay(delay_in_seconds)
+        delay_in_seconds = cls._calculate_delay_in_seconds(eta=eta)
+        cls._validate_delay(delay_in_seconds=delay_in_seconds)
         return cls.push(
             task_kwargs=task_kwargs,
             queue=queue,

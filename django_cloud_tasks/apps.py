@@ -25,25 +25,26 @@ class DjangoCloudTasksAppConfig(AppConfig):
         self.on_demand_tasks = {}
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
-        self.domain = self._fetch_config(name="ENDPOINT", default="http://localhost:8080")
-        self.app_name = self._fetch_config(name="APP_NAME", default=os.environ.get("APP_NAME", None))
-        self.delimiter = self._fetch_config(name="DELIMITER", default="--")
-        self.eager = self._fetch_config(name="EAGER", default=False)
-        self.tasks_url_name = self._fetch_config(name="URL_NAME", default="tasks-endpoint")
-        self.tasks_max_eta = self._fetch_config(name="MAXIMUM_ETA_TASK", default=None)
-        self.subscribers_url_name = self._fetch_config(name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint")
+        self.domain = self._fetch_str_config(name="ENDPOINT", default="http://localhost:8080")
+        self.app_name = self._fetch_str_config(name="APP_NAME", default=os.environ.get("APP_NAME", None))
+        self.delimiter = self._fetch_str_config(name="DELIMITER", default="--")
+        self.eager = self._fetch_bool_config(name="EAGER", default=False)
+        self.tasks_url_name = self._fetch_str_config(name="URL_NAME", default="tasks-endpoint")
+        self.tasks_max_eta = self._fetch_int_config(name="MAXIMUM_ETA_TASK", default=None)
+        self.subscribers_url_name = self._fetch_str_config(
+            name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint"
+        )
 
-        self.subscribers_max_retries = self._fetch_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
-        self.subscribers_min_backoff = self._fetch_config(name="SUBSCRIBER_MIN_BACKOFF", default=None)
-        self.subscribers_max_backoff = self._fetch_config(name="SUBSCRIBER_MAX_BACKOFF", default=None)
-        self.subscribers_expiration = self._fetch_config(name="SUBSCRIBER_EXPIRATION", default=None)
+        self.subscribers_max_retries = self._fetch_int_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
+        self.subscribers_min_backoff = self._fetch_int_config(name="SUBSCRIBER_MIN_BACKOFF", default=None)
+        self.subscribers_max_backoff = self._fetch_int_config(name="SUBSCRIBER_MAX_BACKOFF", default=None)
+        self.subscribers_expiration = self._fetch_int_config(name="SUBSCRIBER_EXPIRATION", default=None)
 
-        self.propagated_headers = self._fetch_config(
+        self.propagated_headers = self._fetch_list_config(
             name="PROPAGATED_HEADERS",
             default=DEFAULT_PROPAGATION_HEADERS,
-            as_list=True,
         )
-        self.propagated_headers_key = self._fetch_config(
+        self.propagated_headers_key = self._fetch_str_config(
             name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
         )
 
@@ -79,7 +80,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
         raise exceptions.TaskNotFound(name=name)
 
     def get_backup_queue_name(self, original_name: str) -> str:
-        return self._fetch_config(
+        return self._fetch_str_config(
             name="BACKUP_QUEUE_NAME",
             default=f"{original_name}{self.delimiter}temp",
         )
@@ -87,7 +88,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
     def get_task_metadata_class(self):
         from django_cloud_tasks.tasks import TaskMetadata
 
-        metadata_class_name = self._fetch_config(
+        metadata_class_name = self._fetch_str_config(
             name="TASK_METADATA_CLASS",
             default="django_cloud_tasks.tasks.task.TaskMetadata",
         )
@@ -104,13 +105,29 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
         return metadata_class
 
-    def _fetch_config(self, name: str, default: Any, as_list: bool = False) -> Any:
+    def _fetch_config(self, name: str, default: Any) -> Any:
         config_name = f"{PREFIX}{name.upper()}"
+        return getattr(settings, config_name, os.environ.get(config_name, default))
 
-        value = getattr(settings, config_name, os.environ.get(config_name, default))
-        if as_list and not isinstance(value, list):
-            value = value.split(",")
-        return value
+    def _fetch_str_config(self, name: str, default: Any) -> str:
+        value = self._fetch_config(name=name, default=default)
+        return str(value) if value is not None else default
+
+    def _fetch_bool_config(self, name: str, default: Any) -> bool:
+        value = self._fetch_config(name=name, default=default)
+        return str(value).lower() in ("true", "1", "t", "y", "yes") if value is not None else default
+
+    def _fetch_int_config(self, name: str, default: Any) -> int:
+        value = self._fetch_config(name=name, default=default)
+        return int(value) if value is not None else default
+
+    def _fetch_float_config(self, name: str, default: Any) -> float:
+        value = self._fetch_config(name=name, default=default)
+        return float(value) if value is not None else default
+
+    def _fetch_list_config(self, name: str, default: Any) -> list:
+        value = self._fetch_config(name=name, default=default)
+        return value.split(",") if value is not None and isinstance(value, str) else default
 
     def register_task(self, task_class):
         from django_cloud_tasks.tasks.periodic_task import PeriodicTask
