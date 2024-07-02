@@ -127,7 +127,17 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
     def _fetch_list_config(self, name: str, default: Any) -> list:
         value = self._fetch_config(name=name, default=default)
-        return value.split(",") if value is not None and isinstance(value, str) else default
+
+        if not value:
+            return default
+
+        if isinstance(value, list):
+            return value
+
+        if isinstance(value, str):
+            return value.split(",")
+
+        raise ValueError(f"Invalid value for {name}: {value}")
 
     def register_task(self, task_class):
         from django_cloud_tasks.tasks.periodic_task import PeriodicTask
