@@ -3,6 +3,7 @@ import abc
 from django.db.models import Model
 
 from django_cloud_tasks.tasks import PeriodicTask, RoutineTask, SubscriberTask, Task, ModelPublisherTask, TaskMetadata
+from django_cloud_tasks.exceptions import DiscardTaskException
 
 
 class BaseAbstractTask(Task, abc.ABC):
@@ -97,6 +98,45 @@ class PublishPersonTask(ModelPublisherTask):
     @classmethod
     def build_message_attributes(cls, obj: Model, event: str, **kwargs) -> dict[str, str]:
         return {"any-custom-attribute": "yay!", "event": event}
+
+
+class FindPrimeNumbersTask(Task):
+    storage: list[int] = []
+
+    @classmethod
+    def reset(cls):
+        cls.storage = []
+
+    def run(self, quantity):
+        if not isinstance(quantity, int):
+            raise DiscardTaskException(
+                "Can't find a non-integer amount of prime numbers",
+                http_status_code=299,
+                http_status_reason="Unretriable failure",
+            )
+
+        if len(self.storage) >= quantity:
+            raise DiscardTaskException("Nothing to do here")
+
+        return self._find_primes(quantity)
+
+    @classmethod
+    def _find_primes(cls, quantity: int) -> list[int]:
+        if not cls.storage:
+            cls.storage = [2]
+
+        while len(cls.storage) < quantity:
+            cls.storage.append(cls._find_next_prime(cls.storage[-1] + 1))
+
+        return cls.storage
+
+    @classmethod
+    def _find_next_prime(cls, candidate: int) -> int:
+        for prime in cls.storage:
+            if candidate % prime == 0:
+                return cls._find_next_prime(candidate=candidate + 1)
+
+        return candidate
 
 
 class DummyRoutineTask(RoutineTask):

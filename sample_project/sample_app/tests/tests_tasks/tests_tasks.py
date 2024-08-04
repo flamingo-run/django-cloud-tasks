@@ -50,17 +50,18 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
     def test_registered_tasks(self):
         expected_tasks = {
             "CalculatePriceTask",
+            "DummyRoutineTask",
+            "ExposeCustomHeadersTask",
             "FailMiserablyTask",
+            "FindPrimeNumbersTask",
+            "NonCompliantTask",
             "OneBigDedicatedTask",
+            "ParentCallingChildTask",
+            "PublishPersonTask",
             "RoutineExecutorTask",
+            "RoutineReverterTask",
             "SayHelloTask",
             "SayHelloWithParamsTask",
-            "DummyRoutineTask",
-            "RoutineReverterTask",
-            "ParentCallingChildTask",
-            "ExposeCustomHeadersTask",
-            "PublishPersonTask",
-            "NonCompliantTask",
         }
         self.assertEqual(expected_tasks, set(self.app_config.on_demand_tasks))
 
@@ -89,6 +90,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             tasks.SayHelloTask,
             tasks.SayHelloWithParamsTask,
             tasks.PublishPersonTask,
+            tasks.FindPrimeNumbersTask,
             tasks.DummyRoutineTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.OneBigDedicatedTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.NonCompliantTask,
