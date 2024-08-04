@@ -29,17 +29,21 @@ class GoogleCloudTaskView(View):
             output = self.execute_task(task_class=task_class, task_metadata=task_metadata, task_kwargs=task_kwargs)
             status = "executed"
             status_code = 200
-        except exceptions.DiscardTaskException:
+            status_reason = None
+        except exceptions.DiscardTaskException as e:
             output = None
             status = "discarded"
-            status_code = 202
+            status_code = e.http_status_code
+            status_reason = e.http_status_reason
 
         data = {"result": output, "status": status}
         try:
-            return JsonResponse(status=status_code, data=data)
+            return JsonResponse(status=status_code, reason=status_reason, data=data)
         except TypeError:
             logger.warning(f"Unable to serialize task output from {request.path}: {str(output)}")
-            return JsonResponse(status=status_code, data={"result": str(output), "status": "executed"})
+            return JsonResponse(
+                status=status_code, reason=status_reason, data={"result": str(output), "status": "executed"}
+            )
 
     def get_task(self, name: str) -> Type[Task]:
         app = apps.get_app_config("django_cloud_tasks")

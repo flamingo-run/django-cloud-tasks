@@ -3,6 +3,7 @@ from unittest.mock import patch, ANY
 from another_app.tasks.deep_down_tasks.one_dedicated_task import NonCompliantTask
 from django_cloud_tasks.tasks import TaskMetadata
 from sample_app.tests.tests_base_tasks import AuthenticationMixin
+from sample_app.tasks import FindPrimeNumbersTask
 
 
 class TaskViewTest(AuthenticationMixin):
@@ -116,3 +117,33 @@ class TaskViewTest(AuthenticationMixin):
             response = self.client.post(path=url, data=data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertEqual({"result": ANY, "status": "executed"}, response.json())
+
+
+class TaskDiscardingTest(AuthenticationMixin):
+    url = "/tasks/FindPrimeNumbersTask"
+
+    def setUp(self):
+        super().setUp()
+        FindPrimeNumbersTask.reset()
+
+    def call_task(self, data):
+        return self.client.post(path=self.url, data=data, content_type="application/json")
+
+    def test_when_task_is_not_discarded(self):
+        response = self.call_task(data={"quantity": 3})
+        self.assertEqual(200, response.status_code)
+        self.assertEqual({"result": [2, 3, 5], "status": "executed"}, response.json())
+
+    def test_when_task_is_discarded_due_to_no_longer_being_needed(self):
+        self.call_task(data={"quantity": 3})
+
+        response = self.call_task(data={"quantity": 3})
+        self.assertEqual(202, response.status_code)
+        self.assertEqual("Accepted", response.reason_phrase)
+        self.assertEqual({"result": None, "status": "discarded"}, response.json())
+
+    def test_when_task_is_discarded_due_to_permanent_error(self):
+        response = self.call_task(data={"quantity": "not-a-number"})
+        self.assertEqual(299, response.status_code)
+        self.assertEqual("Unretriable failure", response.reason_phrase)
+        self.assertEqual({"result": None, "status": "discarded"}, response.json())
