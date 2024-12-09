@@ -1,6 +1,6 @@
 [project]
 name = "django-google-cloud-tasks"
-version = "2.17.0"
+version = "2.18.0"
 description = "Async Tasks with HTTP endpoints"
 authors = [
     {name = "Joao Daher", email = "joao@daher.dev"},
