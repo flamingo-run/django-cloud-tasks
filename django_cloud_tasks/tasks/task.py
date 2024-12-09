@@ -217,9 +217,36 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return cls.push(task_kwargs=kwargs)
 
     @classmethod
-    def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
-        delay_in_seconds = cls._calculate_delay_in_seconds(eta=eta)
-        cls._validate_delay(delay_in_seconds=delay_in_seconds)
+    def later(
+        cls,
+        task_kwargs: dict,
+        eta: int | timedelta | datetime | None = None,
+        max_eta: int | timedelta | datetime | None = None,
+        queue: str = None,
+        headers: dict | None = None,
+    ):
+        provided_eta = eta is not None
+        provided_max_eta = max_eta is not None
+        if provided_eta and provided_max_eta:
+            raise ValueError("You can't provide both eta and max_eta")
+        elif not provided_eta and not provided_max_eta:
+            raise ValueError("You must provide either eta or max_eta")
+
+        max_delay_in_seconds = cls._calculate_delay_in_seconds(eta=max_eta if provided_max_eta else eta)
+        cls._validate_delay(delay_in_seconds=max_delay_in_seconds)
+
+        if provided_max_eta:
+            # max_eta mean "distribute tasks over time the way you see fit, as long as they all get a chance
+            # to run before this eta. We will start with a simple uniform distribution, but this is free to
+            # evolve (without breaking contract) to do things like:
+            #
+            # - Adding a ramp up period (run less tasks in the first minutes, increase frequency gradually)
+            # - Querying the enqueued Tasks to find less busy slots
+            # - etc.
+            delay_in_seconds = randint(0, int(max_delay_in_seconds))
+        else:
+            delay_in_seconds = max_delay_in_seconds
+
         return cls.push(
             task_kwargs=task_kwargs,
             queue=queue,

@@ -256,6 +256,60 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
 
         self.assertEqual(f"Invalid delay time {excessive_delay}, maximum is {max_eta_task}", str(context.exception))
 
+    def test_task_later_max_eta_datetime(self):
+        self._test_task_max_eta(max_eta=now() + timedelta(minutes=60), max_eta_seconds=3600)
+
+    def test_task_later_max_eta_int(self):
+        self._test_task_max_eta(max_eta=300, max_eta_seconds=300)
+
+    def test_task_later_max_eta_timedelta(self):
+        self._test_task_max_eta(max_eta=timedelta(hours=3), max_eta_seconds=3600 * 3)
+
+    def _test_task_max_eta(self, max_eta: datetime | timedelta | int, max_eta_seconds: int):
+        with self.patch_push() as push:
+            for _ in range(999):
+                task_kwargs = dict(price=30, quantity=4, discount=0.2)
+                tasks.CalculatePriceTask.later(max_eta=max_eta, task_kwargs=task_kwargs)
+
+        delays = [call.kwargs.get("delay_in_seconds", 0) for call in push.call_args_list]
+
+        # All delays should be within range
+        self.assertEqual([], [delay for delay in delays if delay < 0])
+        self.assertEqual([], [delay for delay in delays if delay > max_eta_seconds])
+
+        # Distribution should be approximately uniform, so
+        # a) mean should be close to half of max_eta
+        self.assertAlmostEqual(max_eta_seconds / 2, sum(delays) / len(delays), delta=0.1 * max_eta_seconds)
+        # b) low, mid and high values should be roughly just as likely
+        self.assertAlmostEqual(333, sum(1 for delay in delays if 0 <= delay < max_eta_seconds / 3), delta=50)
+        self.assertAlmostEqual(
+            333, sum(1 for delay in delays if max_eta_seconds / 3 <= delay < 2 * max_eta_seconds / 3), delta=50
+        )
+        self.assertAlmostEqual(
+            333, sum(1 for delay in delays if 2 * max_eta_seconds / 3 <= delay <= max_eta_seconds), delta=50
+        )
+
+    def test_task_later_max_eta_exceeds_hard_limit(self):
+        task_kwargs = dict(price=30, quantity=4, discount=0.2)
+        excessive_delay = int(60 * 60 * 24 * 2)  # 2 days
+
+        max_eta_task = 60 * 60 * 24  # 1 day
+        with (
+            patch("django_cloud_tasks.tasks.task.get_config", return_value=max_eta_task),
+            self.assertRaises(ValueError) as context,
+        ):
+            tasks.CalculatePriceTask.later(max_eta=excessive_delay, task_kwargs=task_kwargs)
+
+        self.assertEqual(f"Invalid delay time {excessive_delay}, maximum is {max_eta_task}", str(context.exception))
+
+    def test_task_later_cannot_provide_both_eta_and_max_eta(self):
+        with self.assertRaisesMessage(ValueError, "You can't provide both eta and max_eta"):
+            tasks.CalculatePriceTask.later(eta=now(), max_eta=now() + timedelta(seconds=60), task_kwargs={})
+
+    def test_task_later_must_provide_either_eta_or_max_eta(self):
+        with self.assertRaisesMessage(ValueError, "You must provide either eta or max_eta"):
+            tasks.CalculatePriceTask.later(task_kwargs={})
+
     def test_singleton_client_on_task(self):
         # we have a singleton if it calls the same task twice
         with (
