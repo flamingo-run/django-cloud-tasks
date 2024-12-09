@@ -1,12 +1,12 @@
 setup:
-	@pip install -U pip poetry
+	@pip install -U pip uv
 
 dependencies:
 	@make setup
-	@poetry install --no-root
+	@uv sync --all-extras
 
 update:
-	@poetry update
+	@uv lock --upgrade
 
 test:
 	@make check
@@ -14,23 +14,21 @@ test:
 	@make unit
 
 check:
-	@echo "Checking safety and integrity ..."
-	poetry check
-	poetry run safety check
+	@uv lock --locked
 
 lint:
 	@echo "Checking code style ..."
-	poetry run ruff format --check .
-	poetry run ruff check .
+	uv run ruff format --check .
+	uv run ruff check .
 
 style:
 	@echo "Applying code style ..."
-	poetry run ruff format .
-	poetry run ruff check . --fix
+	uv run ruff format .
+	uv run ruff check . --fix
 
 unit:
 	@echo "Running unit tests ..."
-	ENV=test poetry run pytest test
+	@uv run pytest
 
 clean:
 	@rm -rf .coverage coverage.xml dist/ build/ *.egg-info/
@@ -39,9 +37,9 @@ publish:
 	@make clean
 	@printf "\nPublishing lib"
 	@make setup
-	@poetry config pypi-token.pypi $(PYPI_API_TOKEN)
-	@poetry publish --build
+	@uv build
+	@uv publish --token $(PYPI_API_TOKEN)
 	@make clean
 
 
-.PHONY: lint publish clean unit test dependencies setup
+.PHONY: setup dependencies update test check lint clean publish

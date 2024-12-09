@@ -1,33 +1,39 @@
-[tool.poetry]
+[project]
 name = "django-google-cloud-tasks"
 version = "2.17.0"
 description = "Async Tasks with HTTP endpoints"
-authors = ["Joao Daher <joao@daher.dev>"]
-packages = [
-    { include = "django_cloud_tasks" },
+authors = [
+    {name = "Joao Daher", email = "joao@daher.dev"},
+]
+maintainers = [
+    {name = "Lucas Gomide"},
+    {name = "Rodrigo Almeida"},
+    {name = "Diego Freire"},
+    {name = "Guilherme Araujo"},
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=4",
+    "drf-kit>=1.45.0",
+    "gcp-pilot[pubsub,tasks]>=1.31.0",
 ]
 
-[tool.poetry.dependencies]
-python = "~3.11||~3.12"
-Django = "~4||~5"
-gcp-pilot = { version = ">=1.23.0", extras = ["tasks", "pubsub"]}
-drf-kit = { version = ">=1.29.1" }
-
-
-[tool.poetry.dev-dependencies]
-ruff = "*"
-coverage = "*"
-factory-boy = "*"
-freezegun = "*"
-safety = "*"
-pytest-cov = "*"
-pytest-django = "*"
-pytest-rerunfailures = "*"
-pytest-xdist = "*"
-pytest-sugar = "*"
-pytest-random-order = "*"
-pytest-timeout = "*"
-
+[dependency-groups]
+dev = [
+    "coverage>=7.6.9",
+    "factory-boy>=3.3.1",
+    "freezegun>=1.5.1",
+    "pytest-cov>=6.0.0",
+    "pytest-django>=4.9.0",
+    "pytest-random-order>=1.1.1",
+    "pytest-rerunfailures>=15.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.6.1",
+    "ruff>=0.8.2",
+    "safety>=3.2.11",
+]
 
 [tool.ruff]
 line-length = 120
@@ -46,7 +52,9 @@ branch = true
 source = ["django_cloud_tasks"]
 omit = ["*/manage.py", "*/settings.py", "*/wsgi.py"]
 
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
