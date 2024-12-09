@@ -196,7 +196,9 @@ class DjangoCloudTasksAppConfig(AppConfig):
             if not self.app_name:
                 return names
 
-            for subscription in client.list_subscriptions(suffix=self.app_name):
+            for subscription in client.list_subscriptions():
+                if self.domain not in subscription.push_config.push_endpoint:
+                    continue
                 subscription_id = subscription.name.rsplit("subscriptions/", 1)[-1]
                 task_name = subscription.push_config.push_endpoint.rsplit("/", 1)[-1]
                 names.append((task_name, subscription_id))
