@@ -11,67 +11,66 @@ on:
 jobs:
   linter:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ '3.11.x', '3.12.x' ]
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
+        run: uv python install
       - name: Install Python dependencies
         run: make dependencies
-
-      - name: Lint code style
+      - name: Lint with pylint
         run: |
           make lint
+
+  setup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.11', '3.12' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install Python dependencies
+        run: make dependencies
+      - name: Install as a package
+        run: uv build
+
   security:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.11.x', '3.12.x' ]
+        python-version: [ '3.11', '3.12' ]
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
       - name: Install Python dependencies
         run: make dependencies
+      - name: Verify security vulnerabilities
+        run: make check
 
-      - name: Check vulnerabilities
-        run: |
-          make check
+
   unit:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        python-version: [ '3.11.x', '3.12.x' ]
+        python-version: [ '3.11', '3.12' ]
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
       - name: Install Python dependencies
         run: make dependencies
-
-      - name: Unit test with Django test suite
-        run: |
-          make unit
+      - name: Unit test
+        run: make unit
         env:
           LOG_LEVEL: ERROR
 
