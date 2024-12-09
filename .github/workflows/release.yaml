@@ -8,43 +8,45 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.x'
-          cache: poetry
-      - name: Setup Environment
-        run: |
-          make setup
+        run: uv python install
+      - name: Install release dependencies
+        run: make setup
       - name: Detect version upgrade
         id: versioning
         run: |
-          package_version=$(echo $(poetry version -v) | sed "s/django-google-cloud-tasks //")
-          echo "::set-output name=package_version::"$package_version
+          package_version=$(uvx hatch version)
+          echo "package_version=$package_version" >> $GITHUB_OUTPUT
           upgraded=$(git tag --list | grep -q "${package_version}$" && echo "false" || echo "true")
-          echo "::set-output name=upgraded::"$upgraded
+          echo "upgraded=$upgraded" >> $GITHUB_OUTPUT
           pre_release=$([[ $package_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && echo "false" || echo "true")
-          echo "::set-output name=pre_release::"$pre_release
+          echo "pre_release=$pre_release" >> $GITHUB_OUTPUT
+          pypi_env=$([[ $pre_release == "true" ]] && echo "dev" || echo "prd")
+          echo "pypi_env=$pypi_env" >> $GITHUB_OUTPUT
+          main_branch_release=$([[ $pre_release == "false" && $GITHUB_REF_NAME == "main" ]] && echo "true" || echo "false")
+          alternative_branch_release=$([[ $pre_release == "true" && $GITHUB_REF_NAME != "main" ]] && echo "true" || echo "false")
+          should_release=$([[ $upgraded == "true" && ($main_branch_release == "true" || $alternative_branch_release == "true") ]] && echo "true" || echo "false")
+          echo "should_release=$should_release" >> $GITHUB_OUTPUT
+          echo "upgraded=$upgraded"
+          echo "pre_release=$pre_release"
+          echo "git_ref=$GITHUB_REF_NAME"
+          echo "main_branch_release=$main_branch_release"
+          echo "alternative_branch_release=$alternative_branch_release"
+          echo "should_release=$should_release"
       - name: Create Release
-        if: ${{ steps.versioning.outputs.upgraded == 'true' }}
-        uses: actions/create-release@v1
+        if: ${{ steps.versioning.outputs.should_release == 'true' }}
+        run: gh release create ${{ steps.versioning.outputs.package_version }} --generate-notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.versioning.outputs.package_version }}
-          release_name: ${{ steps.versioning.outputs.package_version }}
-          body: |
-            Auto-released by bot.
-            See commit changes.
-          draft: false
-          prerelease: ${{ steps.versioning.outputs.pre_release }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build & Publish package
-        if: ${{ steps.versioning.outputs.upgraded == 'true' }}
+        if: ${{ steps.versioning.outputs.should_release == 'true' }}
         run: |
-          make publish
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          uv build
+          uv publish
