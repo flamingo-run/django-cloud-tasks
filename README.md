@@ -3,6 +3,7 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/4e211a8dc7a2520873c6/test_coverage)](https://codeclimate.com/github/flamingo-run/django-cloud-tasks/test_coverage)
 [![python](https://img.shields.io/badge/python-3.11-blue.svg)]()
 [![python](https://img.shields.io/badge/python-3.12-blue.svg)]()
+[![python](https://img.shields.io/badge/python-3.13-blue.svg)]()
 
 # Django Cloud Tasks
 
