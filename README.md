@@ -21,7 +21,21 @@ The following APIs must be enabled in your project(s):
 - [Cloud Scheduler API](https://console.cloud.google.com/marketplace/product/google/cloudscheduler.googleapis.com)
 - [Admin SDK API](https://console.cloud.google.com/marketplace/product/google/admin.googleapis.com)
 
+### IAM
+
+TDB
+
 ## Configuration
+
+Include the Django app in your settings.py:
+
+```
+INSTALLED_APPS = [
+    # ...
+    "django_cloud_tasks",
+    # ...
+]
+```
 
 > Add ``DJANGO_CLOUD_TASKS_ENDPOINT`` to your Django settings or as an environment variable
 
