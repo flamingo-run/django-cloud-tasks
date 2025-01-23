@@ -197,6 +197,7 @@ class DjangoCloudTask(abc.ABCMeta, TaskMeta): ...
 
 class Task(abc.ABC, metaclass=DjangoCloudTask):
     only_once: bool = False
+    dispatch_deadline = None
 
     def __init__(self, metadata: TaskMetadata | None = None):
         self._metadata = metadata or TaskMetadata.build_eager(task_class=self.__class__)
@@ -286,6 +287,9 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             "payload": payload,
             "headers": headers,
         }
+
+        if cls.dispatch_deadline:
+            api_kwargs["dispatch_deadline"] = cls.dispatch_deadline
 
         if delay_in_seconds:
             api_kwargs["delay_in_seconds"] = delay_in_seconds
