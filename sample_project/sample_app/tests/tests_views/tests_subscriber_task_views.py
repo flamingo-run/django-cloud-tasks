@@ -40,6 +40,7 @@ class SubscriberTaskViewTest(AuthenticationMixin):
             "url": "http://localhost:8080/tasks/CalculatePriceTask",
             "payload": '{"price": 10, "quantity": 42, "_http_headers": {"traceparent": "trace-this-potato"}}',
             "headers": {"Traceparent": "trace-this-potato", "X-CloudTasks-Projectname": ANY},
+            "task_timeout": None,
         }
         push.assert_called_once_with(**expected_kwargs)
 

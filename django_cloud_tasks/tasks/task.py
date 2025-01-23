@@ -217,7 +217,13 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return cls.push(task_kwargs=kwargs)
 
     @classmethod
-    def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
+    def later(
+        cls,
+        task_kwargs: dict,
+        eta: int | timedelta | datetime,
+        queue: str = None,
+        headers: dict | None = None,
+    ):
         delay_in_seconds = cls._calculate_delay_in_seconds(eta=eta)
         cls._validate_delay(delay_in_seconds=delay_in_seconds)
         return cls.push(
@@ -269,6 +275,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         headers: dict | None = None,
         queue: str | None = None,
         delay_in_seconds: int | float | None = None,
+        task_timeout: timedelta | None = None,
     ):
         payload = serialize(value=task_kwargs)
 
@@ -285,6 +292,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             "url": cls.url(),
             "payload": payload,
             "headers": headers,
+            "task_timeout": task_timeout or cls.get_task_timeout(),
         }
 
         if delay_in_seconds:
@@ -360,6 +368,10 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
     def queue(cls) -> str:
         app_name = get_config(name="app_name")
         return app_name or "tasks"
+
+    @classmethod
+    def get_task_timeout(cls):
+        return None
 
     @classmethod
     @lru_cache()
