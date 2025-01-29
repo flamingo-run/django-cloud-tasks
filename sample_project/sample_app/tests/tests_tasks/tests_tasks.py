@@ -43,6 +43,9 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
     def patch_push(self, **kwargs):
         return patch("gcp_pilot.tasks.CloudTasks.push", **kwargs)
 
+    def patch_task_timeout(self, timeout: timedelta):
+        return patch("django_cloud_tasks.tasks.task.Task.get_task_timeout", return_value=timeout)
+
     @property
     def app_config(self):
         return apps.get_app_config("django_cloud_tasks")
@@ -133,6 +136,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -147,6 +151,37 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             payload=json.dumps({"magic_number": 666}),
             unique=False,
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
+        )
+        push.assert_called_once_with(**expected_call)
+
+    def test_task_timeout_with_asap_call(self):
+        with self.patch_push() as push, self.patch_task_timeout(timedelta(minutes=30)):
+            tasks.FailMiserablyTask.asap(magic_number=666)
+
+        expected_call = dict(
+            task_name="FailMiserablyTask",
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/FailMiserablyTask",
+            payload=json.dumps({"magic_number": 666}),
+            unique=False,
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=timedelta(minutes=30),
+        )
+        push.assert_called_once_with(**expected_call)
+
+    def test_task_timeout_with_later_call(self):
+        with self.patch_push() as push, self.patch_task_timeout(timedelta(minutes=10)):
+            task_kwargs = dict(price=30, quantity=4, discount=0.2)
+            tasks.CalculatePriceTask.later(eta=1800, task_kwargs=task_kwargs)
+
+        expected_call = dict(
+            delay_in_seconds=1800,
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=timedelta(minutes=10),
         )
         push.assert_called_once_with(**expected_call)
 
@@ -160,6 +195,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         expected_backup_call = expected_call
         expected_backup_call["queue_name"] += "--temp"
@@ -184,6 +220,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -199,6 +236,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -215,6 +253,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -232,6 +271,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             url="http://localhost:8080/tasks/CalculatePriceTask",
             payload=json.dumps({"price": 30, "quantity": 4, "discount": 0.2}),
             headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
         )
         push.assert_called_once_with(**expected_call)
 
@@ -518,6 +558,7 @@ class TestModelPublisherTask(PatchOutputAndAuthMixin, TestCase):
                         topic_name=payload["topic_name"],
                     )
                 ),
+                task_timeout=None,
             )
             | kwargs
         )
