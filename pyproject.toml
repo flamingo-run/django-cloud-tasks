@@ -1,6 +1,6 @@
 [project]
 name = "django-google-cloud-tasks"
-version = "2.18.0"
+version = "2.19.0"
 description = "Async Tasks with HTTP endpoints"
 authors = [
     {name = "Joao Daher", email = "joao@daher.dev"},
@@ -16,7 +16,7 @@ requires-python = ">=3.11"
 dependencies = [
     "django>=4",
     "drf-kit>=1.45.0",
-    "gcp-pilot[pubsub,tasks]>=1.31.0",
+    "gcp-pilot[pubsub,tasks]>=1.32.0",
 ]
 
 [dependency-groups]
