@@ -269,6 +269,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         headers: dict | None = None,
         queue: str | None = None,
         delay_in_seconds: int | float | None = None,
+        task_timeout: timedelta | None = None,
     ):
         payload = serialize(value=task_kwargs)
 
@@ -285,6 +286,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             "url": cls.url(),
             "payload": payload,
             "headers": headers,
+            "task_timeout": task_timeout or cls.get_task_timeout(),
         }
 
         if delay_in_seconds:
@@ -314,6 +316,10 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
         task_metadata_class = get_config(name="task_metadata_class")
         return task_metadata_class.from_task_obj(task_obj=outcome)
+
+    @classmethod
+    def get_task_timeout(cls):
+        return None
 
     @classmethod
     def debug(cls, task_id: str):
