@@ -16,7 +16,7 @@ requires-python = ">=3.11"
 dependencies = [
     "django>=4",
     "drf-kit>=1.45.0",
-    "gcp-pilot[pubsub,tasks]>=1.31.0",
+    "gcp-pilot[pubsub,tasks]==1.32.0",
 ]
 
 [dependency-groups]
