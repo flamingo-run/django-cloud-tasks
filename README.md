@@ -140,6 +140,93 @@ You can also provide `min_retries` parameter to filter the tasks that have retri
 MyTask.discard(min_retries=5)
 ```
 
+### Task Enqueuing Retry Policy
+
+When enqueuing tasks with the Cloud Tasks API, transient errors (network issues, service unavailable responses, etc.) can cause task creation to fail silently. Since there is no automatic retry for the API calls that enqueue tasks, this can lead to tasks never being created, potentially breaking workflows or causing data inconsistency.
+
+You can configure a retry policy to automatically handle these transient failures when tasks are being enqueued.
+
+#### Global Configuration
+
+Configure the retry policy globally in your Django settings:
+
+```python
+# settings.py
+
+# Comma-separated list of exception classes that should trigger a retry
+# Default: None (no retry will be performed)
+DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_EXCEPTIONS = "google.api_core.exceptions.ServiceUnavailable,google.api_core.exceptions.InternalServerError"
+
+# Initial retry delay in seconds
+# Default: 1.0  # seconds
+DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_INITIAL = 0.1
+
+# Maximum retry delay in seconds
+# Default: 60.0  # seconds
+DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_MAXIMUM = 10.0
+
+# Multiplier applied to the delay between retries
+# Default: 2.0
+DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_MULTIPLIER = 1.3
+
+# Maximum total time spent retrying in seconds
+# Default: 120.0  # seconds
+DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_DEADLINE = 20.0
+```
+
+#### Task-Specific Configuration
+
+Override the retry policy for specific task classes:
+
+```python
+from django_cloud_tasks.tasks import Task
+
+class MyTask(Task):
+    # List of exception classes that should trigger a retry
+    enqueue_retry_exceptions = [
+        "google.api_core.exceptions.ServiceUnavailable",
+        "google.api_core.exceptions.InternalServerError",
+    ]
+    
+    # Initial retry delay in seconds
+    enqueue_retry_initial = 0.1
+    
+    # Maximum retry delay in seconds
+    enqueue_retry_maximum = 10.0
+    
+    # Multiplier applied to the delay between retries
+    enqueue_retry_multiplier = 1.3
+    
+    # Maximum total time spent retrying in seconds
+    enqueue_retry_deadline = 20.0
+    
+    def run(self, **kwargs):
+        # Task implementation here
+        pass
+```
+
+#### How It Works
+
+When a task is enqueued using `asap()`, `later()`, or other methods, the library automatically applies the configured retry policy to the Cloud Tasks API call. If the API call fails with one of the specified exceptions, it will be retried according to the configured policy.
+
+The retry mechanism uses an exponential backoff strategy:
+- First retry occurs after `initial` seconds
+- Each subsequent retry's delay is multiplied by `multiplier`
+- Delay is capped at `maximum` seconds
+- Total retry time is limited to `deadline` seconds
+
+**Important**: For a retry policy to be created, `enqueue_retry_exceptions` must be defined - this is the only mandatory configuration. If this setting is `None`, no retry will be performed.
+
+For the other parameters (`initial`, `maximum`, `multiplier`, `deadline`), if no explicit value is set, the default values from Google's Retry object will be used (initial=1.0s, maximum=60.0s, multiplier=2.0, deadline=120.0s).
+
+Recommended values based on Google's retry defaults:
+- initial: 1.0 second
+- maximum: 60.0 seconds
+- multiplier: 2.0
+- deadline: 120.0 seconds (listed as timeout in the Google API)
+
+Note that this retry mechanism only applies to the task creation API call. Once a task is successfully created, the Cloud Tasks queue's own retry configuration takes over for task execution failures.
+
 ## Periodic Task
 
 Tasks can be executed recurrently, using a crontab syntax.
