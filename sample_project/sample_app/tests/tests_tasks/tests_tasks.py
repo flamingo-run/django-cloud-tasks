@@ -8,6 +8,8 @@ from django.utils.timezone import now
 from freezegun import freeze_time
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
+from google.api_core import retry
+from google.api_core.exceptions import ServiceUnavailable, InternalServerError
 
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import Task, TaskMetadata, is_task_route
@@ -63,6 +65,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             "PublishPersonTask",
             "RoutineExecutorTask",
             "RoutineReverterTask",
+            "RetryEnqueueTask",
             "SayHelloTask",
             "SayHelloWithParamsTask",
         }
@@ -95,6 +98,7 @@ class TasksTest(PatchOutputAndAuthMixin, SimpleTestCase):
             tasks.PublishPersonTask,
             tasks.FindPrimeNumbersTask,
             tasks.DummyRoutineTask,
+            tasks.RetryEnqueueTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.OneBigDedicatedTask,
             another_app_tasks.deep_down_tasks.one_dedicated_task.NonCompliantTask,
         ]
@@ -562,3 +566,107 @@ class TestModelPublisherTask(PatchOutputAndAuthMixin, TestCase):
             )
             | kwargs
         )
+
+
+class TasksWithRetryPolicyTest(PatchOutputAndAuthMixin, SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.enterContext(patch_auth())
+        self.patched_push = self.enterContext(patch("gcp_pilot.tasks.CloudTasks.push"))
+
+        self.app_config = apps.get_app_config("django_cloud_tasks")
+        Task._get_tasks_client.cache_clear()
+
+    def patch_config(self, attr_name, new_value):
+        return self.enterContext(patch.object(self.app_config, attr_name, new_value))
+
+    def test_retry_policy_with_no_exceptions_configured(self):
+        retry_obj = tasks.CalculatePriceTask.enqueue_retry_policy()
+        self.assertIsNone(retry_obj)
+
+    def test_retry_policy_with_global_properties(self):
+        self.patch_config("enqueue_retry_exceptions", ["google.api_core.exceptions.ServiceUnavailable"])
+
+        retry_obj = tasks.CalculatePriceTask.enqueue_retry_policy()
+
+        self.assertIsInstance(retry_obj, retry.Retry)
+
+        self.assertEqual(retry.retry_base._DEFAULT_INITIAL_DELAY, retry_obj._initial)
+        self.assertEqual(retry.retry_base._DEFAULT_MAXIMUM_DELAY, retry_obj._maximum)
+        self.assertEqual(retry.retry_base._DEFAULT_DELAY_MULTIPLIER, retry_obj._multiplier)
+        self.assertEqual(retry.retry_base._DEFAULT_DEADLINE, retry_obj._deadline)
+
+        self.assertTrue(retry_obj._predicate(ServiceUnavailable("ServiceUnavailable")))
+        self.assertFalse(retry_obj._predicate(InternalServerError("InternalServerError")))
+
+    def test_retry_policy_with_global_overriden_properties(self):
+        self.patch_config("enqueue_retry_exceptions", ["google.api_core.exceptions.ServiceUnavailable"])
+        self.patch_config("enqueue_retry_initial", 0.5)
+        self.patch_config("enqueue_retry_maximum", 5.0)
+
+        retry_obj = tasks.CalculatePriceTask.enqueue_retry_policy()
+
+        self.assertIsInstance(retry_obj, retry.Retry)
+
+        self.assertEqual(0.5, retry_obj._initial)
+        self.assertEqual(5.0, retry_obj._maximum)
+        self.assertEqual(retry.retry_base._DEFAULT_DELAY_MULTIPLIER, retry_obj._multiplier)
+        self.assertEqual(retry.retry_base._DEFAULT_DEADLINE, retry_obj._deadline)
+
+        self.assertTrue(retry_obj._predicate(ServiceUnavailable("ServiceUnavailable")))
+        self.assertFalse(retry_obj._predicate(InternalServerError("InternalServerError")))
+
+    def test_retry_policy_with_task_properties(self):
+        self.patch_config("enqueue_retry_exceptions", ["google.api_core.exceptions.Exception"])
+        self.patch_config("enqueue_retry_initial", 5.0)
+        self.patch_config("enqueue_retry_maximum", 20.0)
+        self.patch_config("enqueue_retry_multiplier", 2.0)
+        self.patch_config("enqueue_retry_deadline", 40.0)
+
+        retry_obj = tasks.RetryEnqueueTask.enqueue_retry_policy()
+
+        self.assertIsInstance(retry_obj, retry.Retry)
+
+        # task params overrided global configs
+        self.assertEqual(0.1, retry_obj._initial)
+        self.assertEqual(10.0, retry_obj._maximum)
+        self.assertEqual(1.3, retry_obj._multiplier)
+        self.assertEqual(20.0, retry_obj._deadline)
+
+        self.assertTrue(callable(retry_obj._predicate))
+
+        self.assertTrue(retry_obj._predicate(ServiceUnavailable("ServiceUnavailable")))
+        self.assertTrue(retry_obj._predicate(InternalServerError("InternalServerError")))
+        self.assertFalse(retry_obj._predicate(Exception("Exception")))
+
+    def test_task_push_with_retry_policy(self):
+        tasks.RetryEnqueueTask.asap()
+
+        expected_call = dict(
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/RetryEnqueueTask",
+            payload="{}",
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
+            retry=ANY,
+        )
+        self.patched_push.assert_called_once_with(**expected_call)
+
+        retry_arg = self.patched_push.call_args.kwargs["retry"]
+        self.assertIsInstance(retry_arg, retry.Retry)
+
+    def test_task_push_without_retry_policy(self):
+        tasks.CalculatePriceTask.asap(price=10, quantity=2, discount=0.5)
+
+        expected_call = dict(
+            queue_name="tasks",
+            url="http://localhost:8080/tasks/CalculatePriceTask",
+            payload='{"price": 10, "quantity": 2, "discount": 0.5}',
+            headers={"X-CloudTasks-Projectname": "potato-dev"},
+            task_timeout=None,
+        )
+        self.patched_push.assert_called_once_with(**expected_call)
+
+        with self.assertRaises(KeyError):
+            self.patched_push.call_args.kwargs["retry"]
