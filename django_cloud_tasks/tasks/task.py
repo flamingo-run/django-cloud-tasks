@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from django.apps import apps
 from django.urls import reverse
 from django.utils.timezone import now
+from django_cloud_tasks import UNSET
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.tasks import CloudTasks
 from google.cloud.tasks_v2 import Task as GoogleCloudTask
@@ -19,6 +20,7 @@ from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import deserialize, serialize
 import json
 from django.http import HttpRequest
+from google.api_core import retry
 
 
 def register(task_class) -> None:
@@ -197,6 +199,11 @@ class DjangoCloudTask(abc.ABCMeta, TaskMeta): ...
 
 class Task(abc.ABC, metaclass=DjangoCloudTask):
     only_once: bool = False
+    enqueue_retry_exceptions: list[str] | None = UNSET
+    enqueue_retry_initial: float | None = UNSET
+    enqueue_retry_maximum: float | None = UNSET
+    enqueue_retry_multiplier: float | None = UNSET
+    enqueue_retry_deadline: float | None = UNSET
 
     def __init__(self, metadata: TaskMetadata | None = None):
         self._metadata = metadata or TaskMetadata.build_eager(task_class=self.__class__)
@@ -288,6 +295,8 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             "headers": headers,
             "task_timeout": task_timeout or cls.get_task_timeout(),
         }
+        if enqueue_retry_policy := cls.enqueue_retry_policy():
+            api_kwargs["retry"] = enqueue_retry_policy
 
         if delay_in_seconds:
             api_kwargs["delay_in_seconds"] = delay_in_seconds
@@ -384,6 +393,30 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
     @lru_cache()
     def _get_tasks_client(cls) -> CloudTasks:
         return CloudTasks()
+
+    @classmethod
+    def enqueue_retry_policy(cls) -> retry.Retry | None:
+        def import_exceptions_class() -> None:
+            exceptions_classes = []
+            for exception in enqueue_retry_exceptions:
+                module_name, class_name = exception.rsplit(".", 1)
+                module = __import__(module_name, fromlist=[class_name])
+                exception_class = getattr(module, class_name)
+                exceptions_classes.append(exception_class)
+            return exceptions_classes
+
+        enqueue_retry_exceptions = cls.enqueue_retry_exceptions or get_config(name="enqueue_retry_exceptions")
+        if not enqueue_retry_exceptions:
+            return
+
+        exceptions_classes = import_exceptions_class()
+        return retry.Retry(
+            predicate=retry.if_exception_type(*exceptions_classes),
+            initial=cls.enqueue_retry_initial or get_config(name="enqueue_retry_initial"),
+            maximum=cls.enqueue_retry_maximum or get_config(name="enqueue_retry_maximum"),
+            multiplier=cls.enqueue_retry_multiplier or get_config(name="enqueue_retry_multiplier"),
+            deadline=cls.enqueue_retry_deadline or get_config(name="enqueue_retry_deadline"),
+        )
 
 
 def get_config(name: str) -> Any:

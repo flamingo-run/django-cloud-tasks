@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils.module_loading import module_has_submodule
 from gcp_pilot.pubsub import CloudSubscriber
 from gcp_pilot.scheduler import CloudScheduler
-
+from google.api_core.retry import retry_base
 from django_cloud_tasks import exceptions
 
 PREFIX = "DJANGO_CLOUD_TASKS_"
@@ -46,6 +46,20 @@ class DjangoCloudTasksAppConfig(AppConfig):
         )
         self.propagated_headers_key = self._fetch_str_config(
             name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
+        )
+
+        self.enqueue_retry_exceptions = self._fetch_list_config(name="ENQUEUE_RETRY_EXCEPTIONS", default=None)
+        self.enqueue_retry_initial = self._fetch_float_config(
+            name="ENQUEUE_RETRY_INITIAL", default=retry_base._DEFAULT_INITIAL_DELAY
+        )
+        self.enqueue_retry_maximum = self._fetch_float_config(
+            name="ENQUEUE_RETRY_MAXIMUM", default=retry_base._DEFAULT_MAXIMUM_DELAY
+        )
+        self.enqueue_retry_multiplier = self._fetch_float_config(
+            name="ENQUEUE_RETRY_MULTIPLIER", default=retry_base._DEFAULT_DELAY_MULTIPLIER
+        )
+        self.enqueue_retry_deadline = self._fetch_float_config(
+            name="ENQUEUE_RETRY_DEADLINE", default=retry_base._DEFAULT_DEADLINE
         )
 
     @property

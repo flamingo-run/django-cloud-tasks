@@ -150,3 +150,17 @@ class MyMetadata(TaskMetadata): ...
 
 
 class MyUnsupportedMetadata: ...
+
+
+class RetryEnqueueTask(Task):
+    enqueue_retry_exceptions = [
+        "google.api_core.exceptions.ServiceUnavailable",
+        "google.api_core.exceptions.InternalServerError",
+    ]
+    enqueue_retry_initial = 0.1
+    enqueue_retry_maximum = 10.0
+    enqueue_retry_multiplier = 1.3
+    enqueue_retry_deadline = 20.0
+
+    def run(self, **kwargs):
+        pass
