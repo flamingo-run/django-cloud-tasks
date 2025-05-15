@@ -396,20 +396,24 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
     @classmethod
     def enqueue_retry_policy(cls) -> retry.Retry | None:
-        def import_exceptions_class() -> None:
-            exceptions_classes = []
-            for exception in enqueue_retry_exceptions:
-                module_name, class_name = exception.rsplit(".", 1)
-                module = __import__(module_name, fromlist=[class_name])
-                exception_class = getattr(module, class_name)
-                exceptions_classes.append(exception_class)
-            return exceptions_classes
+        def parse_exceptions(exceptions: list[str | type[Exception]]) -> list[Type[Exception]]:
+            klasses = []
+            for exception in exceptions:
+                if isinstance(exception, str):
+                    module_name, klass_name = exception.rsplit(".", 1)
+                    klass = getattr(import_module(module_name), klass_name)
+                elif issubclass(exception, Exception):
+                    klass = exception
+                else:
+                    raise ValueError(f"Invalid exception class: {exception}")
+                klasses.append(klass)
+            return klasses
 
         enqueue_retry_exceptions = cls.enqueue_retry_exceptions or get_config(name="enqueue_retry_exceptions")
-        if not enqueue_retry_exceptions:
-            return
+        exceptions_classes = parse_exceptions(exceptions=enqueue_retry_exceptions)
+        if not exceptions_classes:
+            return None
 
-        exceptions_classes = import_exceptions_class()
         return retry.Retry(
             predicate=retry.if_exception_type(*exceptions_classes),
             initial=cls.enqueue_retry_initial or get_config(name="enqueue_retry_initial"),
