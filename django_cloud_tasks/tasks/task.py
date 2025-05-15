@@ -342,7 +342,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return cls(metadata=metadata).run(**task_kwargs)
 
     @classmethod
-    def discard(cls, task_id: str | None = None, min_retries: int = 0):
+    def discard(cls, task_id: str | None = None, min_retries: int = 0, max_workers: int | None = None) -> list[str]:
         client = cls._get_tasks_client()
         if task_id:
             task_objects = [client.get_task(queue_name=cls.queue(), task_name=task_id)]
@@ -361,8 +361,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
                 if task_name == cls.name() and task_obj.dispatch_count >= min_retries:
                     yield task_obj
 
-        pool = ThreadPoolExecutor()
-
+        pool = ThreadPoolExecutor(max_workers=max_workers)
         outputs = []
         for output in pool.map(process, jobs()):
             outputs.append(output)
