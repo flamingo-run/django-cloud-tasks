@@ -1,5 +1,6 @@
 import importlib
 import os
+from importlib import import_module
 from typing import Iterable, Tuple, Any
 
 from django.apps import AppConfig
@@ -22,44 +23,63 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Tasks
         self.on_demand_tasks = {}
         self.periodic_tasks = {}
         self.subscriber_tasks = {}
+
+        # Routing
         self.domain = self._fetch_str_config(name="ENDPOINT", default="http://localhost:8080")
         self.app_name = self._fetch_str_config(name="APP_NAME", default=os.environ.get("APP_NAME", None))
-        self.delimiter = self._fetch_str_config(name="DELIMITER", default="--")
-        self.eager = self._fetch_bool_config(name="EAGER", default=False)
         self.tasks_url_name = self._fetch_str_config(name="URL_NAME", default="tasks-endpoint")
-        self.tasks_max_eta = self._fetch_int_config(name="MAXIMUM_ETA_TASK", default=None)
         self.subscribers_url_name = self._fetch_str_config(
             name="SUBSCRIBERS_URL_NAME", default="subscriptions-endpoint"
         )
 
+        # Execution
+        self.eager = self._fetch_bool_config(name="EAGER", default=False)
+        self.tasks_max_eta = self._fetch_int_config(name="MAXIMUM_ETA_TASK", default=None)
+
+        # Naming
+        self.delimiter = self._fetch_str_config(name="DELIMITER", default="--")
+
+        # Subscriber Retrying
         self.subscribers_max_retries = self._fetch_int_config(name="SUBSCRIBER_MAX_RETRIES", default=None)
         self.subscribers_min_backoff = self._fetch_int_config(name="SUBSCRIBER_MIN_BACKOFF", default=None)
         self.subscribers_max_backoff = self._fetch_int_config(name="SUBSCRIBER_MAX_BACKOFF", default=None)
         self.subscribers_expiration = self._fetch_int_config(name="SUBSCRIBER_EXPIRATION", default=None)
 
+        # Headers
         self.propagated_headers = self._fetch_list_config(
             name="PROPAGATED_HEADERS",
             default=DEFAULT_PROPAGATION_HEADERS,
         )
         self.propagated_headers_key = self._fetch_str_config(
-            name="PROPAGATED_HEADERS_KEY", default=DEFAULT_PROPAGATION_HEADERS_KEY
+            name="PROPAGATED_HEADERS_KEY",
+            default=DEFAULT_PROPAGATION_HEADERS_KEY,
         )
 
-        self.enqueue_retry_exceptions = self._fetch_list_config(name="ENQUEUE_RETRY_EXCEPTIONS", default=None)
+        # Enqueue Retrying
+        self.enqueue_retry_exceptions = self._fetch_list_config(
+            name="ENQUEUE_RETRY_EXCEPTIONS",
+            default=[],
+        )
         self.enqueue_retry_initial = self._fetch_float_config(
-            name="ENQUEUE_RETRY_INITIAL", default=retry_base._DEFAULT_INITIAL_DELAY
+            name="ENQUEUE_RETRY_INITIAL",
+            default=retry_base._DEFAULT_INITIAL_DELAY,
         )
         self.enqueue_retry_maximum = self._fetch_float_config(
-            name="ENQUEUE_RETRY_MAXIMUM", default=retry_base._DEFAULT_MAXIMUM_DELAY
+            name="ENQUEUE_RETRY_MAXIMUM",
+            default=retry_base._DEFAULT_MAXIMUM_DELAY,
         )
         self.enqueue_retry_multiplier = self._fetch_float_config(
-            name="ENQUEUE_RETRY_MULTIPLIER", default=retry_base._DEFAULT_DELAY_MULTIPLIER
+            name="ENQUEUE_RETRY_MULTIPLIER",
+            default=retry_base._DEFAULT_DELAY_MULTIPLIER,
         )
         self.enqueue_retry_deadline = self._fetch_float_config(
-            name="ENQUEUE_RETRY_DEADLINE", default=retry_base._DEFAULT_DEADLINE
+            name="ENQUEUE_RETRY_DEADLINE",
+            default=retry_base._DEFAULT_DEADLINE,
         )
 
     @property
@@ -109,7 +129,7 @@ class DjangoCloudTasksAppConfig(AppConfig):
 
         try:
             module_name, class_name = metadata_class_name.rsplit(".", 1)
-            module = __import__(module_name, fromlist=[class_name])
+            module = import_module(module_name)
             metadata_class = getattr(module, class_name)
         except (AttributeError, ImportError, ValueError) as err:
             raise ImportError(f"Unable to import {metadata_class_name}") from err
