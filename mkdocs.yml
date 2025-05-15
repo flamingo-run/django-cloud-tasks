@@ -1,0 +1,10 @@
+site_name: Django Cloud Tasks
+site_url: https://django-cloud-tasks.flamingo.codes/
+nav:
+    - 'Getting Started': 'index.md'
+    - 'On-Demand Tasks': 'on_demand_tasks.md'
+    - 'Scheduled Tasks': 'scheduled_tasks.md'
+    - 'Pub/Sub': 'pubsub.md'
+    - 'Header Propagation': 'headers.md'
+    - 'TaskField (Model Field)': 'task_field.md'
+theme: readthedocs 
