@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.mocker import patch_auth
 from google.api_core import retry
-from google.api_core.exceptions import ServiceUnavailable, InternalServerError
+from google.api_core.exceptions import InternalServerError, ServiceUnavailable
 
 from django_cloud_tasks import exceptions
 from django_cloud_tasks.tasks import Task, TaskMetadata, is_task_route

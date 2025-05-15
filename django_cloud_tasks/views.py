@@ -1,8 +1,7 @@
 import logging
 from typing import Type, Any
 
-from django.apps import apps
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from django.views.generic import View
 from gcp_pilot.pubsub import Message
 
@@ -10,13 +9,13 @@ from django_cloud_tasks import exceptions
 from django_cloud_tasks.exceptions import TaskNotFound
 from django_cloud_tasks.serializers import deserialize
 from django_cloud_tasks.tasks import Task, SubscriberTask
-from django_cloud_tasks.tasks.task import TaskMetadata, get_config
+from django_cloud_tasks.tasks.task import TaskMetadata, get_config, get_app
 
 logger = logging.getLogger("django_cloud_tasks")
 
 
 class GoogleCloudTaskView(View):
-    def post(self, request, task_name, *args, **kwargs):
+    def post(self, request: HttpRequest, task_name: str, *args: Any, **kwargs: Any) -> JsonResponse:
         try:
             task_class = self.get_task(name=task_name)
         except TaskNotFound:
@@ -46,23 +45,23 @@ class GoogleCloudTaskView(View):
             )
 
     def get_task(self, name: str) -> Type[Task]:
-        app = apps.get_app_config("django_cloud_tasks")
+        app = get_app()
         return app.get_task(name=name)
 
     def execute_task(self, task_class: type[Task], task_metadata: TaskMetadata, task_kwargs: dict) -> Any:
         return task_class(metadata=task_metadata).process(**task_kwargs)
 
-    def parse_input(self, request, task_class: Type[Task]) -> dict:
+    def parse_input(self, request: HttpRequest, task_class: Type[Task]) -> dict:
         return deserialize(value=request.body)
 
-    def parse_metadata(self, request) -> TaskMetadata:
+    def parse_metadata(self, request: HttpRequest) -> TaskMetadata:
         task_metadata_class = get_config(name="task_metadata_class")
         return task_metadata_class.from_headers(headers=dict(request.headers))
 
 
 # More info: https://cloud.google.com/pubsub/docs/push#receiving_messages
 class GoogleCloudSubscribeView(GoogleCloudTaskView):
-    def parse_input(self, request, task_class: Type[SubscriberTask]) -> dict:
+    def parse_input(self, request: HttpRequest, task_class: Type[SubscriberTask]) -> dict:
         message = Message.load(body=request.body, parser=task_class.message_parser())
         return {
             "content": message.data,
@@ -70,7 +69,7 @@ class GoogleCloudSubscribeView(GoogleCloudTaskView):
         }
 
     def get_task(self, name: str) -> Type[SubscriberTask]:
-        app = apps.get_app_config("django_cloud_tasks")
+        app = get_app()
         try:
             return app.subscriber_tasks[name]
         except KeyError:

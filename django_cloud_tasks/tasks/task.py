@@ -3,11 +3,11 @@ import inspect
 from dataclasses import dataclass, fields
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
+from importlib import import_module
 from random import randint
-from typing import Any, Self
+from typing import Any, Self, Type
 from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor
-from django.apps import apps
 from django.urls import reverse
 from django.utils.timezone import now
 from django_cloud_tasks import UNSET
@@ -15,17 +15,12 @@ from gcp_pilot.exceptions import DeletedRecently
 from gcp_pilot.tasks import CloudTasks
 from google.cloud.tasks_v2 import Task as GoogleCloudTask
 
-from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
 from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import deserialize, serialize
 import json
-from django.http import HttpRequest
 from google.api_core import retry
 
-
-def register(task_class) -> None:
-    app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
-    app.register_task(task_class=task_class)
+from django_cloud_tasks.tasks.helpers import get_config, get_app
 
 
 @dataclass
@@ -187,7 +182,8 @@ class TaskMeta(type):
     def __new__(cls, name, bases, attrs):
         klass = type.__new__(cls, name, bases, attrs)
         if not inspect.isabstract(klass) and abc.ABC not in bases:
-            register(task_class=klass)
+            app = get_app()
+            app.register_task(task_class=klass)
         return klass
 
     def __str__(self):
@@ -199,7 +195,7 @@ class DjangoCloudTask(abc.ABCMeta, TaskMeta): ...
 
 class Task(abc.ABC, metaclass=DjangoCloudTask):
     only_once: bool = False
-    enqueue_retry_exceptions: list[str] | None = UNSET
+    enqueue_retry_exceptions: list[str | Type[Exception]] | None = UNSET
     enqueue_retry_initial: float | None = UNSET
     enqueue_retry_maximum: float | None = UNSET
     enqueue_retry_multiplier: float | None = UNSET
@@ -209,22 +205,28 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         self._metadata = metadata or TaskMetadata.build_eager(task_class=self.__class__)
 
     @abc.abstractmethod
-    def run(self, **kwargs):
+    def run(self, **kwargs: Any) -> Any:
         raise NotImplementedError()
 
-    def process(self, **task_kwargs) -> Any:
+    def process(self, **task_kwargs: Any) -> Any:
         return self.run(**task_kwargs)
 
     @classmethod
-    def sync(cls, **kwargs):
+    def sync(cls, **kwargs: Any) -> Any:
         return cls().run(**kwargs)
 
     @classmethod
-    def asap(cls, **kwargs):
+    def asap(cls, **kwargs: Any) -> TaskMetadata:
         return cls.push(task_kwargs=kwargs)
 
     @classmethod
-    def later(cls, task_kwargs: dict, eta: int | timedelta | datetime, queue: str = None, headers: dict | None = None):
+    def later(
+        cls,
+        task_kwargs: dict,
+        eta: int | timedelta | datetime,
+        queue: str = None,
+        headers: dict | None = None,
+    ) -> TaskMetadata:
         delay_in_seconds = cls._calculate_delay_in_seconds(eta=eta)
         cls._validate_delay(delay_in_seconds=delay_in_seconds)
         return cls.push(
@@ -234,8 +236,8 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             delay_in_seconds=delay_in_seconds,
         )
 
-    @staticmethod
-    def _calculate_delay_in_seconds(eta: int | timedelta | datetime) -> float | int:
+    @classmethod
+    def _calculate_delay_in_seconds(cls, eta: int | timedelta | datetime) -> float | int:
         if isinstance(eta, int) or isinstance(eta, float):
             return eta
         elif isinstance(eta, timedelta):
@@ -247,8 +249,8 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
                 f"Unsupported schedule {eta} of type {eta.__class__.__name__}. Must be int, timedelta or datetime."
             )
 
-    @staticmethod
-    def _validate_delay(delay_in_seconds: int | float):
+    @classmethod
+    def _validate_delay(cls, delay_in_seconds: int | float) -> None:
         max_eta_task = get_config("tasks_max_eta")
         if max_eta_task is not None and delay_in_seconds > max_eta_task:
             raise ValueError(f"Invalid delay time {delay_in_seconds}, maximum is {max_eta_task}")
@@ -277,7 +279,7 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         queue: str | None = None,
         delay_in_seconds: int | float | None = None,
         task_timeout: timedelta | None = None,
-    ):
+    ) -> TaskMetadata:
         payload = serialize(value=task_kwargs)
 
         if cls.eager():
@@ -314,9 +316,8 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         except DeletedRecently:
             # If the task queue was "accidentally" removed, GCP does not let us recreate it in 1 week
             # so we'll use a temporary queue (defined in settings) for some time
-            backup_queue_name = apps.get_app_config("django_cloud_tasks").get_backup_queue_name(
-                original_name=cls.queue(),
-            )
+            app = get_app()
+            backup_queue_name = app.get_backup_queue_name(original_name=cls.queue())
             if not backup_queue_name:
                 raise
 
@@ -327,11 +328,11 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
         return task_metadata_class.from_task_obj(task_obj=outcome)
 
     @classmethod
-    def get_task_timeout(cls):
+    def get_task_timeout(cls) -> int | None:
         return None
 
     @classmethod
-    def debug(cls, task_id: str):
+    def debug(cls, task_id: str) -> Any:
         client = cls._get_tasks_client()
         task_obj = client.get_task(queue_name=cls.queue(), task_name=task_id)
         task_kwargs = json.loads(task_obj.http_request.body)
@@ -350,9 +351,9 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
 
         def process(task_obj):
             task_name = task_obj.http_request.url.rsplit("/", 1)[-1]
-            task_id = task_obj.name.split("/")[-1]
-            client.delete_task(queue_name=cls.queue(), task_name=task_id)
-            return f"{task_name}/{task_id}"
+            _task_id = task_obj.name.split("/")[-1]
+            client.delete_task(queue_name=cls.queue(), task_name=_task_id)
+            return f"{task_name}/{_task_id}"
 
         def jobs():
             for task_obj in task_objects:
@@ -417,21 +418,3 @@ class Task(abc.ABC, metaclass=DjangoCloudTask):
             multiplier=cls.enqueue_retry_multiplier or get_config(name="enqueue_retry_multiplier"),
             deadline=cls.enqueue_retry_deadline or get_config(name="enqueue_retry_deadline"),
         )
-
-
-def get_config(name: str) -> Any:
-    app: DjangoCloudTasksAppConfig = apps.get_app_config("django_cloud_tasks")
-    return getattr(app, name)
-
-
-def is_task_route(request: HttpRequest) -> bool:
-    parts = request.path.removesuffix("/").rsplit("/", 1)
-    if len(parts) != 2:
-        return False
-
-    _, task_name = parts
-    if not task_name:
-        return False
-
-    expected_url = reverse(get_config(name="tasks_url_name"), args=(task_name,))
-    return request.path == expected_url
