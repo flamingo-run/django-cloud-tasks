@@ -318,7 +318,7 @@ wheels = [
 
 [[package]]
 name = "django-google-cloud-tasks"
-version = "2.20.0"
+version = "2.21.0"
 source = { virtual = "." }
 dependencies = [
     { name = "django" },
