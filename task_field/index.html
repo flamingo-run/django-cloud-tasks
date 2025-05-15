@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/task_field/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>TaskField (Model Field) - Django Cloud Tasks</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "TaskField (Model Field)";
+        var mkdocs_page_input_path = "task_field.md";
+        var mkdocs_page_url = "/task_field/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Django Cloud Tasks
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../on_demand_tasks/">On-Demand Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../scheduled_tasks/">Scheduled Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pubsub/">Pub/Sub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">TaskField (Model Field)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#field-options">Field Options</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#how-the-class-property-works">How the Class Property Works</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#use-cases">Use Cases</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Django Cloud Tasks</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">TaskField (Model Field)</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="taskfield-storing-task-references-in-models">TaskField - Storing Task References in Models</h1>
+<p>Django Cloud Tasks provides a custom Django model field, <code>django_cloud_tasks.field.TaskField</code>, designed to store a reference to a specific task class name within your models. This is particularly useful when you want to dynamically determine which task to run based on a model instance's data.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>TaskField</code> is a subclass of Django's <code>CharField</code>. It stores the string representation of a task class (e.g., <code>"MyCoolTask"</code> or <code>"myapp.tasks.AnotherTask"</code> if it's not auto-discoverable by simple name).</p>
+<p>Key features:</p>
+<ul>
+<li><strong>Validation:</strong> It can automatically validate that the stored string corresponds to an actual task class registered with Django Cloud Tasks.</li>
+<li><strong>Convenient Class Access:</strong> It dynamically adds a property to your model that allows you to directly access the task class itself from the stored name.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>Here's how you might use <code>TaskField</code> in one of your models:</p>
+<pre><code class="language-python"># In your app's models.py
+from django.db import models
+from django_cloud_tasks.field import TaskField
+
+class NotificationRule(models.Model):
+    name = models.CharField(max_length=100)
+    event_type = models.CharField(max_length=50, unique=True)
+
+    # Stores the name of the task to execute for this event type
+    task_to_run_name = TaskField()
+    # If you don't want validation at the DB level (e.g. during migrations before tasks are loaded):
+    # task_to_run_name = TaskField(validate_task=False)
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f&quot;{self.name} (Event: {self.event_type} -&gt; Task: {self.task_to_run_name})&quot;
+
+    def trigger_action(self, payload: dict):
+        if self.is_active and self.task_to_run_name:
+            # Access the actual task class via the dynamically added property
+            # If your field is `foo_name`, the property is `foo_class`
+            ActualTaskClass = self.task_to_run_class
+            if ActualTaskClass:
+                print(f&quot;Triggering task {ActualTaskClass.name()} for event {self.event_type}&quot;)
+                ActualTaskClass.asap(**payload)
+            else:
+                print(f&quot;No valid task class found for {self.task_to_run_name}&quot;)
+</code></pre>
+<p>In this example:</p>
+<ol>
+<li><code>task_to_run_name = TaskField()</code> defines a field that will store the name of a task (e.g., <code>"SendWelcomeEmailTask"</code>).</li>
+<li>When you save a <code>NotificationRule</code> instance, if <code>validate_task</code> is <code>True</code> (the default), the field will check if the provided string name corresponds to a task discoverable by <code>django-cloud-tasks</code>.</li>
+<li>A dynamic property <code>task_to_run_class</code> is automatically added to your <code>NotificationRule</code> model. Accessing <code>my_rule.task_to_run_class</code> will return the actual task class (e.g., <code>SendWelcomeEmailTask</code>), not just its name.</li>
+</ol>
+<h2 id="field-options">Field Options</h2>
+<ul>
+<li><strong><code>validate_task: bool = True</code></strong><ul>
+<li>If <code>True</code> (default), the field will validate that the provided task name corresponds to a registered task class when the value is being prepared for the database. This helps ensure data integrity.</li>
+<li>If <code>False</code>, this validation is skipped. This might be useful in scenarios like during initial data migrations where tasks might not be fully loaded or discoverable yet.</li>
+</ul>
+</li>
+<li><strong><code>max_length: int = 50</code></strong><ul>
+<li>The default <code>max_length</code> for the underlying <code>CharField</code>. You can override this if your task names are longer (though 50 characters is usually sufficient for a class name).</li>
+</ul>
+</li>
+<li>Other <code>CharField</code> options (like <code>null</code>, <code>blank</code>, <code>default</code>, <code>help_text</code>, etc.) can also be used.</li>
+</ul>
+<h2 id="how-the-class-property-works">How the Class Property Works</h2>
+<p>When you define a field like <code>my_task_field_name = TaskField()</code>, the <code>TaskField</code> automatically adds a new property to your model named <code>my_task_field_class</code>.</p>
+<p>So, if your field is <code>task_to_run_name</code>, the property becomes <code>task_to_run_class</code>.
+If your field is <code>backup_task_name</code>, the property becomes <code>backup_task_class</code>.</p>
+<p>This makes it very convenient to work with, as you can directly call class methods like <code>.asap()</code>, <code>.sync()</code>, or <code>.later()</code> on the retrieved class.</p>
+<h2 id="use-cases">Use Cases</h2>
+<ul>
+<li><strong>Configurable Workflows:</strong> Allow administrators or users to select different tasks for different events or conditions through a Django admin interface or a settings model.</li>
+<li><strong>Dynamic Task Routing:</strong> In a system that processes various types of jobs, a model instance can hold a reference to the specific task class responsible for handling its job type.</li>
+<li><strong>Scheduled Task Management:</strong> If you have a model that defines custom schedules, it could also store the name of the task to be executed on that schedule.</li>
+</ul>
+<p><code>TaskField</code> simplifies storing and retrieving task references in your database, adding a layer of validation and convenience. </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../headers/" class="btn btn-neutral float-left" title="Header Propagation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../headers/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

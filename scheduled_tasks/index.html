@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/scheduled_tasks/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Scheduled Tasks - Django Cloud Tasks</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Scheduled Tasks";
+        var mkdocs_page_input_path = "scheduled_tasks.md";
+        var mkdocs_page_url = "/scheduled_tasks/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Django Cloud Tasks
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../on_demand_tasks/">On-Demand Tasks</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Scheduled Tasks</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#defining-a-scheduled-task">Defining a Scheduled Task</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#deploying-scheduled-tasks">Deploying Scheduled Tasks</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#customizing-scheduled-task-behavior">Customizing Scheduled Task Behavior</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-job-naming-schedule_name">Custom Job Naming (schedule_name)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-http-headers-for-scheduler-requests-schedule_headers">Custom HTTP Headers for Scheduler Requests (schedule_headers)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#oidc-authentication-for-scheduler-requests-schedule_use_oidc">OIDC Authentication for Scheduler Requests (schedule_use_oidc)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#scheduler-level-retry-configuration-schedule_retries">Scheduler-Level Retry Configuration (schedule_retries)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-payload-for-scheduled-tasks">Custom Payload for Scheduled Tasks</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#how-it-works-under-the-hood">How It Works Under the Hood</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pubsub/">Pub/Sub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Django Cloud Tasks</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Scheduled Tasks</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="scheduled-tasks-powered-by-google-cloud-scheduler">Scheduled Tasks (Powered by Google Cloud Scheduler)</h1>
+<p>Scheduled tasks, often known as "cron jobs," are tasks that run automatically on a repeating schedule (e.g., every hour, once a day at 2 AM, every Monday morning). Django Cloud Tasks leverages Google Cloud Scheduler to manage and execute these periodic jobs. Your Django application defines what needs to run, and Cloud Scheduler takes care of triggering it at the right time via an HTTP request.</p>
+<h2 id="defining-a-scheduled-task">Defining a Scheduled Task</h2>
+<p>You define a scheduled task by inheriting from <code>django_cloud_tasks.tasks.PeriodicTask</code>. The most crucial part is setting the <code>run_every</code> class attribute to a cron expression that defines the schedule.</p>
+<p><strong>Example: Daily Digest and Hourly Cleanup</strong></p>
+<pre><code class="language-python"># In your app's tasks.py (e.g., reports/tasks.py or core/tasks.py)
+
+from django_cloud_tasks.tasks import PeriodicTask
+from django.utils import timezone
+# from myapp.models import UserActivity, TemporaryFile
+
+class GenerateDailyUserActivityDigest(PeriodicTask):
+    # Cron expression: &quot;At 00:00 on every day-of-week from Monday through Friday.&quot;
+    # (Assumes server/Cloud Scheduler timezone is UTC by default)
+    run_every = &quot;0 0 * * 1-5&quot;
+
+    def run(self, **kwargs): # kwargs will receive payload from Cloud Scheduler if any is set
+        print(f&quot;Generating daily user activity digest for {timezone.now().date()}...&quot;)
+        # yesterday = timezone.now().date() - timezone.timedelta(days=1)
+        # activities = UserActivity.objects.filter(timestamp__date=yesterday)
+        # generate_report(activities)
+        # send_report_to_admins()
+        return {&quot;status&quot;: &quot;digest_generated&quot;, &quot;date&quot;: str(timezone.now().date())}
+
+class HourlyTemporaryFileCleanup(PeriodicTask):
+    run_every = &quot;@hourly&quot;  # Cloud Scheduler shorthand for &quot;0 * * * *&quot;
+
+    def run(self, older_than_hours: int = 2, **kwargs):
+        print(f&quot;Cleaning up temporary files older than {older_than_hours} hours...&quot;)
+        # cutoff_time = timezone.now() - timezone.timedelta(hours=older_than_hours)
+        # TemporaryFile.objects.filter(created_at__lt=cutoff_time).delete()
+        return {&quot;status&quot;: &quot;cleanup_done&quot;, &quot;older_than_hours&quot;: older_than_hours}
+</code></pre>
+<p><strong>Key Attributes for <code>PeriodicTask</code>:</strong></p>
+<ul>
+<li><strong><code>run_every: str</code> (Required):</strong> Defines the schedule using the standard <a href="https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules">cron format</a>. Cloud Scheduler also supports shorthands like <code>@daily</code>, <code>@hourly</code>, <code>@weekly</code>, <code>@monthly</code>, <code>@yearly</code>.</li>
+<li><strong><code>run(**kwargs)</code>:</strong> The method containing your task's logic. It's the same as for on-demand tasks. Any JSON payload you define in Cloud Scheduler (or through customization hooks) will be passed as <code>kwargs</code>.</li>
+</ul>
+<h2 id="deploying-scheduled-tasks">Deploying Scheduled Tasks</h2>
+<p>Defining the Python class is just the first step. You need to inform Google Cloud Scheduler about your tasks. This is done using a Django management command:</p>
+<pre><code class="language-bash">python manage.py schedule_tasks
+</code></pre>
+<p><strong>What this command does:</strong></p>
+<ol>
+<li>It scans your Django project for all classes inheriting from <code>PeriodicTask</code> (ensure these modules are imported by Django at startup).</li>
+<li>It compares these definitions against the jobs currently configured in Google Cloud Scheduler for your <code>DJANGO_CLOUD_TASKS_APP_NAME</code>.</li>
+<li>It then synchronizes the state:<ul>
+<li><strong><code>[+] Added</code></strong>: New jobs are created in Cloud Scheduler for tasks found in your code but not yet scheduled.</li>
+<li><strong><code>[~] Updated</code></strong>: Existing jobs in Cloud Scheduler are updated if their definition (e.g., cron schedule <code>run_every</code>, target URL, payload) has changed in your code.</li>
+<li><strong><code>[-] Deleted</code></strong>: Jobs in Cloud Scheduler are deleted if their corresponding <code>PeriodicTask</code> class has been removed from your code.</li>
+</ul>
+</li>
+</ol>
+<p><strong>When to run <code>schedule_tasks</code>?</strong></p>
+<p>You should run this command as part of your deployment process, any time you add, remove, or modify the definition (especially <code>run_every</code> or other schedule-related overrides) of a <code>PeriodicTask</code>.</p>
+<h2 id="customizing-scheduled-task-behavior">Customizing Scheduled Task Behavior</h2>
+<p>You can override several class methods on your <code>PeriodicTask</code> subclass to fine-tune how it interacts with Google Cloud Scheduler.</p>
+<h3 id="custom-job-naming-schedule_name">Custom Job Naming (<code>schedule_name</code>)</h3>
+<p>By default, the Cloud Scheduler job name is constructed using your <code>DJANGO_CLOUD_TASKS_APP_NAME</code>, the <code>DJANGO_CLOUD_TASKS_DELIMITER</code>, and the task's class name (e.g., <code>my-app--GenerateDailyUserActivityDigest</code>). You can customize this for better organization or to adhere to specific naming conventions.</p>
+<pre><code class="language-python">class MonthlyBillingRun(PeriodicTask):
+    run_every = &quot;0 3 1 * *&quot; # At 03:00 on day-of-month 1.
+
+    @classmethod
+    def schedule_name(cls) -&gt; str:
+        # Example: &quot;billing-service-MonthlyBillingRun-prod&quot;
+        app_name = get_config(&quot;app_name&quot;) # Fetches DJANGO_CLOUD_TASKS_APP_NAME
+        env = &quot;prod&quot; if not settings.DEBUG else &quot;dev&quot;
+        return f&quot;{app_name}-{cls.name()}-{env}&quot; # cls.name() is the class name
+
+    def run(self, **kwargs):
+        print(&quot;Starting monthly billing run...&quot;)
+        # ... billing logic ...
+</code></pre>
+<h3 id="custom-http-headers-for-scheduler-requests-schedule_headers">Custom HTTP Headers for Scheduler Requests (<code>schedule_headers</code>)</h3>
+<p>You can inject custom HTTP headers into the requests that Cloud Scheduler makes to your task endpoint. This can be useful for passing specific tokens, versioning information, or routing hints that your Django application or infrastructure might use.</p>
+<pre><code class="language-python">class DataSyncWithExternalService(PeriodicTask):
+    run_every = &quot;0 */6 * * *&quot; # Every 6 hours
+
+    @classmethod
+    def schedule_headers(cls) -&gt; dict:
+        # This token might be used by your endpoint's authentication/authorization layer
+        return {&quot;X-Scheduler-Auth-Token&quot;: &quot;my-secret-scheduler-token&quot;, &quot;X-Job-Type&quot;: cls.name()}
+
+    def run(self, **kwargs):
+        # Your Django view or middleware can inspect request.META for these headers
+        # e.g., request.META.get('HTTP_X_SCHEDULER_AUTH_TOKEN')
+        print(&quot;Running data sync, triggered with custom headers.&quot;)
+</code></pre>
+<h3 id="oidc-authentication-for-scheduler-requests-schedule_use_oidc">OIDC Authentication for Scheduler Requests (<code>schedule_use_oidc</code>)</h3>
+<p>Determines if OIDC (OpenID Connect) authentication should be used for the HTTP request from Cloud Scheduler to your application. This is the recommended secure way for Google services to call your services.</p>
+<ul>
+<li>Default: <code>True</code>.</li>
+<li>If <code>True</code>, Cloud Scheduler will send a Google-signed OIDC token in the <code>Authorization</code> header. Your application endpoint (usually a Cloud Run service or similar) should be configured to validate this token.</li>
+<li>If <code>False</code>, no OIDC token is sent by Scheduler. You would rely on other means of securing your endpoint (e.g., network controls, custom <code>schedule_headers</code> with a pre-shared key, though OIDC is preferred).</li>
+</ul>
+<pre><code class="language-python">class PublicDataFetcherTask(PeriodicTask):
+    run_every = &quot;@daily&quot;
+
+    @classmethod
+    def schedule_use_oidc(cls) -&gt; bool:
+        # If this task calls a public, non-OIDC protected part of your app, or if auth is handled differently
+        return False # Set to True if your endpoint expects a Google OIDC token
+
+    def run(self, **kwargs):
+        print(&quot;Fetching public data...&quot;)
+</code></pre>
+<h3 id="scheduler-level-retry-configuration-schedule_retries">Scheduler-Level Retry Configuration (<code>schedule_retries</code>)</h3>
+<p>Specifies the number of times Google Cloud Scheduler should retry invoking your task endpoint if the HTTP request fails (e.g., your endpoint returns a 5xx error or doesn't respond).</p>
+<ul>
+<li>Default: <code>0</code> (no retries at the Cloud Scheduler level).</li>
+<li>This is distinct from any retry logic within your task's <code>run()</code> method or Cloud Tasks queue retries (if the scheduled job itself pushes to a Cloud Tasks queue).</li>
+</ul>
+<pre><code class="language-python">class OccasionallyFailingExternalCheck(PeriodicTask):
+    run_every = &quot;*/30 * * * *&quot; # Every 30 minutes
+
+    @classmethod
+    def schedule_retries(cls) -&gt; int:
+        # If the endpoint is down, ask Cloud Scheduler to retry up to 3 times
+        return 3
+
+    def run(self, **kwargs):
+        print(&quot;Performing an external check that might sometimes fail...&quot;)
+        # ... call external service ...
+</code></pre>
+<h3 id="custom-payload-for-scheduled-tasks">Custom Payload for Scheduled Tasks</h3>
+<p>While <code>PeriodicTask.schedule()</code> itself takes <code>**kwargs</code> which are serialized into the payload for Cloud Scheduler, you typically set these arguments directly in the <code>run</code> method's signature with defaults if they are static for the schedule. If you need to dynamically build a more complex payload during the <code>schedule_tasks</code> command or want to override what arguments are sent, you would need to customize the <code>schedule</code> method itself or ensure your <code>run</code> method pulls configuration dynamically.</p>
+<p>The default arguments sent in the payload by <code>schedule()</code> are simply the <code>**kwargs</code> passed to it. If no <code>kwargs</code> are passed (common for periodic tasks where the logic is self-contained or configured via <code>settings</code>), the payload will be an empty JSON object <code>{}</code>.</p>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<p>When <code>PeriodicTask.schedule()</code> is invoked (typically by the <code>schedule_tasks</code> management command), it communicates with Google Cloud Scheduler to create or update a job. This job is configured to:</p>
+<ol>
+<li>Trigger based on the <code>run_every</code> cron schedule.</li>
+<li>Make an HTTP POST request to the URL generated by <code>YourTaskClass.url()</code> (this defaults to the standard task execution endpoint in <code>django_cloud_tasks.urls</code>).</li>
+<li>Include a JSON payload (by default, an empty dictionary <code>{}</code> unless <code>kwargs</code> were passed to <code>schedule</code> or the task sends a default payload).</li>
+<li>Use OIDC authentication and custom headers as configured.</li>
+</ol>
+<p>Essentially, Cloud Scheduler acts as a timed trigger that invokes your <code>PeriodicTask</code> as if it were an on-demand task call arriving at your application's endpoint.</p>
+<p><strong>Eager Mode Behavior (<code>DJANGO_CLOUD_TASKS_EAGER = True</code>)</strong>
+If <code>DJANGO_CLOUD_TASKS_EAGER</code> is true, running <code>python manage.py schedule_tasks</code> will <em>not</em> actually interact with Google Cloud Scheduler. Instead, for any tasks that <em>would have been</em> added or updated, their <code>run()</code> method will be executed synchronously, locally, one time. This is primarily for testing the task logic itself, not the scheduling mechanism.</p>
+<p>And that's the rundown on keeping your tasks running like clockwork with scheduled tasks! </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../on_demand_tasks/" class="btn btn-neutral float-left" title="On-Demand Tasks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../pubsub/" class="btn btn-neutral float-right" title="Pub/Sub">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../on_demand_tasks/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../pubsub/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

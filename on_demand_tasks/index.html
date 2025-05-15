@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/on_demand_tasks/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>On-Demand Tasks - Django Cloud Tasks</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "On-Demand Tasks";
+        var mkdocs_page_input_path = "on_demand_tasks.md";
+        var mkdocs_page_url = "/on_demand_tasks/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Django Cloud Tasks
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">On-Demand Tasks</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#defining-a-basic-task">Defining a Basic Task</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#running-your-tasks">Running Your Tasks</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../scheduled_tasks/">Scheduled Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pubsub/">Pub/Sub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Django Cloud Tasks</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">On-Demand Tasks</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="on-demand-tasks-powered-by-google-cloud-tasks">On-Demand Tasks (Powered by Google Cloud Tasks)</h1>
+<p>On-demand tasks are your workhorses for anything you want to do asynchronously. Think of sending a welcome email after a user signs up, processing an image after upload, or calling a slow external API without making your user wait. These tasks are pushed to a Google Cloud Tasks queue and executed by an HTTP request back to your Django application.</p>
+<h2 id="defining-a-basic-task">Defining a Basic Task</h2>
+<p>Creating a task is as simple as inheriting from <code>django_cloud_tasks.tasks.Task</code> and implementing the <code>run</code> method. This method contains the logic your task will execute.</p>
+<p><strong>Example: Sending a Welcome Email</strong></p>
+<p>Let's say you want to send a welcome email to a new user. Their details (like email and name) will be passed as arguments to the task.</p>
+<pre><code class="language-python"># In your app's tasks.py (e.g., users/tasks.py)
+
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django_cloud_tasks.tasks import Task
+
+class SendWelcomeEmailTask(Task):
+    def run(self, user_id: int, custom_message: str | None = None):
+        try:
+            user = User.objects.get(pk=user_id)
+            subject = f&quot;Welcome to Our Awesome Platform, {user.first_name}!&quot;
+            message_body = custom_message or f&quot;Hi {user.first_name}, \n\nThanks for signing up! We're thrilled to have you.&quot;
+            send_mail(
+                subject=subject,
+                message=message_body,
+                from_email=&quot;noreply@myawesomeplatform.com&quot;,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            print(f&quot;Welcome email sent to {user.email}&quot;)
+            return {&quot;status&quot;: &quot;success&quot;, &quot;user_id&quot;: user_id, &quot;email&quot;: user.email}
+        except User.DoesNotExist:
+            print(f&quot;User with ID {user_id} not found. Cannot send welcome email.&quot;)
+            # You might want to raise an exception here to have Cloud Tasks retry, or handle it as a permanent failure.
+            return {&quot;status&quot;: &quot;error&quot;, &quot;reason&quot;: &quot;user_not_found&quot;}
+        except Exception as e:
+            print(f&quot;Failed to send welcome email to user {user_id}: {e}&quot;)
+            # Re-raise the exception to make Cloud Tasks retry based on queue configuration
+            raise
+</code></pre>
+<p><strong>Important Notes:</strong></p>
+<ul>
+<li><strong>Task Discovery:</strong> Django Cloud Tasks automatically discovers task classes that inherit from <code>Task</code>, <code>PeriodicTask</code>, etc. Just ensure the Python modules containing your task definitions (e.g., <code>myapp/tasks.py</code>) are imported by Django at startup. A common pattern is to import them in your app's <code>apps.py</code> within the <code>ready()</code> method.</li>
+<li><strong>Serialization:</strong> Arguments passed to your task's <code>run</code> method (and the return value) <strong>must be JSON serializable</strong>. Basic types like integers, strings, lists, and dicts are fine. For complex objects like Django model instances, you should pass identifiers (like a primary key) and re-fetch the object within the task, as shown in the <code>SendWelcomeEmailTask</code>.</li>
+</ul>
+<h2 id="running-your-tasks">Running Your Tasks</h2>
+<p>Once defined, you can trigger your tasks from anywhere in your Django code (views, signals, model methods, etc.).</p>
+<ol>
+<li>
+<p><strong><code>asap(**kwargs)</code> - Run As Soon As Possible:</strong>
+    This is the most common way. It enqueues the task to be executed by Cloud Tasks as soon as a worker is available. The <code>kwargs</code> are the arguments to your task's <code>run</code> method.</p>
+<p>```python</p>
+<h1 id="assuming-user_just_registered-is-a-user-object">Assuming user_just_registered is a User object</h1>
+<p>SendWelcomeEmailTask.asap(user_id=user_just_registered.id)
+SendWelcomeEmailTask.asap(user_id=another_user.id, custom_message="Hey there, special user!")
+```</p>
+</li>
+<li>
+<p><strong><code>later(task_kwargs: dict, eta: int | timedelta | datetime)</code> - Schedule for a Specific Future Time:</strong>
+    Use this to delay a task's execution.</p>
+<p>```python
+from datetime import timedelta
+from django.utils import timezone</p>
+<h1 id="send-a-follow-up-email-7-days-after-signup">Send a follow-up email 7 days after signup</h1>
+<p>user_id_to_follow_up = 123
+follow_up_time = timezone.now() + timedelta(days=7)
+SendWelcomeEmailTask.later(
+    task_kwargs={"user_id": user_id_to_follow_up, "custom_message": "Hope you're enjoying the platform after your first week!"},
+    eta=follow_up_time
+)</p>
+<h1 id="or-run-30-minutes-from-now-eta-can-be-seconds-as-an-int">Or run 30 minutes from now (eta can be seconds as an int)</h1>
+<p>SendWelcomeEmailTask.later(task_kwargs={"user_id": 456}, eta=30 * 60)
+```</p>
+<p>When using <code>eta</code>, be mindful of the <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> setting (or its environment variable counterpart). This setting defines the maximum number of seconds into the future a task can be scheduled. Google Cloud Tasks itself has a limit (typically 30 days). If <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> is set, it imposes an additional, potentially more restrictive, limit within your application.
+*   Default: <code>None</code> (meaning the library doesn't impose its own limit beyond GCP's).
+*   Example: <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK = 60 * 60 * 24 * 7</code> (limit to 7 days).</p>
+</li>
+<li>
+<p><strong><code>sync(**kwargs)</code> - Run Synchronously (Mainly for Testing &amp; Eager Mode):</strong>
+    Executes the task's <code>run</code> method immediately in the current process. This is the default behavior if <code>DJANGO_CLOUD_TASKS_EAGER = True</code> is set in your settings. It's extremely helpful for debugging and local development.</p>
+<p>```python</p>
+<h1 id="this-will-run-the-sendwelcomeemailtaskrun-method-directly">This will run the SendWelcomeEmailTask.run() method directly</h1>
+<p>result = SendWelcomeEmailTask.sync(user_id=some_user.id, custom_message="Testing sync call.")
+print(result) # Output: {'status': 'success', 'user_id': ..., 'email': ...}
+```</p>
+</li>
+<li>
+<p><strong><code>until(task_kwargs: dict, max_eta: datetime)</code> - Schedule Randomly Before a Deadline:</strong>
+    Schedules the task to run at a random time between now and the specified <code>max_eta</code> (maximum execution time). Useful for distributing load for non-time-critical tasks. It's not a load balancer, it's just a way to schedule tasks to run at different times.</p>
+<p>```python
+from django.utils import timezone
+from datetime import timedelta</p>
+<h1 id="process-a-batch-of-optional-analytics-updates-sometime-in-the-next-hour">Process a batch of optional analytics updates sometime in the next hour</h1>
+<p>max_execution_time = timezone.now() + timedelta(hours=1)
+class ProcessAnalyticsBatch(Task):
+    def run(self, user_ids: list[int]):
+        for user_id in user_ids:
+            SendWelcomeEmailTask.until(task_kwargs={"user_id": user_id}, max_eta=max_execution_time)
+```</p>
+</li>
+</ol>
+<h2 id="advanced-task-configuration">Advanced Task Configuration</h2>
+<p>You can fine-tune task behavior using several class attributes and methods on your <code>Task</code> subclass. These configurations often map to Google Cloud Tasks API features.</p>
+<h3 id="ensuring-uniqueness-only_once">Ensuring Uniqueness: <code>only_once</code></h3>
+<p>Set <code>only_once = True</code> on your task class if you want to prevent duplicate enqueues of tasks that are identical <em>by class name</em> for a given queue. Cloud Tasks will use a deterministic task name derived from your task's class name.</p>
+<ul>
+<li><strong>Use Case:</strong> Imagine you have a task <code>ProcessOrderTask</code> that gets called when an order is submitted. If, due to a client-side retry or a race condition, your system tries to enqueue <code>ProcessOrderTask</code> for the <em>same order</em> multiple times in quick succession <em>before the first one is picked up</em>, <code>only_once = True</code> can help prevent multiple identical tasks for that order from being added to the queue initially.</li>
+<li><strong>Caveat:</strong> This de-duplication is based on the task <em>class name</em>. It doesn't consider task arguments. If you need de-duplication based on specific arguments (e.g., "only one <code>ProcessOrderTask</code> for <code>order_id=123</code>"), you'd need to implement that logic yourself, perhaps by checking for an existing task with a custom-generated name via the <code>push()</code> method, or within your <code>run</code> method.</li>
+</ul>
+<pre><code class="language-python">class ProcessOrderTask(Task):
+    only_once = True # Prevents rapid, identical enqueues by class name
+
+    def run(self, order_id: int, payment_details: dict):
+        print(f&quot;Processing order {order_id}...&quot;)
+        # ... order processing logic ...
+
+</code></pre>
+<h3 id="enqueue-retry-policy">Enqueue Retry Policy</h3>
+<p>These settings control retries if the the act of trying to send the task to Google Cloud Tasks fails, for example, due to a transient network issue or a temporary problem with the Cloud Tasks API. This is <strong>not</strong> about retrying your task if its <code>run()</code> method fails.</p>
+<ul>
+<li><strong><code>enqueue_retry_exceptions: list[str | Type[Exception]] | None</code></strong>: A list of exception types (or their string paths like <code>'google.api_core.exceptions.ServiceUnavailable'</code>) that should trigger a retry. Defaults to an empty list (or what's set globally via <code>DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_EXCEPTIONS</code>).</li>
+<li><strong><code>enqueue_retry_initial: float | None</code></strong>: Initial delay in seconds for the first retry. Defaults to global config.</li>
+<li><strong><code>enqueue_retry_maximum: float | None</code></strong>: Maximum delay in seconds between retries. Defaults to global config.</li>
+<li><strong><code>enqueue_retry_multiplier: float | None</code></strong>: Multiplier for increasing the delay between retries. Defaults to global config.</li>
+<li><strong><code>enqueue_retry_deadline: float | None</code></strong>: Total time in seconds to keep retrying. Defaults to global config.</li>
+</ul>
+<pre><code class="language-python">from google.api_core.exceptions import ServiceUnavailable, InternalServerError
+
+class RobustEnqueueTask(Task):
+    enqueue_retry_exceptions = [ServiceUnavailable, InternalServerError, &quot;requests.exceptions.ConnectionError&quot;]
+    enqueue_retry_initial = 2.0  # Start with a 2-second delay
+    enqueue_retry_maximum = 60.0 # Cap retries at 1 minute intervals
+    enqueue_retry_multiplier = 2.5
+    enqueue_retry_deadline = 300.0 # Try for up to 5 minutes
+
+    def run(self, data: dict):
+        print(&quot;Task enqueued robustly and now running.&quot;)
+</code></pre>
+<h3 id="using-custom-queue-names">Using Custom Queue Names</h3>
+<p>By default, tasks are sent to a queue named after your <code>DJANGO_CLOUD_TASKS_APP_NAME</code> (or just <code>"tasks"</code> if <code>APP_NAME</code> is not set). You can direct specific tasks to different queues by overriding the <code>queue()</code> class method. This is useful for prioritizing tasks or managing different workloads (e.g., short, quick tasks vs. long-running batch jobs).</p>
+<p>Make sure any custom queues you specify actually exist in your Google Cloud Tasks project.</p>
+<pre><code class="language-python">class HighPriorityNotification(Task):
+    @classmethod
+    def queue(cls) -&gt; str:
+        return &quot;critical-notifications-queue&quot; # Ensure this queue is configured in GCP with appropriate retries etc.
+
+    def run(self, user_id: int, alert_message: str):
+        # ... send an urgent alert ...
+        print(f&quot;Sent high priority alert to user {user_id}&quot;)
+
+class BatchDataProcessing(Task):
+    @classmethod
+    def queue(cls) -&gt; str:
+        return &quot;batch-jobs-queue&quot; # A queue for longer, less time-sensitive tasks
+
+    def run(self, dataset_id: str):
+        # ... process a large dataset ...
+        print(f&quot;Processed batch data for {dataset_id}&quot;)
+</code></pre>
+<h3 id="suggesting-a-task-timeout">Suggesting a Task Timeout</h3>
+<p>Cloud Tasks need to know how long to wait for your task to complete before considering it timed out. You can suggest a timeout by overriding <code>get_task_timeout()</code>. The actual timeout is ultimately controlled by the queue configuration in GCP, but this provides a hint.</p>
+<pre><code class="language-python">from datetime import timedelta
+
+class ReportGenerationTask(Task):
+    @classmethod
+    def get_task_timeout(cls) -&gt; timedelta | None:
+        # This report can sometimes take a while
+        return timedelta(minutes=15) # Suggest Cloud Tasks allow up to 15 minutes
+
+    def run(self, report_params: dict):
+        # ... logic to generate a potentially long report ...
+        print(&quot;Report generation complete.&quot;)
+</code></pre>
+<h3 id="accessing-task-metadata-self_metadata">Accessing Task Metadata (<code>self._metadata</code>)</h3>
+<p>Inside your task's <code>run</code> method, you can access information about the current execution attempt via <code>self._metadata</code>. This is an instance of <code>TaskMetadata</code> (or your custom class specified by <code>DJANGO_CLOUD_TASKS_TASK_METADATA_CLASS</code>).</p>
+<ul>
+<li><strong>Use Case:</strong> You might want to log the attempt number, or have slightly different behavior on the first attempt versus a retry (e.g., more aggressive external API calls on first try, then back off).</li>
+</ul>
+<pre><code class="language-python">class RetryAwareTask(Task):
+    def run(self, api_call_details: dict):
+        print(f&quot;--- Task Execution --- &quot;)
+        print(f&quot;Task ID: {self._metadata.task_id}&quot;)
+        print(f&quot;Queue: {self._metadata.queue_name}&quot;)
+        print(f&quot;Attempt Number (dispatch count + 1): {self._metadata.attempt_number}&quot;)
+        print(f&quot;Execution Number (non-5XX responses): {self._metadata.execution_number}&quot;)
+        print(f&quot;Scheduled ETA: {self._metadata.eta}&quot;)
+
+        if self._metadata.previous_failure:
+            print(f&quot;This task previously failed with reason: {self._metadata.previous_failure}&quot;)
+
+        if self._metadata.is_cloud_scheduler:
+             print(f&quot;This task was triggered by Cloud Scheduler job: {self._metadata.cloud_scheduler_job_name}&quot;)
+
+        # Example: Different logic for first attempt vs retries
+        if self._metadata.first_attempt:
+            print(&quot;First attempt: trying the primary API endpoint.&quot;)
+            # make_api_call(api_call_details, endpoint_type=&quot;primary&quot;)
+        else:
+            print(&quot;Retry attempt: trying a fallback API endpoint or with reduced payload.&quot;)
+            # make_api_call(api_call_details, endpoint_type=&quot;fallback&quot;)
+
+        # Your main task logic here
+        # ...
+</code></pre>
+<h3 id="using-push-for-full-control">Using <code>push()</code> for Full Control</h3>
+<p>For the most granular control over task enqueuing, you can use the <code>push()</code> class method directly. <code>asap()</code> and <code>later()</code> are convenient wrappers around <code>push()</code>. This allows you to specify custom headers, a dynamically generated task name (useful for more specific de-duplication than <code>only_once</code>), or override the queue dynamically.</p>
+<pre><code class="language-python"># Generate a unique task name for de-duplication based on arguments
+# This requires more careful management than `only_once = True`
+unique_part = hashlib.md5(f&quot;{user_id}-{item_id}&quot;.encode()).hexdigest()
+deterministic_task_name = f&quot;ProcessItemTask-{unique_part}&quot;
+
+SendWelcomeEmailTask.push(
+    task_kwargs={&quot;user_id&quot;: 777, &quot;custom_message&quot;: &quot;Pushed with full control!&quot;},
+    headers={&quot;X-Correlation-ID&quot;: &quot;my-custom-trace-id&quot;}, # Custom headers for this specific push
+    delay_in_seconds=60, # Delay by 1 minute
+    queue=&quot;another-dynamic-queue&quot;, # Can override queue here too
+    task_name=deterministic_task_name, # Provide a specific task name
+)
+</code></pre>
+<h2 id="managing-and-debugging-tasks">Managing and Debugging Tasks</h2>
+<p>Django Cloud Tasks provides a couple of utility methods on your task classes for interacting with tasks <strong>already in a queue</strong>.</p>
+<h3 id="debugging-a-specific-task-debug">Debugging a Specific Task (<code>debug()</code>)</h3>
+<p>If a task has failed in the cloud, or you want to re-run a specific execution locally with the exact same payload it had, you can use <code>debug()</code>.</p>
+<ul>
+<li><strong>How it works:</strong> It fetches the task details (including its original payload) from Google Cloud Tasks using its <code>task_id</code> and then executes the <code>run()</code> method locally (synchronously) with that payload. It also populates <code>self._metadata</code> from the fetched task information.</li>
+</ul>
+<pre><code class="language-python"># In a Django shell or management command:
+# from myapp.tasks import SendWelcomeEmailTask
+
+# Assume you got this task ID from your GCP logs
+task_id_from_gcp = &quot;1234567890abcdef&quot;
+
+# This will fetch the task, deserialize its payload, and run it locally:
+SendWelcomeEmailTask.debug(task_id=task_id_from_gcp)
+</code></pre>
+<h3 id="discarding-tasks-discard">Discarding Tasks (<code>discard()</code>)</h3>
+<p>You can remove tasks from a Google Cloud Tasks queue.</p>
+<ul>
+<li>
+<p><strong>Discard a specific task by ID:</strong>
+    <code>python
+    # SendWelcomeEmailTask.discard(task_id="projects/.../tasks/someSpecificId")</code></p>
+</li>
+<li>
+<p><strong>Discard all tasks of a certain type from a queue (use with caution!):</strong>
+    <code>python
+    # This will list all tasks for SendWelcomeEmailTask in its default queue and delete them.
+    # deleted_tasks_info = SendWelcomeEmailTask.discard()
+    # print(f"Deleted tasks: {deleted_tasks_info}")</code></p>
+</li>
+<li>
+<p><strong>Discard tasks of a certain type that have met a minimum retry count:</strong>
+    Useful for clearing out tasks that seem to be failing persistently after a certain number of attempts.
+    <code>python
+    # Delete all SendWelcomeEmailTask instances from the queue that have been dispatched (retried) at least 5 times.
+    # SendWelcomeEmailTask.discard(min_retries=5)</code></p>
+</li>
+</ul>
+<h3 id="handling-failed-tasks">Handling Failed Tasks</h3>
+<p>Any exception raised by your task's <code>run()</code> method is considered a failure.</p>
+<p>This will inform Google Cloud Tasks to retry the task, according to the policy you've set.</p>
+<p>If you want to skip retrying a task, you can raise <code>DiscardTaskException</code> from within your task.</p>
+<p>This covers the ins and outs of on-demand tasks. They form the foundation for many asynchronous operations in your Django application. </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Getting Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../scheduled_tasks/" class="btn btn-neutral float-right" title="Scheduled Tasks">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../scheduled_tasks/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

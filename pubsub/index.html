@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/pubsub/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Pub/Sub - Django Cloud Tasks</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Pub/Sub";
+        var mkdocs_page_input_path = "pubsub.md";
+        var mkdocs_page_url = "/pubsub/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Django Cloud Tasks
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../on_demand_tasks/">On-Demand Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../scheduled_tasks/">Scheduled Tasks</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Pub/Sub</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#publishing-messages">Publishing Messages</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-basic-publisher-publishertask">1. Basic Publisher: PublisherTask</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-model-specific-publisher-modelpublishertask">2. Model-Specific Publisher: ModelPublisherTask</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#topic-naming-convention">Topic Naming Convention</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#ensuring-topics-exist-set_up">Ensuring Topics Exist (set_up)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subscribing-to-messages-subscribertask">Subscribing to Messages (SubscriberTask)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#subscription-naming-convention">Subscription Naming Convention</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-up-and-deploying-subscriptions">Setting Up and Deploying Subscriptions</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#customizing-publishers">Customizing Publishers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-topic-names-for-publishers">Custom Topic Names for Publishers</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#customizing-subscribers">Customizing Subscribers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-subscription-name-subscription_name">Custom Subscription Name (subscription_name)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-subscription-url-subscription_url">Custom Subscription URL (subscription_url)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#oidc-authentication-for-push-endpoint-_use_oidc_auth">OIDC Authentication for Push Endpoint (_use_oidc_auth)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#subscription-retry-policy-message-acknowledgement-deadline-backoff">Subscription Retry Policy (Message Acknowledgement Deadline &amp; Backoff)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dead-letter-topics-dltdlq">Dead Letter Topics (DLT/DLQ)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#message-filtering-subscription_filter">Message Filtering (subscription_filter)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-message-parsing-message_parser">Custom Message Parsing (message_parser)</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Django Cloud Tasks</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Pub/Sub</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="publishing-subscribing-google-cloud-pubsub">Publishing &amp; Subscribing (Google Cloud Pub/Sub)</h1>
+<p>Django Cloud Tasks seamlessly integrates with Google Cloud Pub/Sub, enabling you to build powerful event-driven architectures. You can publish messages to Pub/Sub topics when something interesting happens in your application, and define subscriber tasks that react to these messages asynchronously.</p>
+<h2 id="publishing-messages">Publishing Messages</h2>
+<p>Messages are published to specific "topics." You can think of a topic as a named channel for a certain category of events (e.g., "user-signups", "order-updates").</p>
+<p>There are two main base classes for creating publishers:</p>
+<ol>
+<li><strong><code>PublisherTask</code></strong>: For publishing general-purpose dictionary-based messages.</li>
+<li><strong><code>ModelPublisherTask</code></strong>: A specialized helper for easily publishing messages related to Django model instance events (e.g., when a model is created, updated, or deleted).</li>
+</ol>
+<h3 id="1-basic-publisher-publishertask">1. Basic Publisher: <code>PublisherTask</code></h3>
+<p>Inherit from <code>PublisherTask</code> to define a generic message publisher. The primary method to override is <code>topic_name()</code>.</p>
+<p><strong>Example: Publishing User Action Events</strong></p>
+<p>Let's say we want to publish an event whenever a critical user action occurs, like a password change or profile update.</p>
+<pre><code class="language-python"># In your app's tasks.py or a dedicated publishers.py file
+
+from django_cloud_tasks.tasks import PublisherTask
+
+class UserActionEventPublisher(PublisherTask):
+    @classmethod
+    def topic_name(cls) -&gt; str:
+        # This will be the base name for your topic.
+        # The final name in GCP might be prefixed (see &quot;Topic Naming&quot; below).
+        return &quot;user-actions&quot;
+
+# --- How to use it ---
+# In your views.py, after a user successfully changes their password:
+# user = request.user
+# event_payload = {
+#     &quot;user_id&quot;: user.id,
+#     &quot;action_type&quot;: &quot;password_changed&quot;,
+#     &quot;ip_address&quot;: get_client_ip(request), # A helper function to get IP
+#     &quot;timestamp&quot;: timezone.now().isoformat()
+# }
+# UserActionEventPublisher.asap(message=event_payload, attributes={&quot;priority&quot;: &quot;high&quot;})
+
+# Or publish synchronously (e.g., for tests or if DJANGO_CLOUD_TASKS_EAGER = True):
+# UserActionEventPublisher.sync(message=event_payload, attributes={&quot;source&quot;: &quot;test_suite&quot;})
+</code></pre>
+<p><strong>How to run <code>PublisherTask</code>:</strong>
+*   <code>YourPublisher.asap(message: dict, attributes: dict[str, str] | None = None)</code>: Enqueues the publishing action itself as an on-demand task (via Cloud Tasks) to publish the message to Pub/Sub. This makes the HTTP request that publishes the message asynchronous.
+*   <code>YourPublisher.sync(message: dict, attributes: dict[str, str] | None = None)</code>: Directly publishes the message to Pub/Sub in the current process.</p>
+<h3 id="2-model-specific-publisher-modelpublishertask">2. Model-Specific Publisher: <code>ModelPublisherTask</code></h3>
+<p>This class is incredibly useful when the event you want to publish is directly tied to a Django model instance (e.g., an <code>Order</code> was created, an <code>Article</code> was updated).</p>
+<p><strong>Example: Publishing Order Creation Events</strong></p>
+<pre><code class="language-python"># In your app's tasks.py or publishers.py
+# Assuming you have an Order model: models.py
+# class Order(models.Model):
+#     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     status = models.CharField(max_length=50, default=&quot;pending&quot;)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+from django.db import models # Your Django models
+from django_cloud_tasks.tasks import ModelPublisherTask
+
+class OrderCreatedEvent(ModelPublisherTask):
+    @classmethod
+    def build_message_content(cls, obj: models.Model, **kwargs) -&gt; dict:
+        # obj is an instance of your Django model (e.g., an Order instance)
+        # kwargs can receive any extra arguments passed to asap(), sync(), etc.
+        order = obj # Explicitly cast/type hint if needed
+        return {
+            &quot;order_id&quot;: str(order.order_id),
+            &quot;user_id&quot;: order.user_id,
+            &quot;total_amount&quot;: float(order.total_amount), # Pub/Sub prefers basic JSON types
+            &quot;status&quot;: order.status,
+            &quot;created_at_iso&quot;: order.created_at.isoformat(),
+            &quot;campaign_source&quot;: kwargs.get(&quot;campaign_source&quot;) # Example of using an extra kwarg
+        }
+
+    @classmethod
+    def build_message_attributes(cls, obj: models.Model, **kwargs) -&gt; dict[str, str]:
+        order = obj
+        return {
+            &quot;event_type&quot;: &quot;order_created&quot;,
+            &quot;customer_segment&quot;: &quot;retail&quot;, # Example attribute
+            &quot;region&quot;: kwargs.get(&quot;region&quot;, &quot;unknown&quot;)
+        }
+
+    # topic_name() by default uses the model's app_label and model_name (e.g., &quot;myapp-order&quot;)
+    # You can override it if needed (see &quot;Customizing Publishers&quot; below).
+
+# --- How to use it ---
+# After an order instance is created and saved:
+# new_order = Order.objects.create(user=request.user, total_amount=cart.total, ...)
+
+# Publish ASAP:
+# OrderCreatedEvent.asap(obj=new_order, campaign_source=&quot;spring_sale&quot;, region=&quot;emea&quot;)
+
+# Or, to ensure the message is sent ONLY if the current database transaction commits successfully:
+# from django.db import transaction
+# with transaction.atomic():
+#     new_order.save() # Or new_order.objects.create(...)
+#     OrderCreatedEvent.sync_on_commit(obj=new_order, campaign_source=&quot;newsletter&quot;)
+</code></pre>
+<p><strong>Key methods for <code>ModelPublisherTask</code>:</strong></p>
+<ul>
+<li><strong><code>build_message_content(cls, obj: Model, **kwargs) -&gt; dict</code> (Required):</strong> You implement this to transform your model instance (<code>obj</code>) and any extra <code>kwargs</code> into the main JSON payload of the Pub/Sub message.</li>
+<li><strong><code>build_message_attributes(cls, obj: Model, **kwargs) -&gt; dict[str, str]</code> (Required):</strong> You implement this to create a dictionary of string-to-string attributes for the Pub/Sub message. Attributes are useful for filtering messages on the subscriber side without needing to parse the full JSON payload.</li>
+<li><code>sync_on_commit(obj: Model, **kwargs)</code>: A very handy method that delays the actual publishing until the current database transaction is successfully committed. This prevents sending messages for data that might be rolled back.</li>
+</ul>
+<h3 id="topic-naming-convention">Topic Naming Convention</h3>
+<ul>
+<li><strong>Default <code>topic_name()</code> for <code>PublisherTask</code>:</strong> Uses the class name (e.g., <code>UserActionEventPublisher</code> becomes topic base name <code>UserActionEventPublisher</code>).</li>
+<li><strong>Default <code>topic_name()</code> for <code>ModelPublisherTask</code>:</strong> Uses <code>app_label-model_name</code> (e.g., if <code>Order</code> is in <code>sales</code> app, it becomes <code>sales-order</code>).</li>
+<li><strong>Global Prefixing:</strong> If <code>DJANGO_CLOUD_TASKS_APP_NAME</code> is set in your Django settings (e.g., to <code>"my-ecom-service"</code>), this name, along with the <code>DJANGO_CLOUD_TASKS_DELIMITER</code> (default <code>"--"</code>), will be <strong>prepended</strong> to the base topic name. So, <code>UserActionEventPublisher</code> could become <code>my-ecom-service--UserActionEventPublisher</code> in GCP.</li>
+<li>This prefixing helps organize topics in GCP, especially if multiple services share a project.</li>
+</ul>
+<h3 id="ensuring-topics-exist-set_up">Ensuring Topics Exist (<code>set_up</code>)</h3>
+<p><code>PublisherTask</code> (and by extension <code>ModelPublisherTask</code>) has a <code>set_up()</code> class method. Calling <code>YourPublisherTask.set_up()</code> will attempt to create the Pub/Sub topic in GCP if it doesn't already exist.</p>
+<pre><code class="language-python"># You might call this in an AppConfig.ready() or a custom management command
+# UserActionEventPublisher.set_up()
+# OrderCreatedEvent.set_up() # For ModelPublisherTask, it uses the default topic name based on model
+</code></pre>
+<p>This does <em>not</em> set up IAM permissions for publishing; your service account running the Django app needs <code>pubsub.topics.publish</code> permission on the topic or project.</p>
+<h2 id="subscribing-to-messages-subscribertask">Subscribing to Messages (<code>SubscriberTask</code>)</h2>
+<p>To process messages published to a topic, you define a <code>SubscriberTask</code>. This task will be triggered via an HTTP push request from Google Cloud Pub/Sub to a dedicated endpoint in your Django application when a new message arrives on the subscribed topic.</p>
+<p><strong>Example: Processing User Action Events and Order Notifications</strong></p>
+<pre><code class="language-python"># In your app's tasks.py (or a dedicated subscribers.py file)
+
+from django_cloud_tasks.tasks import SubscriberTask
+# from myapp.services import fraud_detection_service, notification_service
+
+class UserActionAuditor(SubscriberTask):
+    @classmethod
+    def topic_name(cls) -&gt; str:
+        # This MUST match the topic name used by UserActionEventPublisher
+        return &quot;user-actions&quot;
+
+    # The run method receives the deserialized message content and attributes
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        print(f&quot;Auditing user action: {content.get('action_type')} for user {content.get('user_id')}&quot;)
+        print(f&quot;  Attributes: {attributes}&quot;)
+        # if content.get('action_type') == 'password_changed':
+        #     fraud_detection_service.check_suspicious_login_after_password_change(content)
+        return {&quot;status&quot;: &quot;action_audited&quot;, &quot;user_id&quot;: content.get('user_id')}
+
+class OrderNotificationHandler(SubscriberTask):
+    @classmethod
+    def topic_name(cls) -&gt; str:
+        # This MUST match the topic from OrderCreatedEvent. For an Order model in 'sales' app:
+        return &quot;sales-order&quot; # Or your custom topic name if overridden in ModelPublisherTask
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        print(f&quot;New order received for processing: {content.get('order_id')}&quot;)
+        print(f&quot;  Event Type (from attribute): {attributes.get('event_type')}&quot;)
+        # notification_service.send_order_confirmation_email(content.get('user_id'), content)
+        # inventory_service.reserve_stock(content.get('order_id'), ...)
+        return {&quot;status&quot;: &quot;order_processed&quot;, &quot;order_id&quot;: content.get('order_id')}
+</code></pre>
+<p><strong>Key elements for <code>SubscriberTask</code>:</strong></p>
+<ul>
+<li><strong><code>topic_name(cls) -&gt; str</code> (Required):</strong> Specifies which Pub/Sub topic this task subscribes to. This name needs to match the <em>base name</em> of the publisher's topic (before any global <code>APP_NAME</code> prefixing).</li>
+<li><strong><code>run(content: dict, attributes: dict[str, str] | None = None)</code>:</strong> Your core logic to handle the incoming message. <code>content</code> is the deserialized JSON payload, and <code>attributes</code> are the string key-value pairs sent with the Pub/Sub message.</li>
+</ul>
+<h3 id="subscription-naming-convention">Subscription Naming Convention</h3>
+<ul>
+<li><strong>Default <code>subscription_name()</code>:</strong> Similar to topics, the subscription name is derived from <code>DJANGO_CLOUD_TASKS_APP_NAME</code> (if set), the <code>DJANGO_CLOUD_TASKS_DELIMITER</code>, and the <code>SubscriberTask</code> class name (e.g., <code>my-ecom-service--UserActionAuditor</code>).</li>
+<li>This name is used for the actual Pub/Sub Subscription resource created in GCP.</li>
+</ul>
+<h3 id="setting-up-and-deploying-subscriptions">Setting Up and Deploying Subscriptions</h3>
+<p>Defining the <code>SubscriberTask</code> class in Python doesn't automatically create the subscription in Google Cloud Pub/Sub. You need to run a management command:</p>
+<pre><code class="language-bash">python manage.py initialize_subscribers
+</code></pre>
+<p><strong>What this command does:</strong></p>
+<ol>
+<li>Scans your project for all <code>SubscriberTask</code> classes.</li>
+<li>For each task, it calls its <code>set_up()</code> class method.</li>
+<li>The default <code>set_up()</code> method in <code>SubscriberTask</code> will:<ul>
+<li>Attempt to create a Pub/Sub <strong>topic</strong> (using the subscriber's <code>topic_name()</code>) if it doesn't already exist. This is a safety measure; ideally, publishers manage their topics.</li>
+<li>Create or update a Pub/Sub <strong>subscription</strong> (using <code>subscription_name()</code>) to that topic.</li>
+<li>Configure the subscription to PUSH messages via HTTP to a Django endpoint specific to that <code>SubscriberTask</code> (derived from <code>subscription_url()</code>).</li>
+<li>Enable OIDC authentication by default for these push requests (see <code>_use_oidc_auth</code> customization).</li>
+<li>Apply other subscription settings like retry policies, dead-letter topics, and filters if customized on the task class.</li>
+</ul>
+</li>
+</ol>
+<p>The command will output <code>[+]</code>, <code>[~]</code>, <code>[-]</code> for added, updated, or (less commonly) deleted subscriptions.</p>
+<p><strong>When to run <code>initialize_subscribers</code>?</strong>
+Run this as part of your deployment process, especially when you add new <code>SubscriberTask</code>s or change their subscription configurations (like <code>topic_name</code>, <code>filter</code>, retry policies, etc.).</p>
+<h2 id="customizing-publishers">Customizing Publishers</h2>
+<h3 id="custom-topic-names-for-publishers">Custom Topic Names for Publishers</h3>
+<p>For both <code>PublisherTask</code> and <code>ModelPublisherTask</code>, you can override <code>topic_name(cls, ...)</code> for more control.</p>
+<pre><code class="language-python">class LegacySystemEventPublisher(PublisherTask):
+    @classmethod
+    def topic_name(cls) -&gt; str:
+        # Overrides the default naming based on class name
+        return &quot;legacy-integration-bus&quot;
+
+# For ModelPublisherTask, topic_name can also use the object
+class ProductUpdateToSpecificChannel(ModelPublisherTask):
+    @classmethod
+    def topic_name(cls, obj: models.Model, **kwargs) -&gt; str:
+        product = obj
+        # Example: route product updates to different topics based on category
+        if product.category == &quot;electronics&quot;:
+            return &quot;product-updates-electronics&quot;
+        return &quot;product-updates-general&quot;
+    # ... build_message_content and build_message_attributes ...
+</code></pre>
+<p>Remember that if <code>DJANGO_CLOUD_TASKS_APP_NAME</code> is set, it will still be prefixed unless your override includes it or is absolute.</p>
+<h2 id="customizing-subscribers">Customizing Subscribers</h2>
+<p><code>SubscriberTask</code> offers several attributes and methods for fine-tuning the GCP Pub/Sub subscription.</p>
+<h3 id="custom-subscription-name-subscription_name">Custom Subscription Name (<code>subscription_name</code>)</h3>
+<p>While default naming is usually fine, you can override <code>subscription_name()</code> if needed, similar to <code>schedule_name</code> for periodic tasks.</p>
+<h3 id="custom-subscription-url-subscription_url">Custom Subscription URL (<code>subscription_url</code>)</h3>
+<p>This is rarely needed, as the default URL points to the correct handler in <code>django-cloud-tasks</code>. Overriding this means you're pointing Pub/Sub to a custom endpoint you've built.</p>
+<h3 id="oidc-authentication-for-push-endpoint-_use_oidc_auth">OIDC Authentication for Push Endpoint (<code>_use_oidc_auth</code>)</h3>
+<ul>
+<li>Class attribute <code>_use_oidc_auth: bool = True</code>.</li>
+<li>Controls if the Pub/Sub push subscription expects Google to send an OIDC token for authentication. Generally, keep this <code>True</code> if your Django app runs on a service like Cloud Run that can validate these tokens.</li>
+</ul>
+<h3 id="subscription-retry-policy-message-acknowledgement-deadline-backoff">Subscription Retry Policy (Message Acknowledgement Deadline &amp; Backoff)</h3>
+<p>These settings on your <code>SubscriberTask</code> class map to the Pub/Sub subscription's message delivery retry configuration. They define how Pub/Sub handles messages if your endpoint doesn't acknowledge them (e.g., returns an error or times out).</p>
+<ul>
+<li><strong><code>max_retries: int | None = UNSET</code></strong>: Maximum delivery attempts before sending to a dead-letter topic (if configured). Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MAX_RETRIES</code> or GCP default.</li>
+<li><strong><code>min_backoff: int | None = UNSET</code></strong>: Minimum delay (in seconds) Pub/Sub waits before redelivering an unacknowledged message. Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MIN_BACKOFF</code> or GCP default (typically 10s).</li>
+<li><strong><code>max_backoff: int | None = UNSET</code></strong>: Maximum delay (in seconds) for redelivery. Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MAX_BACKOFF</code> or GCP default (typically 600s).</li>
+</ul>
+<pre><code class="language-python">class TimeSensitiveAlertSubscriber(SubscriberTask):
+    topic_name = &quot;critical-alerts&quot;
+    min_backoff = 5    # Retry quickly for these alerts, minimum 5 seconds
+    max_backoff = 60   # But don't wait too long, max 1 minute
+    max_retries = 3    # Only try 3 times before considering it failed (e.g., for dead-lettering)
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        print(f&quot;Processing time-sensitive alert: {content}&quot;)
+        # ... alert processing ...
+</code></pre>
+<h3 id="dead-letter-topics-dltdlq">Dead Letter Topics (DLT/DLQ)</h3>
+<p>If a message consistently fails processing after configured retries, Pub/Sub can forward it to a Dead Letter Topic (DLT), effectively a Dead Letter Queue (DLQ).</p>
+<ul>
+<li><strong><code>dead_letter_topic_name(cls) -&gt; str | None</code></strong>: Override to return the <em>base name</em> of the DLT. If <code>None</code> (default), no DLT is used for this subscriber.</li>
+<li><strong><code>dead_letter_subscription_name(cls) -&gt; str</code></strong>: Name for the subscription to the DLT (often just the DLT name).</li>
+</ul>
+<p>The <code>initialize_subscribers</code> command will attempt to set up the DLT and necessary permissions if you configure this. You'll need a separate process or subscriber to monitor and handle messages in the DLT.</p>
+<pre><code class="language-python">class PaymentProcessingSubscriber(SubscriberTask):
+    topic_name = &quot;payment-requests&quot;
+    max_retries = 5 # After 5 failed attempts, send to DLT
+
+    @classmethod
+    def dead_letter_topic_name(cls) -&gt; str | None:
+        return &quot;payment-requests-failed&quot; # Base name for the DLT
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        # ... process payment ...
+        # if permanent_failure_condition(content):
+        #     raise DiscardTaskException() # To prevent retries and avoid DLT for known bad messages
+        pass
+</code></pre>
+<h3 id="message-filtering-subscription_filter">Message Filtering (<code>subscription_filter</code>)</h3>
+<p>Pub/Sub allows subscriptions to specify a filter, so the subscription only receives messages whose attributes match the filter. This can reduce the number of messages your subscriber task needs to process.</p>
+<ul>
+<li><strong><code>subscription_filter(cls) -&gt; str | None</code></strong>: Return a filter string based on <a href="https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax">Pub/Sub filter syntax</a>.</li>
+</ul>
+<pre><code class="language-python">class HighPriorityOrderSubscriber(SubscriberTask):
+    topic_name = &quot;sales-order&quot; # Subscribes to the same topic as OrderNotificationHandler
+
+    @classmethod
+    def subscription_filter(cls) -&gt; str | None:
+        # Only receive messages where the 'priority' attribute is 'high'
+        return 'attributes.priority = &quot;high&quot;'
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        print(f&quot;Processing HIGH PRIORITY order: {content.get('order_id')}&quot;)
+        # ... specialized high-priority handling ...
+</code></pre>
+<h3 id="custom-message-parsing-message_parser">Custom Message Parsing (<code>message_parser</code>)</h3>
+<ul>
+<li><strong><code>message_parser(cls) -&gt; Callable</code></strong>: A callable used to parse the raw message body received from Pub/Sub. Defaults to <code>json.loads</code>.</li>
+<li>You'd only override this if your publishers are sending non-JSON messages (e.g., raw text, protobuf), which is less common when using this library's <code>PublisherTask</code> which serializes to JSON.</li>
+</ul>
+<p>This event-driven model using Pub/Sub provides a robust and scalable way to build decoupled applications where services can communicate and react to events without direct dependencies. </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../scheduled_tasks/" class="btn btn-neutral float-left" title="Scheduled Tasks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../headers/" class="btn btn-neutral float-right" title="Header Propagation">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../scheduled_tasks/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../headers/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

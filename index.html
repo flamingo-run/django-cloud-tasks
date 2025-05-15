@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Django Cloud Tasks</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Getting Started";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> Django Cloud Tasks
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting Started</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#django-setup">Django Setup</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#required-google-cloud-apis">Required Google Cloud APIs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#core-configuration-settingspy">Core Configuration (settings.py)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="on_demand_tasks/">On-Demand Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="scheduled_tasks/">Scheduled Tasks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="pubsub/">Pub/Sub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="headers/">Header Propagation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="task_field/">TaskField (Model Field)</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">Django Cloud Tasks</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Getting Started</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="welcome-to-django-cloud-tasks">Welcome to Django Cloud Tasks!</h1>
+<p>Django Cloud Tasks is your go-to Django app for effortlessly running asynchronous tasks on Google Cloud Platform. It makes it a breeze to work with Google Cloud Tasks, Cloud Scheduler, and Cloud Pub/Sub right from your Django project.</p>
+<p>Think of it as a way to offload heavy work (like image processing or report generation), schedule future jobs (like nightly cleanups), or react to events in a decoupled way (like sending a welcome email when a new user signs up) – all without making your users wait or bogging down your web servers.</p>
+<p>This documentation will guide you through setting up and using its powerful features.</p>
+<h2 id="installation">Installation</h2>
+<p>Getting this bad boy into your project is super easy. Just pip install it:</p>
+<pre><code class="language-bash">pip install django-cloud-tasks
+</code></pre>
+<h2 id="django-setup">Django Setup</h2>
+<ol>
+<li>
+<p>Add <code>'django_cloud_tasks'</code> to your <code>INSTALLED_APPS</code> in <code>settings.py</code>:</p>
+<p><code>python
+INSTALLED_APPS = [
+    # ... other apps
+    'django_cloud_tasks',
+    # ...
+]</code></p>
+</li>
+<li>
+<p>Include the Django Cloud Tasks URLs in your main <code>urls.py</code>. These URLs are the endpoints that Google Cloud services will call to trigger your tasks.</p>
+<p>```python
+from django.urls import path, include</p>
+<p>urlpatterns = [
+    # ... other urls
+    path('my-tasks-prefix/', include('django_cloud_tasks.urls')), # You can choose your own prefix
+    # ...
+]
+```
+Make sure this endpoint is publicly accessible if you're not running in a private VPC, as Google Cloud services need to reach it.</p>
+</li>
+</ol>
+<h2 id="required-google-cloud-apis">Required Google Cloud APIs</h2>
+<p>To use <code>django-cloud-tasks</code> effectively, you'll need to enable the following APIs in your Google Cloud Project:</p>
+<ul>
+<li><a href="https://console.cloud.google.com/marketplace/product/google/cloudtasks.googleapis.com">Cloud Tasks API</a></li>
+<li><a href="https://console.cloud.google.com/marketplace/product/google/cloudscheduler.googleapis.com">Cloud Scheduler API</a></li>
+<li><a href="https://console.cloud.google.com/marketplace/product/google/pubsub.googleapis.com">Pub/Sub API</a></li>
+<li>Optional: <a href="https://console.cloud.google.com/marketplace/product/google/admin.googleapis.com">Admin SDK API</a> (Needed for some advanced features or if you are working with domain-wide delegation for service accounts, though typically not required for basic task and pub/sub operations with OIDC or standard service account authentication).</li>
+</ul>
+<h2 id="core-configuration-settingspy">Core Configuration (<code>settings.py</code>)</h2>
+<p>You can tweak how Django Cloud Tasks behaves through your Django <code>settings.py</code> file. All settings are prefixed with <code>DJANGO_CLOUD_TASKS_</code>. You can also set these as environment variables (which will take precedence if both are set).</p>
+<p>Here are some of the main ones to get you started:</p>
+<ul>
+<li>
+<p><strong><code>DJANGO_CLOUD_TASKS_ENDPOINT</code></strong>: The full base URL of your application (e.g., <code>https://your-cool-app.com</code>). This is crucial because Cloud Tasks, Scheduler, and Pub/Sub push subscriptions need to know the exact URL to send HTTP requests to trigger your tasks. It's often your Cloud Run service URL.</p>
+<ul>
+<li>Default: <code>"http://localhost:8080"</code></li>
+<li>Example: <code>DJANGO_CLOUD_TASKS_ENDPOINT = "https://myapp.com"</code></li>
+</ul>
+</li>
+<li>
+<p><strong><code>DJANGO_CLOUD_TASKS_APP_NAME</code></strong>: A unique name for your application or service. This is used to prefix and organize resources in GCP, such as Cloud Scheduler job names or Pub/Sub topic/subscription names, making it easier to manage them, especially if you have multiple applications in the same GCP project.</p>
+<ul>
+<li>Default: <code>None</code> (reads from <code>APP_NAME</code> environment variable if set)</li>
+<li>Example: <code>DJANGO_CLOUD_TASKS_APP_NAME = "user-service"</code></li>
+</ul>
+</li>
+<li>
+<p><strong><code>DJANGO_CLOUD_TASKS_EAGER</code></strong>: If set to <code>True</code>, tasks will run synchronously (i.e., immediately in the same process) instead of being sent to Google Cloud. This is incredibly useful for local development and testing, as it bypasses the need for GCP setup and lets you debug tasks like regular function calls.</p>
+<ul>
+<li>Default: <code>False</code></li>
+<li>Example: <code>DJANGO_CLOUD_TASKS_EAGER = settings.DEBUG</code> (to enable eager mode when Django's <code>DEBUG</code> is true)</li>
+</ul>
+</li>
+<li>
+<p><strong><code>DJANGO_CLOUD_TASKS_URL_NAME</code></strong>: The specific Django URL <em>name</em> (not path) within the included <code>django_cloud_tasks.urls</code> that is used as the endpoint for on-demand tasks triggered by Cloud Tasks and scheduled tasks triggered by Cloud Scheduler.</p>
+<ul>
+<li>Default: <code>"tasks-endpoint"</code></li>
+</ul>
+</li>
+<li>
+<p><strong><code>DJANGO_CLOUD_TASKS_DELIMITER</code></strong>: A string used to join parts of names, for example, when constructing default queue names, scheduler job names, or Pub/Sub topic/subscription names (e.g., <code>my-app--my-task</code>).</p>
+<ul>
+<li>Default: <code>"--"</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Header Propagation</strong>: Settings related to header propagation are covered in detail in the "Header Propagation" section.</p>
+</li>
+</ul>
+<p>There are more settings for fine-tuning retries, Pub/Sub behavior, and specific service interactions. We'll touch upon many of these in the relevant sections. For a comprehensive list, you can always refer to the <code>django_cloud_tasks.apps.DjangoCloudTasksAppConfig</code> class.</p>
+<p>With this foundational setup, you're ready to dive into defining and using the different types of tasks! </p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="on_demand_tasks/" class="btn btn-neutral float-right" title="On-Demand Tasks">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="on_demand_tasks/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2025-05-15 20:24:21.283426+00:00
+-->
