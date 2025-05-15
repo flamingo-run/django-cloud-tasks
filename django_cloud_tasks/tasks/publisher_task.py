@@ -1,16 +1,17 @@
 import abc
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Any
 
 from cachetools.func import lru_cache
-from django.apps import apps
 from django.db.models import Model
 from django.db import transaction
 from gcp_pilot.pubsub import CloudPublisher
+from google.pubsub_v1 import PublishResponse
 
-from django_cloud_tasks.apps import DjangoCloudTasksAppConfig
 from django_cloud_tasks.context import get_current_headers
 from django_cloud_tasks.serializers import serialize
+from django_cloud_tasks.tasks.task import TaskMetadata
+from django_cloud_tasks.tasks.helpers import get_app
 from django_cloud_tasks.tasks.task import Task, get_config
 
 
@@ -18,18 +19,23 @@ class PublisherTask(Task, abc.ABC):
     # Just a specialized Task that publishes a message to PubSub
     # Since it cannot accept any random parameters, all its signatures have fixed arguments
     @classmethod
-    def sync(cls, message: dict, attributes: dict[str, str] | None = None):
+    def sync(cls, message: dict, attributes: dict[str, str] | None = None) -> Any:
         return cls().run(message=message, attributes=attributes)
 
     @classmethod
-    def asap(cls, message: dict, attributes: dict[str, str] | None = None):
+    def asap(cls, message: dict, attributes: dict[str, str] | None = None) -> TaskMetadata:
         task_kwargs = {
             "message": message,
             "attributes": attributes,
         }
         return cls.push(task_kwargs=task_kwargs)
 
-    def run(self, message: dict, attributes: dict[str, str] | None = None, headers: dict[str, str] | None = None):
+    def run(
+        self,
+        message: dict,
+        attributes: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> PublishResponse:
         # Cloud PubSub does not support headers, but we simulate them with a key in the data property
         message = self._build_message_with_headers(message=message, headers=headers)
 
@@ -39,11 +45,13 @@ class PublisherTask(Task, abc.ABC):
             attributes=attributes,
         )
 
-    def _build_message_with_headers(self, message: dict, headers: dict | None = None):
+    def _build_message_with_headers(
+        self, message: dict[str, Any], headers: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         message = message.copy()
         headers = get_current_headers() | (headers or {})
         if headers:
-            message[self._app.propagated_headers_key] = headers
+            message[get_app().propagated_headers_key] = headers
         return message
 
     @classmethod
@@ -62,11 +70,6 @@ class PublisherTask(Task, abc.ABC):
     @lru_cache()
     def _get_publisher_client(cls) -> CloudPublisher:
         return CloudPublisher()
-
-    @property
-    @lru_cache()
-    def _app(self) -> DjangoCloudTasksAppConfig:
-        return apps.get_app_config("django_cloud_tasks")
 
 
 @dataclass
@@ -112,7 +115,7 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         transaction.on_commit(lambda: prepared_publication.sync())
 
     @classmethod
-    def asap(cls, obj: Model, **kwargs):
+    def asap(cls, obj: Model, **kwargs: Any) -> TaskMetadata:
         return cls.prepare(obj=obj, **kwargs).asap()
 
     @classmethod
@@ -120,11 +123,11 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         return cls.prepare(**task_kwargs).push(**kwargs)
 
     @classmethod
-    def _push_prepared(cls, prepared: PreparedModelPublication, **kwargs):
+    def _push_prepared(cls, prepared: PreparedModelPublication, **kwargs: Any) -> TaskMetadata:
         return super().push(task_kwargs=prepared.get_task_kwargs(), **kwargs)
 
     @classmethod
-    def prepare(cls, obj: Model, **kwargs):
+    def prepare(cls, obj: Model, **kwargs: Any) -> PreparedModelPublication:
         return PreparedModelPublication(
             task_klass=cls,
             message=cls.build_message_content(obj=obj, **kwargs),
@@ -133,8 +136,12 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         )
 
     def run(
-        self, message: dict, topic_name: str, attributes: dict[str, str] | None, headers: dict[str, str] | None = None
-    ):
+        self,
+        message: dict,
+        topic_name: str,
+        attributes: dict[str, str] | None,
+        headers: dict[str, str] | None = None,
+    ) -> PublishResponse:
         message = self._build_message_with_headers(message=message, headers=headers)
         return self._get_publisher_client().publish(
             message=serialize(value=message),
@@ -146,7 +153,7 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
     def set_up(cls) -> None: ...  # TODO: run over all models?
 
     @classmethod
-    def topic_name(cls, obj: Model, **kwargs) -> str:
+    def topic_name(cls, obj: Model, **kwargs: Any) -> str:
         name = cls.extract_model_name(obj=obj)
         if app_name := get_config(name="app_name"):
             delimiter = get_config(name="delimiter")
@@ -160,10 +167,12 @@ class ModelPublisherTask(PublisherTask, abc.ABC):
         return f"{app_name}-{model_name}"
 
     @classmethod
+    @abc.abstractmethod
     def build_message_content(cls, obj: Model, **kwargs) -> dict:
         raise NotImplementedError()
 
     @classmethod
+    @abc.abstractmethod
     def build_message_attributes(cls, obj: Model, **kwargs) -> dict[str, str]:
         raise NotImplementedError()
 

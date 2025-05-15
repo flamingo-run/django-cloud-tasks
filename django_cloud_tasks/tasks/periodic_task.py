@@ -1,7 +1,9 @@
 import abc
 from functools import lru_cache
+from typing import Any
 
 from gcp_pilot.scheduler import CloudScheduler
+from google.cloud.scheduler_v1 import Job
 
 from django_cloud_tasks.serializers import deserialize, serialize
 from django_cloud_tasks.tasks.task import Task, get_config
@@ -11,7 +13,7 @@ class PeriodicTask(Task, abc.ABC):
     run_every: str = None
 
     @classmethod
-    def schedule(cls, **kwargs):
+    def schedule(cls, **kwargs: Any) -> Any | Job:
         payload = serialize(kwargs)
 
         if cls.eager():
