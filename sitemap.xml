@@ -2,26 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/headers/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/on_demand_tasks/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/pubsub/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/scheduled_tasks/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
     <url>
          <loc>https://django-cloud-tasks.flamingo.codes/task_field/</loc>
-         <lastmod>2025-05-15</lastmod>
+         <lastmod>2025-05-16</lastmod>
     </url>
 </urlset>

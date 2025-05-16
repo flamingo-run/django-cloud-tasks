@@ -1,241 +1,635 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/scheduled_tasks/" />
-      <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Scheduled Tasks - Django Cloud Tasks</title>
-    <link rel="stylesheet" href="../css/theme.css" />
-    <link rel="stylesheet" href="../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
     
-      <script>
-        // Current page data
-        var mkdocs_page_name = "Scheduled Tasks";
-        var mkdocs_page_input_path = "scheduled_tasks.md";
-        var mkdocs_page_url = "/scheduled_tasks/";
-      </script>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/scheduled_tasks/">
+      
+      
+        <link rel="prev" href="../on_demand_tasks/">
+      
+      
+        <link rel="next" href="../pubsub/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
-    <!--[if lt IE 9]>
-      <script src="../js/html5shiv.min.js"></script>
-    <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
-</head>
+    
+      
+        <title>Scheduled Tasks - Django Cloud Tasks</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
 
-<body class="wy-body-for-nav" role="document">
 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> Django Cloud Tasks
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
-  </form>
-</div>
-      </div>
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../on_demand_tasks/">On-Demand Tasks</a>
-                </li>
-              </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Scheduled Tasks</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#defining-a-scheduled-task">Defining a Scheduled Task</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#deploying-scheduled-tasks">Deploying Scheduled Tasks</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#customizing-scheduled-task-behavior">Customizing Scheduled Task Behavior</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-job-naming-schedule_name">Custom Job Naming (schedule_name)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-http-headers-for-scheduler-requests-schedule_headers">Custom HTTP Headers for Scheduler Requests (schedule_headers)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#oidc-authentication-for-scheduler-requests-schedule_use_oidc">OIDC Authentication for Scheduler Requests (schedule_use_oidc)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#scheduler-level-retry-configuration-schedule_retries">Scheduler-Level Retry Configuration (schedule_retries)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-payload-for-scheduled-tasks">Custom Payload for Scheduled Tasks</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#how-it-works-under-the-hood">How It Works Under the Hood</a>
-    </li>
-    </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../pubsub/">Pub/Sub</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
-                </li>
-              </ul>
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#scheduled-tasks-cron-jobs-fontawesome-solid-calendar-alt" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Django Cloud Tasks" class="md-header__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Django Cloud Tasks
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Scheduled Tasks
+            
+          </span>
+        </div>
       </div>
     </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">Django Cloud Tasks</a>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
         
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
       </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Scheduled Tasks</li>
-    <li class="wy-breadcrumbs-aside">
-    </li>
-  </ul>
-  <hr/>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
               
-                <h1 id="scheduled-tasks-powered-by-google-cloud-scheduler">Scheduled Tasks (Powered by Google Cloud Scheduler)</h1>
-<p>Scheduled tasks, often known as "cron jobs," are tasks that run automatically on a repeating schedule (e.g., every hour, once a day at 2 AM, every Monday morning). Django Cloud Tasks leverages Google Cloud Scheduler to manage and execute these periodic jobs. Your Django application defines what needs to run, and Cloud Scheduler takes care of triggering it at the right time via an HTTP request.</p>
-<h2 id="defining-a-scheduled-task">Defining a Scheduled Task</h2>
-<p>You define a scheduled task by inheriting from <code>django_cloud_tasks.tasks.PeriodicTask</code>. The most crucial part is setting the <code>run_every</code> class attribute to a cron expression that defines the schedule.</p>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Django Cloud Tasks" class="md-nav__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Django Cloud Tasks
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../on_demand_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    On-Demand Tasks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Scheduled Tasks
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scheduled Tasks
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-a-scheduled-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining a Scheduled Task
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploying-scheduled-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploying Scheduled Tasks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizing-scheduled-task-behavior-fontawesome-solid-sliders-h" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizing Scheduled Task Behavior :fontawesome-solid-sliders-h:
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Customizing Scheduled Task Behavior :fontawesome-solid-sliders-h:">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-job-name-schedule_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Job Name (schedule_name)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-headers-for-scheduler-schedule_headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Headers for Scheduler (schedule_headers)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc-authentication-schedule_use_oidc" class="md-nav__link">
+    <span class="md-ellipsis">
+      OIDC Authentication (schedule_use_oidc)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-retry-configuration-for-scheduler-schedule_retries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Retry Configuration for Scheduler (schedule_retries)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-payload-schedule_body_payload" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Payload (schedule_body_payload)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-schedule-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Schedule Attributes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood-fontawesome-solid-cogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works Under the Hood :fontawesome-solid-cogs:
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pubsub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pub/Sub
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Header Propagation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../task_field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TaskField (Model Field)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="scheduled-tasks-cron-jobs-fontawesome-solid-calendar-alt">Scheduled Tasks (Cron Jobs) :fontawesome-solid-calendar-alt:<a class="headerlink" href="#scheduled-tasks-cron-jobs-fontawesome-solid-calendar-alt" title="Permanent link">&para;</a></h1>
+<p>Scheduled tasks, often known as cron jobs, are tasks that run automatically at predefined times or intervals. <code>django-cloud-tasks</code> leverages Google Cloud Scheduler to manage and execute these tasks.</p>
+<h2 id="defining-a-scheduled-task">Defining a Scheduled Task <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M176 0c-17.7 0-32 14.3-32 32s14.3 32 32 32h16v34.4C92.3 113.8 16 200 16 304c0 114.9 93.1 208 208 208s208-93.1 208-208c0-41.8-12.3-80.7-33.5-113.2l24.1-24.1c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L355.7 143c-28.1-23-62.2-38.8-99.7-44.6V64h16c17.7 0 32-14.3 32-32S289.7 0 272 0h-96m72 192v128c0 13.3-10.7 24-24 24s-24-10.7-24-24V192c0-13.3 10.7-24 24-24s24 10.7 24 24"/></svg></span><a class="headerlink" href="#defining-a-scheduled-task" title="Permanent link">&para;</a></h2>
+<p>To define a scheduled task, you create a class that inherits from <code>django_cloud_tasks.tasks.PeriodicTask</code> and implement the <code>run()</code> method. Additionally, you <strong>must</strong> define the schedule using the <code>run_every</code> attribute.</p>
 <p><strong>Example: Daily Digest and Hourly Cleanup</strong></p>
-<pre><code class="language-python"># In your app's tasks.py (e.g., reports/tasks.py or core/tasks.py)
-
-from django_cloud_tasks.tasks import PeriodicTask
-from django.utils import timezone
-# from myapp.models import UserActivity, TemporaryFile
-
-class GenerateDailyUserActivityDigest(PeriodicTask):
-    # Cron expression: &quot;At 00:00 on every day-of-week from Monday through Friday.&quot;
-    # (Assumes server/Cloud Scheduler timezone is UTC by default)
-    run_every = &quot;0 0 * * 1-5&quot;
-
-    def run(self, **kwargs): # kwargs will receive payload from Cloud Scheduler if any is set
-        print(f&quot;Generating daily user activity digest for {timezone.now().date()}...&quot;)
-        # yesterday = timezone.now().date() - timezone.timedelta(days=1)
-        # activities = UserActivity.objects.filter(timestamp__date=yesterday)
-        # generate_report(activities)
-        # send_report_to_admins()
-        return {&quot;status&quot;: &quot;digest_generated&quot;, &quot;date&quot;: str(timezone.now().date())}
-
-class HourlyTemporaryFileCleanup(PeriodicTask):
-    run_every = &quot;@hourly&quot;  # Cloud Scheduler shorthand for &quot;0 * * * *&quot;
-
-    def run(self, older_than_hours: int = 2, **kwargs):
-        print(f&quot;Cleaning up temporary files older than {older_than_hours} hours...&quot;)
-        # cutoff_time = timezone.now() - timezone.timedelta(hours=older_than_hours)
-        # TemporaryFile.objects.filter(created_at__lt=cutoff_time).delete()
-        return {&quot;status&quot;: &quot;cleanup_done&quot;, &quot;older_than_hours&quot;: older_than_hours}
-</code></pre>
+<div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeriodicTask</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">GenerateDailyUserActivityDigest</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;0 0 * * 1-5&quot;</span> <span class="c1"># (1)!</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating daily user activity digest for </span><span class="si">{</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="c1"># TODO: Implement the logic to generate the daily user activity digest</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;digest_generated&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">())}</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">class</span><span class="w"> </span><span class="nc">HourlyTemporaryFileCleanup</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;@hourly&quot;</span>  <span class="c1"># (2)!</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">older_than_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span> <span class="c1"># (3)!</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cleaning up temporary files older than </span><span class="si">{</span><span class="n">older_than_hours</span><span class="si">}</span><span class="s2"> hours...&quot;</span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        <span class="c1"># TODO: Implement the logic to clean up temporary files</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;cleanup_done&quot;</span><span class="p">,</span> <span class="s2">&quot;older_than_hours&quot;</span><span class="p">:</span> <span class="n">older_than_hours</span><span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li>Cron expression: "At 00:00 (UTC by default) on every day-of-week from Monday through Friday."</li>
+<li>Cloud Scheduler shorthand for "0 * * * *" (at the beginning of every hour).</li>
+<li>The <code>run</code> method can accept parameters. If a payload is configured for the Cloud Scheduler job (see Custom Payload section), those key-values will be passed here. Otherwise, only default parameter values are used.</li>
+</ol>
 <p><strong>Key Attributes for <code>PeriodicTask</code>:</strong></p>
 <ul>
 <li><strong><code>run_every: str</code> (Required):</strong> Defines the schedule using the standard <a href="https://cloud.google.com/scheduler/docs/configuring/cron-job-schedules">cron format</a>. Cloud Scheduler also supports shorthands like <code>@daily</code>, <code>@hourly</code>, <code>@weekly</code>, <code>@monthly</code>, <code>@yearly</code>.</li>
 <li><strong><code>run(**kwargs)</code>:</strong> The method containing your task's logic. It's the same as for on-demand tasks. Any JSON payload you define in Cloud Scheduler (or through customization hooks) will be passed as <code>kwargs</code>.</li>
 </ul>
-<h2 id="deploying-scheduled-tasks">Deploying Scheduled Tasks</h2>
-<p>Defining the Python class is just the first step. You need to inform Google Cloud Scheduler about your tasks. This is done using a Django management command:</p>
-<pre><code class="language-bash">python manage.py schedule_tasks
-</code></pre>
+<h2 id="deploying-scheduled-tasks">Deploying Scheduled Tasks <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M144 480C64.5 480 0 415.5 0 336c0-62.8 40.2-116.2 96.2-135.9-.1-2.7-.2-5.4-.2-8.1 0-88.4 71.6-160 160-160 59.3 0 111 32.2 138.7 80.2A95.5 95.5 0 0 1 448 96c53 0 96 43 96 96 0 12.2-2.3 23.8-6.4 34.6C596 238.4 640 290.1 640 352c0 70.7-57.3 128-128 128zm79-217c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l39-39L296 392c0 13.3 10.7 24 24 24s24-10.7 24-24V257.9l39 39c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-80-80c-9.4-9.4-24.6-9.4-33.9 0z"/></svg></span><a class="headerlink" href="#deploying-scheduled-tasks" title="Permanent link">&para;</a></h2>
+<p>Defining the <code>PeriodicTask</code> class in your Python code doesn't automatically create or update the job in Google Cloud Scheduler. You need to run a management command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>schedule_tasks
+</span></code></pre></div>
 <p><strong>What this command does:</strong></p>
 <ol>
-<li>It scans your Django project for all classes inheriting from <code>PeriodicTask</code> (ensure these modules are imported by Django at startup).</li>
-<li>It compares these definitions against the jobs currently configured in Google Cloud Scheduler for your <code>DJANGO_CLOUD_TASKS_APP_NAME</code>.</li>
-<li>It then synchronizes the state:<ul>
-<li><strong><code>[+] Added</code></strong>: New jobs are created in Cloud Scheduler for tasks found in your code but not yet scheduled.</li>
-<li><strong><code>[~] Updated</code></strong>: Existing jobs in Cloud Scheduler are updated if their definition (e.g., cron schedule <code>run_every</code>, target URL, payload) has changed in your code.</li>
-<li><strong><code>[-] Deleted</code></strong>: Jobs in Cloud Scheduler are deleted if their corresponding <code>PeriodicTask</code> class has been removed from your code.</li>
+<li><strong>Scans your project</strong> for all classes that inherit from <code>PeriodicTask</code>.</li>
+<li>For each task found, it <strong>compares its definition</strong> (schedule, payload, OIDC settings, etc.) with what's currently configured in Google Cloud Scheduler for a job with the same name (derived from the task class).</li>
+<li>It then <strong>creates, updates, or deletes</strong> jobs in Google Cloud Scheduler as needed to match your Python definitions.<ul>
+<li><code>[+] Job created: your_app.tasks.NightlyCleanupTask</code></li>
+<li><code>[~] Job updated: your_app.tasks.HourlyReportTask</code> (if, for example, <code>run_every</code> changed)</li>
+<li><code>[-] Job deleted: your_app.tasks.OldRemovedTask</code> (if a task class was removed from code)</li>
 </ul>
 </li>
 </ol>
 <p><strong>When to run <code>schedule_tasks</code>?</strong></p>
-<p>You should run this command as part of your deployment process, any time you add, remove, or modify the definition (especially <code>run_every</code> or other schedule-related overrides) of a <code>PeriodicTask</code>.</p>
-<h2 id="customizing-scheduled-task-behavior">Customizing Scheduled Task Behavior</h2>
-<p>You can override several class methods on your <code>PeriodicTask</code> subclass to fine-tune how it interacts with Google Cloud Scheduler.</p>
-<h3 id="custom-job-naming-schedule_name">Custom Job Naming (<code>schedule_name</code>)</h3>
-<p>By default, the Cloud Scheduler job name is constructed using your <code>DJANGO_CLOUD_TASKS_APP_NAME</code>, the <code>DJANGO_CLOUD_TASKS_DELIMITER</code>, and the task's class name (e.g., <code>my-app--GenerateDailyUserActivityDigest</code>). You can customize this for better organization or to adhere to specific naming conventions.</p>
-<pre><code class="language-python">class MonthlyBillingRun(PeriodicTask):
-    run_every = &quot;0 3 1 * *&quot; # At 03:00 on day-of-month 1.
-
-    @classmethod
-    def schedule_name(cls) -&gt; str:
-        # Example: &quot;billing-service-MonthlyBillingRun-prod&quot;
-        app_name = get_config(&quot;app_name&quot;) # Fetches DJANGO_CLOUD_TASKS_APP_NAME
-        env = &quot;prod&quot; if not settings.DEBUG else &quot;dev&quot;
-        return f&quot;{app_name}-{cls.name()}-{env}&quot; # cls.name() is the class name
-
-    def run(self, **kwargs):
-        print(&quot;Starting monthly billing run...&quot;)
-        # ... billing logic ...
-</code></pre>
-<h3 id="custom-http-headers-for-scheduler-requests-schedule_headers">Custom HTTP Headers for Scheduler Requests (<code>schedule_headers</code>)</h3>
-<p>You can inject custom HTTP headers into the requests that Cloud Scheduler makes to your task endpoint. This can be useful for passing specific tokens, versioning information, or routing hints that your Django application or infrastructure might use.</p>
-<pre><code class="language-python">class DataSyncWithExternalService(PeriodicTask):
-    run_every = &quot;0 */6 * * *&quot; # Every 6 hours
-
-    @classmethod
-    def schedule_headers(cls) -&gt; dict:
-        # This token might be used by your endpoint's authentication/authorization layer
-        return {&quot;X-Scheduler-Auth-Token&quot;: &quot;my-secret-scheduler-token&quot;, &quot;X-Job-Type&quot;: cls.name()}
-
-    def run(self, **kwargs):
-        # Your Django view or middleware can inspect request.META for these headers
-        # e.g., request.META.get('HTTP_X_SCHEDULER_AUTH_TOKEN')
-        print(&quot;Running data sync, triggered with custom headers.&quot;)
-</code></pre>
-<h3 id="oidc-authentication-for-scheduler-requests-schedule_use_oidc">OIDC Authentication for Scheduler Requests (<code>schedule_use_oidc</code>)</h3>
-<p>Determines if OIDC (OpenID Connect) authentication should be used for the HTTP request from Cloud Scheduler to your application. This is the recommended secure way for Google services to call your services.</p>
+<p>Run this command as part of your <strong>deployment process</strong>. Any time you add a new <code>PeriodicTask</code>, remove one, or change its <code>run_every</code> schedule or other schedule-related attributes, you should run this command to synchronize your GCP environment.</p>
+<div class="admonition info">
+<p class="admonition-title">Idempotency</p>
+<p>The <code>schedule_tasks</code> command is idempotent. You can run it multiple times, and it will only make changes if there are differences between your code and the state in Google Cloud Scheduler.</p>
+</div>
+<h2 id="customizing-scheduled-task-behavior-fontawesome-solid-sliders-h">Customizing Scheduled Task Behavior :fontawesome-solid-sliders-h:<a class="headerlink" href="#customizing-scheduled-task-behavior-fontawesome-solid-sliders-h" title="Permanent link">&para;</a></h2>
+<p><code>PeriodicTask</code> offers several attributes and methods to customize how it's scheduled and executed.</p>
+<h3 id="custom-job-name-schedule_name">Custom Job Name (<code>schedule_name</code>)<a class="headerlink" href="#custom-job-name-schedule_name" title="Permanent link">&para;</a></h3>
+<p>By default, the Google Cloud Scheduler job name is derived from the task's class path (e.g., <code>your_app.tasks.NightlyCleanupTask</code>, potentially prefixed by <code>DJANGO_CLOUD_TASKS_APP_NAME</code>). You can provide a custom name:</p>
+<p><div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">CustomNamedJob</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;0 0 1 * *&quot;</span> <span class="c1"># First day of every month</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="c1"># (1)!</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="k">return</span> <span class="s2">&quot;monthly-financial-summary&quot;</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="c1"># ... generate financial summary ...</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="s2">&quot;done&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+1.  The job in GCP will be named <code>monthly-financial-summary</code> (or <code>my-app--monthly-financial-summary</code>).</p>
+<h3 id="custom-headers-for-scheduler-schedule_headers">Custom Headers for Scheduler (<code>schedule_headers</code>)<a class="headerlink" href="#custom-headers-for-scheduler-schedule_headers" title="Permanent link">&para;</a></h3>
+<p>If the HTTP request made by Cloud Scheduler to your Django app needs specific headers (e.g., for an external gateway or specific tracing), you can define them:</p>
+<p><div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TaskWithCustomHeaders</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_headers</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span> <span class="c1"># (1)!</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>            <span class="s2">&quot;X-Custom-Auth-Token&quot;</span><span class="p">:</span> <span class="s2">&quot;some_secret_value&quot;</span><span class="p">,</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>            <span class="s2">&quot;X-Source-System&quot;</span><span class="p">:</span> <span class="s2">&quot;django-scheduler&quot;</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="p">}</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="c1"># Headers will be available in self.request.META or self._metadata.headers</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="c1"># if DJANGO_CLOUD_TASKS_PROPAGATE_HEADERS is True</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+1.  These headers will be sent by Google Cloud Scheduler when it triggers your task.</p>
+<h3 id="oidc-authentication-schedule_use_oidc">OIDC Authentication (<code>schedule_use_oidc</code>)<a class="headerlink" href="#oidc-authentication-schedule_use_oidc" title="Permanent link">&para;</a></h3>
+<p>By default (<code>schedule_use_oidc = True</code>), <code>django-cloud-tasks</code> configures Cloud Scheduler jobs to use OIDC authentication. Google Cloud Scheduler will send an OIDC token in the <code>Authorization</code> header, which your Django app (running on Cloud Run, GKE, or App Engine) can validate.</p>
+<p>If you are running your Django app in an environment that cannot validate these tokens, or if you have a different authentication mechanism (e.g., an API gateway in front), you might disable this:</p>
+<p><div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">NoOidcTask</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;every 2 hours&quot;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">schedule_use_oidc</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># (1)!</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="c1"># ... task logic ...</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;oidc_disabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span></code></pre></div>
+1.  The Cloud Scheduler job will be created without an OIDC token configuration. Your endpoint needs to be publicly accessible or use a different auth method.</p>
+<h3 id="custom-retry-configuration-for-scheduler-schedule_retries">Custom Retry Configuration for Scheduler (<code>schedule_retries</code>)<a class="headerlink" href="#custom-retry-configuration-for-scheduler-schedule_retries" title="Permanent link">&para;</a></h3>
+<p>Google Cloud Scheduler has its own retry mechanism if the HTTP call to your task endpoint fails (e.g., returns a 5xx error or times out). You can customize these retry attempts:</p>
+<p><div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TaskWithCustomRetries</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;0 * * * *&quot;</span> <span class="c1"># Every hour at minute 0</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_retries</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># (1)!</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="k">return</span> <span class="mi">5</span>  <span class="c1"># Attempt up to 5 times if the initial call fails</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="c1"># You can also specify min/max backoff and max duration for retries</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="c1"># @classmethod</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="c1"># def schedule_min_backoff(cls) -&gt; timedelta | None:</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="c1">#     return timedelta(seconds=30)</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="c1"># @classmethod</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="c1"># def schedule_max_backoff(cls) -&gt; timedelta | None:</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="c1">#     return timedelta(minutes=10)</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="c1"># @classmethod</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="c1"># def schedule_max_doublings(cls) -&gt; int | None: # How many times to double backoff</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="c1">#     return 3</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>        <span class="c1"># ... task logic ...</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;processed&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+1.  Corresponds to <code>RetryConfig.retry_count</code> in Cloud Scheduler.</p>
+<h3 id="custom-payload-schedule_body_payload">Custom Payload (<code>schedule_body_payload</code>)<a class="headerlink" href="#custom-payload-schedule_body_payload" title="Permanent link">&para;</a></h3>
+<p>While <code>PeriodicTask</code> usually doesn't require a payload (as it's run on a schedule, not in response to specific data), you can send a JSON payload from Cloud Scheduler if needed. This payload will be passed as keyword arguments to your <code>run()</code> method.</p>
+<p><div class="language-python highlight"><span class="filename">tasks.py</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TaskWithPayload</span><span class="p">(</span><span class="n">PeriodicTask</span><span class="p">):</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">run_every</span> <span class="o">=</span> <span class="s2">&quot;0 9 * * 1-5&quot;</span>  <span class="c1"># 9 AM on weekdays</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_body_payload</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># (1)!</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>            <span class="s2">&quot;report_type&quot;</span><span class="p">:</span> <span class="s2">&quot;daily_sales&quot;</span><span class="p">,</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>            <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;emea&quot;</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="p">}</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">report_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running scheduled task for report: </span><span class="si">{</span><span class="n">report_type</span><span class="si">}</span><span class="s2"> in region: </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="c1"># ... logic using report_type and region ...</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;processed_report&quot;</span><span class="p">:</span> <span class="n">report_type</span><span class="p">,</span> <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="n">region</span><span class="p">}</span>
+</span></code></pre></div>
+1.  The <code>run</code> method will receive <code>report_type="daily_sales"</code> and <code>region="emea"</code>.</p>
+<h3 id="other-schedule-attributes">Other Schedule Attributes<a class="headerlink" href="#other-schedule-attributes" title="Permanent link">&para;</a></h3>
+<p><code>PeriodicTask</code> allows further customization of the Cloud Scheduler job via class methods, corresponding to <code>Job</code> attributes in the GCP API:</p>
 <ul>
-<li>Default: <code>True</code>.</li>
-<li>If <code>True</code>, Cloud Scheduler will send a Google-signed OIDC token in the <code>Authorization</code> header. Your application endpoint (usually a Cloud Run service or similar) should be configured to validate this token.</li>
-<li>If <code>False</code>, no OIDC token is sent by Scheduler. You would rely on other means of securing your endpoint (e.g., network controls, custom <code>schedule_headers</code> with a pre-shared key, though OIDC is preferred).</li>
+<li><code>schedule_description() -&gt; str | None</code>: A human-readable description for the job.</li>
+<li><code>schedule_time_zone() -&gt; str | None</code>: Timezone for cron schedules (e.g., "America/New_York"). Default is UTC.</li>
+<li><code>schedule_attempt_deadline() -&gt; timedelta | None</code>: Time limit for Cloud Scheduler to attempt to deliver the PUSH request to your app. If the task handler takes longer than this, Scheduler might consider it a failure. Default is 3 minutes.</li>
 </ul>
-<pre><code class="language-python">class PublicDataFetcherTask(PeriodicTask):
-    run_every = &quot;@daily&quot;
-
-    @classmethod
-    def schedule_use_oidc(cls) -&gt; bool:
-        # If this task calls a public, non-OIDC protected part of your app, or if auth is handled differently
-        return False # Set to True if your endpoint expects a Google OIDC token
-
-    def run(self, **kwargs):
-        print(&quot;Fetching public data...&quot;)
-</code></pre>
-<h3 id="scheduler-level-retry-configuration-schedule_retries">Scheduler-Level Retry Configuration (<code>schedule_retries</code>)</h3>
-<p>Specifies the number of times Google Cloud Scheduler should retry invoking your task endpoint if the HTTP request fails (e.g., your endpoint returns a 5xx error or doesn't respond).</p>
-<ul>
-<li>Default: <code>0</code> (no retries at the Cloud Scheduler level).</li>
-<li>This is distinct from any retry logic within your task's <code>run()</code> method or Cloud Tasks queue retries (if the scheduled job itself pushes to a Cloud Tasks queue).</li>
-</ul>
-<pre><code class="language-python">class OccasionallyFailingExternalCheck(PeriodicTask):
-    run_every = &quot;*/30 * * * *&quot; # Every 30 minutes
-
-    @classmethod
-    def schedule_retries(cls) -&gt; int:
-        # If the endpoint is down, ask Cloud Scheduler to retry up to 3 times
-        return 3
-
-    def run(self, **kwargs):
-        print(&quot;Performing an external check that might sometimes fail...&quot;)
-        # ... call external service ...
-</code></pre>
-<h3 id="custom-payload-for-scheduled-tasks">Custom Payload for Scheduled Tasks</h3>
-<p>While <code>PeriodicTask.schedule()</code> itself takes <code>**kwargs</code> which are serialized into the payload for Cloud Scheduler, you typically set these arguments directly in the <code>run</code> method's signature with defaults if they are static for the schedule. If you need to dynamically build a more complex payload during the <code>schedule_tasks</code> command or want to override what arguments are sent, you would need to customize the <code>schedule</code> method itself or ensure your <code>run</code> method pulls configuration dynamically.</p>
-<p>The default arguments sent in the payload by <code>schedule()</code> are simply the <code>**kwargs</code> passed to it. If no <code>kwargs</code> are passed (common for periodic tasks where the logic is self-contained or configured via <code>settings</code>), the payload will be an empty JSON object <code>{}</code>.</p>
-<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<h2 id="how-it-works-under-the-hood-fontawesome-solid-cogs">How It Works Under the Hood :fontawesome-solid-cogs:<a class="headerlink" href="#how-it-works-under-the-hood-fontawesome-solid-cogs" title="Permanent link">&para;</a></h2>
 <p>When <code>PeriodicTask.schedule()</code> is invoked (typically by the <code>schedule_tasks</code> management command), it communicates with Google Cloud Scheduler to create or update a job. This job is configured to:</p>
 <ol>
 <li>Trigger based on the <code>run_every</code> cron schedule.</li>
@@ -244,54 +638,82 @@ class HourlyTemporaryFileCleanup(PeriodicTask):
 <li>Use OIDC authentication and custom headers as configured.</li>
 </ol>
 <p>Essentially, Cloud Scheduler acts as a timed trigger that invokes your <code>PeriodicTask</code> as if it were an on-demand task call arriving at your application's endpoint.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    autonumber
+    participant User
+    participant ManagementCmd as "manage.py schedule_tasks"
+    participant DjangoApp as "Django Application"
+    participant CloudScheduler as "Google Cloud Scheduler"
+    participant TaskEndpoint as "Task Execution URL (in DjangoApp)"
+
+    User-&gt;&gt;ManagementCmd: Executes command
+    ManagementCmd-&gt;&gt;DjangoApp: Scans for PeriodicTask classes
+    ManagementCmd-&gt;&gt;CloudScheduler: API: Create/Update Job(s)
+    CloudScheduler--&gt;&gt;ManagementCmd: Confirms Job(s) status
+    ManagementCmd--&gt;&gt;User: Outputs status ([+], [~], [-])
+
+    Note over CloudScheduler, TaskEndpoint: Later, at scheduled time...
+
+    CloudScheduler-&gt;&gt;TaskEndpoint: HTTP POST (with payload, OIDC/custom headers)
+    TaskEndpoint-&gt;&gt;DjangoApp: Receives request
+    DjangoApp-&gt;&gt;DjangoApp: Executes PeriodicTask.run() method
+    TaskEndpoint--&gt;&gt;CloudScheduler: HTTP 2xx (on success)</code></pre>
 <p><strong>Eager Mode Behavior (<code>DJANGO_CLOUD_TASKS_EAGER = True</code>)</strong>
 If <code>DJANGO_CLOUD_TASKS_EAGER</code> is true, running <code>python manage.py schedule_tasks</code> will <em>not</em> actually interact with Google Cloud Scheduler. Instead, for any tasks that <em>would have been</em> added or updated, their <code>run()</code> method will be executed synchronously, locally, one time. This is primarily for testing the task logic itself, not the scheduling mechanism.</p>
-<p>And that's the rundown on keeping your tasks running like clockwork with scheduled tasks! </p>
-              
+<p>And that's the rundown on keeping your tasks running like clockwork with scheduled tasks!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../on_demand_tasks/" class="btn btn-neutral float-left" title="On-Demand Tasks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../pubsub/" class="btn btn-neutral float-right" title="Pub/Sub">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
           
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
-      </div>
-
-    </section>
-
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-    
-      <span><a href="../on_demand_tasks/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../pubsub/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
 </div>
-    <script src="../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "..";</script>
-    <script src="../js/theme_extra.js"></script>
-    <script src="../js/theme.js"></script>
-      <script src="../search/main.js"></script>
-    <script>
-        jQuery(function () {
-            SphinxRtdTheme.Navigation.enable(true);
-        });
-    </script>
-
-</body>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate", "content.code.copy", "navigation.instant", "navigation.sections", "toc.integrate", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
 </html>

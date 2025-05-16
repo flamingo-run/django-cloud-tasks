@@ -1,211 +1,755 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/on_demand_tasks/" />
-      <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>On-Demand Tasks - Django Cloud Tasks</title>
-    <link rel="stylesheet" href="../css/theme.css" />
-    <link rel="stylesheet" href="../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
     
-      <script>
-        // Current page data
-        var mkdocs_page_name = "On-Demand Tasks";
-        var mkdocs_page_input_path = "on_demand_tasks.md";
-        var mkdocs_page_url = "/on_demand_tasks/";
-      </script>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/on_demand_tasks/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../scheduled_tasks/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
-    <!--[if lt IE 9]>
-      <script src="../js/html5shiv.min.js"></script>
-    <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
-</head>
+    
+      
+        <title>On-Demand Tasks - Django Cloud Tasks</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
 
-<body class="wy-body-for-nav" role="document">
 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> Django Cloud Tasks
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
-  </form>
-</div>
-      </div>
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
-                </li>
-              </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">On-Demand Tasks</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#defining-a-basic-task">Defining a Basic Task</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#running-your-tasks">Running Your Tasks</a>
-    </li>
-    </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../scheduled_tasks/">Scheduled Tasks</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../pubsub/">Pub/Sub</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
-                </li>
-              </ul>
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#on-demand-tasks" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Django Cloud Tasks" class="md-header__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Django Cloud Tasks
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              On-Demand Tasks
+            
+          </span>
+        </div>
       </div>
     </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">Django Cloud Tasks</a>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
         
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
       </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">On-Demand Tasks</li>
-    <li class="wy-breadcrumbs-aside">
-    </li>
-  </ul>
-  <hr/>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
               
-                <h1 id="on-demand-tasks-powered-by-google-cloud-tasks">On-Demand Tasks (Powered by Google Cloud Tasks)</h1>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Django Cloud Tasks" class="md-nav__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Django Cloud Tasks
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    On-Demand Tasks
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    On-Demand Tasks
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-a-basic-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining a Basic Task
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-your-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Your Tasks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running Your Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-as-soon-as-possible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run As Soon As Possible
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schedule-for-a-specific-future-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schedule for a Specific Future Time
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-synchronously" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Synchronously
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schedule-randomly-before-a-deadline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schedule Randomly Before a Deadline
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works Under the Hood
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-task-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Task Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Task Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ensuring-uniqueness" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ensuring Uniqueness
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enqueue-retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enqueue Retry Policy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-custom-queue-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Custom Queue Names
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#suggesting-a-task-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Suggesting a Task Timeout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accessing-task-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessing Task Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-level-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Low-Level Control
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging Tasks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#discarding-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discarding Tasks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Discarding Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discard-one-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discard One Task
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discard-all-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discard All Tasks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discard-persistently-failing-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Discard Persistently Failing Tasks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-failed-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Failed Tasks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scheduled Tasks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pubsub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pub/Sub
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Header Propagation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../task_field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TaskField (Model Field)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="on-demand-tasks">On-Demand Tasks<a class="headerlink" href="#on-demand-tasks" title="Permanent link">&para;</a></h1>
 <p>On-demand tasks are your workhorses for anything you want to do asynchronously. Think of sending a welcome email after a user signs up, processing an image after upload, or calling a slow external API without making your user wait. These tasks are pushed to a Google Cloud Tasks queue and executed by an HTTP request back to your Django application.</p>
-<h2 id="defining-a-basic-task">Defining a Basic Task</h2>
+<h2 id="defining-a-basic-task">Defining a Basic Task<a class="headerlink" href="#defining-a-basic-task" title="Permanent link">&para;</a></h2>
 <p>Creating a task is as simple as inheriting from <code>django_cloud_tasks.tasks.Task</code> and implementing the <code>run</code> method. This method contains the logic your task will execute.</p>
 <p><strong>Example: Sending a Welcome Email</strong></p>
 <p>Let's say you want to send a welcome email to a new user. Their details (like email and name) will be passed as arguments to the task.</p>
-<pre><code class="language-python"># In your app's tasks.py (e.g., users/tasks.py)
-
-from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django_cloud_tasks.tasks import Task
-
-class SendWelcomeEmailTask(Task):
-    def run(self, user_id: int, custom_message: str | None = None):
-        try:
-            user = User.objects.get(pk=user_id)
-            subject = f&quot;Welcome to Our Awesome Platform, {user.first_name}!&quot;
-            message_body = custom_message or f&quot;Hi {user.first_name}, \n\nThanks for signing up! We're thrilled to have you.&quot;
-            send_mail(
-                subject=subject,
-                message=message_body,
-                from_email=&quot;noreply@myawesomeplatform.com&quot;,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
-            print(f&quot;Welcome email sent to {user.email}&quot;)
-            return {&quot;status&quot;: &quot;success&quot;, &quot;user_id&quot;: user_id, &quot;email&quot;: user.email}
-        except User.DoesNotExist:
-            print(f&quot;User with ID {user_id} not found. Cannot send welcome email.&quot;)
-            # You might want to raise an exception here to have Cloud Tasks retry, or handle it as a permanent failure.
-            return {&quot;status&quot;: &quot;error&quot;, &quot;reason&quot;: &quot;user_not_found&quot;}
-        except Exception as e:
-            print(f&quot;Failed to send welcome email to user {user_id}: {e}&quot;)
-            # Re-raise the exception to make Cloud Tasks retry based on queue configuration
-            raise
-</code></pre>
-<p><strong>Important Notes:</strong></p>
-<ul>
-<li><strong>Task Discovery:</strong> Django Cloud Tasks automatically discovers task classes that inherit from <code>Task</code>, <code>PeriodicTask</code>, etc. Just ensure the Python modules containing your task definitions (e.g., <code>myapp/tasks.py</code>) are imported by Django at startup. A common pattern is to import them in your app's <code>apps.py</code> within the <code>ready()</code> method.</li>
-<li><strong>Serialization:</strong> Arguments passed to your task's <code>run</code> method (and the return value) <strong>must be JSON serializable</strong>. Basic types like integers, strings, lists, and dicts are fine. For complex objects like Django model instances, you should pass identifiers (like a primary key) and re-fetch the object within the task, as shown in the <code>SendWelcomeEmailTask</code>.</li>
-</ul>
-<h2 id="running-your-tasks">Running Your Tasks</h2>
-<p>Once defined, you can trigger your tasks from anywhere in your Django code (views, signals, model methods, etc.).</p>
+<div class="language-py highlight"><span class="filename">users/tasks.py</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.core.mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_mail</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">SendWelcomeEmailTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">custom_message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> <span class="c1"># (1)!</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>            <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span> <span class="c1"># (2)!</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>            <span class="n">subject</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Welcome to Our Awesome Platform, </span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="si">}</span><span class="s2">!&quot;</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            <span class="n">message_body</span> <span class="o">=</span> <span class="n">custom_message</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;Hi </span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="si">}</span><span class="s2">, </span><span class="se">\n\n</span><span class="s2">Thanks for signing up! We&#39;re thrilled to have you.&quot;</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>            <span class="n">send_mail</span><span class="p">(</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                <span class="n">message</span><span class="o">=</span><span class="n">message_body</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                <span class="n">from_email</span><span class="o">=</span><span class="s2">&quot;noreply@myawesomeplatform.com&quot;</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                <span class="n">recipient_list</span><span class="o">=</span><span class="p">[</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">],</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                <span class="n">fail_silently</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            <span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Welcome email sent to </span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">}</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="k">except</span> <span class="n">User</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User with ID </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> not found. Cannot send welcome email.&quot;</span><span class="p">)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="s2">&quot;user_not_found&quot;</span><span class="p">}</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to send welcome email to user </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>            <span class="k">raise</span> <span class="c1"># (3)!</span>
+</span></code></pre></div>
 <ol>
-<li>
-<p><strong><code>asap(**kwargs)</code> - Run As Soon As Possible:</strong>
-    This is the most common way. It enqueues the task to be executed by Cloud Tasks as soon as a worker is available. The <code>kwargs</code> are the arguments to your task's <code>run</code> method.</p>
-<p>```python</p>
-<h1 id="assuming-user_just_registered-is-a-user-object">Assuming user_just_registered is a User object</h1>
-<p>SendWelcomeEmailTask.asap(user_id=user_just_registered.id)
-SendWelcomeEmailTask.asap(user_id=another_user.id, custom_message="Hey there, special user!")
-```</p>
-</li>
-<li>
-<p><strong><code>later(task_kwargs: dict, eta: int | timedelta | datetime)</code> - Schedule for a Specific Future Time:</strong>
-    Use this to delay a task's execution.</p>
-<p>```python
-from datetime import timedelta
-from django.utils import timezone</p>
-<h1 id="send-a-follow-up-email-7-days-after-signup">Send a follow-up email 7 days after signup</h1>
-<p>user_id_to_follow_up = 123
-follow_up_time = timezone.now() + timedelta(days=7)
-SendWelcomeEmailTask.later(
-    task_kwargs={"user_id": user_id_to_follow_up, "custom_message": "Hope you're enjoying the platform after your first week!"},
-    eta=follow_up_time
-)</p>
-<h1 id="or-run-30-minutes-from-now-eta-can-be-seconds-as-an-int">Or run 30 minutes from now (eta can be seconds as an int)</h1>
-<p>SendWelcomeEmailTask.later(task_kwargs={"user_id": 456}, eta=30 * 60)
-```</p>
-<p>When using <code>eta</code>, be mindful of the <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> setting (or its environment variable counterpart). This setting defines the maximum number of seconds into the future a task can be scheduled. Google Cloud Tasks itself has a limit (typically 30 days). If <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> is set, it imposes an additional, potentially more restrictive, limit within your application.
+<li>The <code>run</code> method is where your task's logic resides. Arguments must be JSON serializable.</li>
+<li>It's good practice to pass IDs and re-fetch database objects within the task.</li>
+<li>Re-raising a generic exception will cause Cloud Tasks to retry the task based on queue configuration.</li>
+</ol>
+<div class="admonition info">
+<p class="admonition-title">Task Discovery</p>
+<p>Django Cloud Tasks automatically discovers task classes that inherit from <code>Task</code>, <code>PeriodicTask</code>, etc.
+Just ensure the Python modules containing your task definitions (e.g., <code>myapp/tasks.py</code>) are imported by Django at startup.
+A common pattern is to import them in your app's <code>apps.py</code> within the <code>ready()</code> method.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Serialization</p>
+<p>Arguments passed to your task's <code>run</code> method (and the return value) <strong>must be JSON serializable</strong>.
+Basic types like integers, strings, lists, and dicts are fine. For complex objects like Django model instances, you should pass identifiers (like a primary key) and re-fetch the object within the task, as shown in the <code>SendWelcomeEmailTask</code>.</p>
+</div>
+<h2 id="running-your-tasks">Running Your Tasks<a class="headerlink" href="#running-your-tasks" title="Permanent link">&para;</a></h2>
+<p>Once defined, you can trigger your tasks from anywhere in your Django code (views, signals, model methods, etc.).</p>
+<h3 id="run-as-soon-as-possible">Run As Soon As Possible<a class="headerlink" href="#run-as-soon-as-possible" title="Permanent link">&para;</a></h3>
+<p>This is the most common way. It enqueues the task to be executed by Cloud Tasks as soon as a worker is available. The <code>kwargs</code> are the arguments to your task's <code>run</code> method.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">asap</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">asap</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span> <span class="n">custom_message</span><span class="o">=</span><span class="s2">&quot;Hey there, special user!&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="schedule-for-a-specific-future-time">Schedule for a Specific Future Time<a class="headerlink" href="#schedule-for-a-specific-future-time" title="Permanent link">&para;</a></h3>
+<p>Use this to delay a task's execution.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">user_id_to_follow_up</span> <span class="o">=</span> <span class="mi">123</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">task_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id_to_follow_up</span><span class="p">,</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="s2">&quot;custom_message&quot;</span><span class="p">:</span> <span class="s2">&quot;Hope you&#39;re enjoying the platform after your first week!&quot;</span><span class="p">,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">}</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">later</span><span class="p">(</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">task_kwargs</span><span class="o">=</span><span class="n">task_kwargs</span><span class="p">,</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">eta</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="p">)</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">later</span><span class="p">(</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">task_kwargs</span><span class="o">=</span><span class="n">task_kwargs</span><span class="p">,</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="n">eta</span><span class="o">=</span><span class="mi">30</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span> <span class="c1"># (2)!</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>Example of scheduling a task for a specific future <code>datetime</code>.</li>
+<li><code>eta</code> can also be an integer representing seconds from now.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Maximum ETA</p>
+<p>When using <code>eta</code>, be mindful of the <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> setting (or its environment variable counterpart): this setting defines the maximum number of seconds into the future a task can be scheduled. Google Cloud Tasks itself has a limit (typically 30 days).</p>
+<p>If <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK</code> is set, it imposes an additional, potentially more restrictive, limit within your application.
 *   Default: <code>None</code> (meaning the library doesn't impose its own limit beyond GCP's).
 *   Example: <code>DJANGO_CLOUD_TASKS_MAXIMUM_ETA_TASK = 60 * 60 * 24 * 7</code> (limit to 7 days).</p>
-</li>
-<li>
-<p><strong><code>sync(**kwargs)</code> - Run Synchronously (Mainly for Testing &amp; Eager Mode):</strong>
-    Executes the task's <code>run</code> method immediately in the current process. This is the default behavior if <code>DJANGO_CLOUD_TASKS_EAGER = True</code> is set in your settings. It's extremely helpful for debugging and local development.</p>
-<p>```python</p>
-<h1 id="this-will-run-the-sendwelcomeemailtaskrun-method-directly">This will run the SendWelcomeEmailTask.run() method directly</h1>
-<p>result = SendWelcomeEmailTask.sync(user_id=some_user.id, custom_message="Testing sync call.")
-print(result) # Output: {'status': 'success', 'user_id': ..., 'email': ...}
-```</p>
-</li>
-<li>
-<p><strong><code>until(task_kwargs: dict, max_eta: datetime)</code> - Schedule Randomly Before a Deadline:</strong>
-    Schedules the task to run at a random time between now and the specified <code>max_eta</code> (maximum execution time). Useful for distributing load for non-time-critical tasks. It's not a load balancer, it's just a way to schedule tasks to run at different times.</p>
-<p>```python
-from django.utils import timezone
-from datetime import timedelta</p>
-<h1 id="process-a-batch-of-optional-analytics-updates-sometime-in-the-next-hour">Process a batch of optional analytics updates sometime in the next hour</h1>
-<p>max_execution_time = timezone.now() + timedelta(hours=1)
-class ProcessAnalyticsBatch(Task):
-    def run(self, user_ids: list[int]):
-        for user_id in user_ids:
-            SendWelcomeEmailTask.until(task_kwargs={"user_id": user_id}, max_eta=max_execution_time)
-```</p>
-</li>
+</div>
+<h3 id="run-synchronously">Run Synchronously<a class="headerlink" href="#run-synchronously" title="Permanent link">&para;</a></h3>
+<p>Executes the task's <code>run</code> method immediately in the current process. This is the default behavior if <code>DJANGO_CLOUD_TASKS_EAGER = True</code> is set in your settings. It's extremely helpful for debugging and local development.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span> <span class="c1"># (1)!</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">user_id</span><span class="o">=</span><span class="n">some_user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">custom_message</span><span class="o">=</span><span class="s2">&quot;Testing sync call.&quot;</span><span class="p">,</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>This will run the <code>SendWelcomeEmailTask.run()</code> method directly.</li>
 </ol>
-<h2 id="advanced-task-configuration">Advanced Task Configuration</h2>
+<h3 id="schedule-randomly-before-a-deadline">Schedule Randomly Before a Deadline<a class="headerlink" href="#schedule-randomly-before-a-deadline" title="Permanent link">&para;</a></h3>
+<p>Schedules the task to run at a random time between now and the specified <code>max_eta</code> (maximum execution time).</p>
+<p>Useful for distributing load for non-time-critical tasks. It's not a load balancer, it's just a way to schedule tasks to run at different times.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">ProcessAnalyticsBatch</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">max_execution_time</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">user_ids</span><span class="p">:</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>            <span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">until</span><span class="p">(</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>                <span class="n">task_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">},</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>                <span class="n">max_eta</span><span class="o">=</span><span class="n">max_execution_time</span><span class="p">,</span> <span class="c1"># (1)!</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>            <span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>Process a batch of optional analytics updates sometime in the next hour</li>
+</ol>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood<a class="headerlink" href="#how-it-works-under-the-hood" title="Permanent link">&para;</a></h2>
+<p>When you trigger an on-demand task using methods like <code>asap()</code> or <code>later()</code>, several steps occur behind the scenes to ensure your task is processed reliably and asynchronously:</p>
+<ol>
+<li><strong>Task Invocation:</strong> Your application code calls a task method (e.g., <code>SendWelcomeEmailTask.asap(user_id=123)</code>).</li>
+<li><strong>Payload &amp; Target Construction:</strong> <code>django-cloud-tasks</code> serializes the provided arguments (e.g., <code>user_id=123</code>) into a JSON payload. It also determines the target Google Cloud Tasks queue and the specific HTTP endpoint URL within your Django application that is configured to execute this task.</li>
+<li><strong>Google Cloud Tasks API Call:</strong> The library makes an authenticated API call to the Google Cloud Tasks service. This call instructs Cloud Tasks to create a new task in the designated queue. The request to GCP includes the JSON payload, the target URL, any specified ETA (for <code>.later</code>), and other execution options (like <code>only_once</code> or custom headers if using <code>push()</code>).</li>
+<li><strong>Task Queuing by GCP:</strong> Google Cloud Tasks receives this request, validates it, and securely stores the task in the specified queue. The task now waits for a worker to become available or for its scheduled ETA to arrive.</li>
+<li><strong>HTTP Invocation by GCP:</strong> At the appropriate time (immediately for <code>asap</code>, or after the ETA for <code>later</code>), Google Cloud Tasks makes an HTTP POST request from its infrastructure to the target URL of your Django application. This request includes the JSON payload in its body and any necessary headers (e.g., for tracing, authentication, or propagated headers).</li>
+<li><strong>Task Execution in Django:</strong> Your Django application receives this incoming HTTP request. The <code>django-cloud-tasks</code> view handler, mapped via <code>django_cloud_tasks.urls</code>, processes this request. It identifies the correct task class (e.g., <code>SendWelcomeEmailTask</code>) based on the URL, deserializes the JSON payload from the request body into Python arguments, and then calls the task's <code>run()</code> method with these arguments.</li>
+<li><strong>Acknowledgement to GCP:</strong> Upon successful receipt and initial processing by your Django endpoint (specifically, if the endpoint returns an HTTP 2xx status code like 200 OK or 202 Accepted), Google Cloud Tasks considers the task acknowledged and removes it from the queue (or marks it as completed, subject to retry policies if errors occurred during the <code>run</code> method that weren't handled).</li>
+</ol>
+<p>This entire process ensures that your task invocation is decoupled from its actual execution, providing benefits like resilience to temporary failures (through retries managed by Cloud Tasks) and improved application responsiveness by offloading work to background processes.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    autonumber
+    participant AppCode as "Your Application Code"
+    participant DCTLib as "django-cloud-tasks Library"
+    participant GCloudTasks as "Google Cloud Tasks Service"
+    participant DCTView as "django-cloud-tasks View"
+    participant YourTaskRun as "Your Task's .run() method"
+
+    AppCode-&gt;&gt;DCTLib: MyTask.asap(params) / .later(params, eta)
+    DCTLib-&gt;&gt;GCloudTasks: API: Create Task (payload, target URL, queue, ETA)
+    GCloudTasks--&gt;&gt;DCTLib: Task Created (Task ID)
+
+    Note over GCloudTasks, DCTView: Later (immediately or at ETA)...
+
+    GCloudTasks-&gt;&gt;DCTView: HTTP POST (payload, headers)
+    DCTView-&gt;&gt;YourTaskRun: Deserializes payload &amp; Calls .run(params)
+    YourTaskRun-&gt;&gt;YourTaskRun: Executes your custom logic
+    YourTaskRun--&gt;&gt;DCTView: Returns result (or raises exception)
+    DCTView--&gt;&gt;GCloudTasks: HTTP 2xx (Acknowledgement) / Error</code></pre>
+<h2 id="advanced-task-configuration">Advanced Task Configuration<a class="headerlink" href="#advanced-task-configuration" title="Permanent link">&para;</a></h2>
 <p>You can fine-tune task behavior using several class attributes and methods on your <code>Task</code> subclass. These configurations often map to Google Cloud Tasks API features.</p>
-<h3 id="ensuring-uniqueness-only_once">Ensuring Uniqueness: <code>only_once</code></h3>
+<h3 id="ensuring-uniqueness">Ensuring Uniqueness<a class="headerlink" href="#ensuring-uniqueness" title="Permanent link">&para;</a></h3>
 <p>Set <code>only_once = True</code> on your task class if you want to prevent duplicate enqueues of tasks that are identical <em>by class name</em> for a given queue. Cloud Tasks will use a deterministic task name derived from your task's class name.</p>
 <ul>
 <li><strong>Use Case:</strong> Imagine you have a task <code>ProcessOrderTask</code> that gets called when an order is submitted. If, due to a client-side retry or a race condition, your system tries to enqueue <code>ProcessOrderTask</code> for the <em>same order</em> multiple times in quick succession <em>before the first one is picked up</em>, <code>only_once = True</code> can help prevent multiple identical tasks for that order from being added to the queue initially.</li>
-<li><strong>Caveat:</strong> This de-duplication is based on the task <em>class name</em>. It doesn't consider task arguments. If you need de-duplication based on specific arguments (e.g., "only one <code>ProcessOrderTask</code> for <code>order_id=123</code>"), you'd need to implement that logic yourself, perhaps by checking for an existing task with a custom-generated name via the <code>push()</code> method, or within your <code>run</code> method.</li>
 </ul>
-<pre><code class="language-python">class ProcessOrderTask(Task):
-    only_once = True # Prevents rapid, identical enqueues by class name
-
-    def run(self, order_id: int, payment_details: dict):
-        print(f&quot;Processing order {order_id}...&quot;)
-        # ... order processing logic ...
-
-</code></pre>
-<h3 id="enqueue-retry-policy">Enqueue Retry Policy</h3>
+<div class="admonition warning">
+<p class="admonition-title">De-duplication</p>
+<p>This de-duplication is based on the task <em>class name</em>. It doesn't consider task arguments.</p>
+<p>If you need de-duplication based on specific arguments (e.g., "only one <code>ProcessOrderTask</code> for <code>order_id=123</code>"), you'd need to implement that logic yourself, perhaps by checking for an existing task with a custom-generated name via the <code>push()</code> method.</p>
+</div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ProcessOrderTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">only_once</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">payment_details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing order </span><span class="si">{</span><span class="n">order_id</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="c1"># ... order processing logic ...</span>
+</span></code></pre></div>
+<h3 id="enqueue-retry-policy">Enqueue Retry Policy<a class="headerlink" href="#enqueue-retry-policy" title="Permanent link">&para;</a></h3>
 <p>These settings control retries if the the act of trying to send the task to Google Cloud Tasks fails, for example, due to a transient network issue or a temporary problem with the Cloud Tasks API. This is <strong>not</strong> about retrying your task if its <code>run()</code> method fails.</p>
 <ul>
 <li><strong><code>enqueue_retry_exceptions: list[str | Type[Exception]] | None</code></strong>: A list of exception types (or their string paths like <code>'google.api_core.exceptions.ServiceUnavailable'</code>) that should trigger a retry. Defaults to an empty list (or what's set globally via <code>DJANGO_CLOUD_TASKS_ENQUEUE_RETRY_EXCEPTIONS</code>).</li>
@@ -214,188 +758,231 @@ class ProcessAnalyticsBatch(Task):
 <li><strong><code>enqueue_retry_multiplier: float | None</code></strong>: Multiplier for increasing the delay between retries. Defaults to global config.</li>
 <li><strong><code>enqueue_retry_deadline: float | None</code></strong>: Total time in seconds to keep retrying. Defaults to global config.</li>
 </ul>
-<pre><code class="language-python">from google.api_core.exceptions import ServiceUnavailable, InternalServerError
-
-class RobustEnqueueTask(Task):
-    enqueue_retry_exceptions = [ServiceUnavailable, InternalServerError, &quot;requests.exceptions.ConnectionError&quot;]
-    enqueue_retry_initial = 2.0  # Start with a 2-second delay
-    enqueue_retry_maximum = 60.0 # Cap retries at 1 minute intervals
-    enqueue_retry_multiplier = 2.5
-    enqueue_retry_deadline = 300.0 # Try for up to 5 minutes
-
-    def run(self, data: dict):
-        print(&quot;Task enqueued robustly and now running.&quot;)
-</code></pre>
-<h3 id="using-custom-queue-names">Using Custom Queue Names</h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">google.api_core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceUnavailable</span><span class="p">,</span> <span class="n">InternalServerError</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">RobustEnqueueTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">enqueue_retry_exceptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">ServiceUnavailable</span><span class="p">,</span> <span class="n">InternalServerError</span><span class="p">,</span> <span class="s2">&quot;requests.exceptions.ConnectionError&quot;</span><span class="p">]</span> <span class="c1"># (1)!</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">enqueue_retry_initial</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># (2)!</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">enqueue_retry_maximum</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="c1"># (3)!</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">enqueue_retry_multiplier</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="c1"># (4)!</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">enqueue_retry_deadline</span> <span class="o">=</span> <span class="mf">300.0</span> <span class="c1"># (5)!</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Task enqueued robustly and now running.&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>List of exceptions that should trigger a retry.</li>
+<li>Start with a 2-second delay for retries.</li>
+<li>Cap retries at 1-minute intervals.</li>
+<li>Multiply the delay by 2.5 each time.</li>
+<li>Try for up to 5 minutes in total.</li>
+</ol>
+<h3 id="using-custom-queue-names">Using Custom Queue Names<a class="headerlink" href="#using-custom-queue-names" title="Permanent link">&para;</a></h3>
 <p>By default, tasks are sent to a queue named after your <code>DJANGO_CLOUD_TASKS_APP_NAME</code> (or just <code>"tasks"</code> if <code>APP_NAME</code> is not set). You can direct specific tasks to different queues by overriding the <code>queue()</code> class method. This is useful for prioritizing tasks or managing different workloads (e.g., short, quick tasks vs. long-running batch jobs).</p>
 <p>Make sure any custom queues you specify actually exist in your Google Cloud Tasks project.</p>
-<pre><code class="language-python">class HighPriorityNotification(Task):
-    @classmethod
-    def queue(cls) -&gt; str:
-        return &quot;critical-notifications-queue&quot; # Ensure this queue is configured in GCP with appropriate retries etc.
-
-    def run(self, user_id: int, alert_message: str):
-        # ... send an urgent alert ...
-        print(f&quot;Sent high priority alert to user {user_id}&quot;)
-
-class BatchDataProcessing(Task):
-    @classmethod
-    def queue(cls) -&gt; str:
-        return &quot;batch-jobs-queue&quot; # A queue for longer, less time-sensitive tasks
-
-    def run(self, dataset_id: str):
-        # ... process a large dataset ...
-        print(f&quot;Processed batch data for {dataset_id}&quot;)
-</code></pre>
-<h3 id="suggesting-a-task-timeout">Suggesting a Task Timeout</h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">HighPriorityNotification</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">queue</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="k">return</span> <span class="s2">&quot;critical-notifications-queue&quot;</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alert_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="c1"># ... send an urgent alert ...</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sent high priority alert to user </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchDataProcessing</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">queue</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="k">return</span> <span class="s2">&quot;batch-jobs-queue&quot;</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="c1"># ... process a large dataset ...</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed batch data for </span><span class="si">{</span><span class="n">dataset_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="suggesting-a-task-timeout">Suggesting a Task Timeout<a class="headerlink" href="#suggesting-a-task-timeout" title="Permanent link">&para;</a></h3>
 <p>Cloud Tasks need to know how long to wait for your task to complete before considering it timed out. You can suggest a timeout by overriding <code>get_task_timeout()</code>. The actual timeout is ultimately controlled by the queue configuration in GCP, but this provides a hint.</p>
-<pre><code class="language-python">from datetime import timedelta
-
-class ReportGenerationTask(Task):
-    @classmethod
-    def get_task_timeout(cls) -&gt; timedelta | None:
-        # This report can sometimes take a while
-        return timedelta(minutes=15) # Suggest Cloud Tasks allow up to 15 minutes
-
-    def run(self, report_params: dict):
-        # ... logic to generate a potentially long report ...
-        print(&quot;Report generation complete.&quot;)
-</code></pre>
-<h3 id="accessing-task-metadata-self_metadata">Accessing Task Metadata (<code>self._metadata</code>)</h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">ReportGenerationTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_timeout</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">timedelta</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">report_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="c1"># ... logic to generate a potentially long report ...</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Report generation complete.&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>This report can sometimes take a while; suggest Cloud Tasks allow up to 15 minutes.</li>
+</ol>
+<h3 id="accessing-task-metadata">Accessing Task Metadata<a class="headerlink" href="#accessing-task-metadata" title="Permanent link">&para;</a></h3>
 <p>Inside your task's <code>run</code> method, you can access information about the current execution attempt via <code>self._metadata</code>. This is an instance of <code>TaskMetadata</code> (or your custom class specified by <code>DJANGO_CLOUD_TASKS_TASK_METADATA_CLASS</code>).</p>
 <ul>
 <li><strong>Use Case:</strong> You might want to log the attempt number, or have slightly different behavior on the first attempt versus a retry (e.g., more aggressive external API calls on first try, then back off).</li>
 </ul>
-<pre><code class="language-python">class RetryAwareTask(Task):
-    def run(self, api_call_details: dict):
-        print(f&quot;--- Task Execution --- &quot;)
-        print(f&quot;Task ID: {self._metadata.task_id}&quot;)
-        print(f&quot;Queue: {self._metadata.queue_name}&quot;)
-        print(f&quot;Attempt Number (dispatch count + 1): {self._metadata.attempt_number}&quot;)
-        print(f&quot;Execution Number (non-5XX responses): {self._metadata.execution_number}&quot;)
-        print(f&quot;Scheduled ETA: {self._metadata.eta}&quot;)
-
-        if self._metadata.previous_failure:
-            print(f&quot;This task previously failed with reason: {self._metadata.previous_failure}&quot;)
-
-        if self._metadata.is_cloud_scheduler:
-             print(f&quot;This task was triggered by Cloud Scheduler job: {self._metadata.cloud_scheduler_job_name}&quot;)
-
-        # Example: Different logic for first attempt vs retries
-        if self._metadata.first_attempt:
-            print(&quot;First attempt: trying the primary API endpoint.&quot;)
-            # make_api_call(api_call_details, endpoint_type=&quot;primary&quot;)
-        else:
-            print(&quot;Retry attempt: trying a fallback API endpoint or with reduced payload.&quot;)
-            # make_api_call(api_call_details, endpoint_type=&quot;fallback&quot;)
-
-        # Your main task logic here
-        # ...
-</code></pre>
-<h3 id="using-push-for-full-control">Using <code>push()</code> for Full Control</h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">RetryAwareTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_call_details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--- Task Execution --- &quot;</span><span class="p">)</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task ID: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Queue: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">queue_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempt Number (dispatch count + 1): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">attempt_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1"># (1)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Execution Number (non-5XX responses): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">execution_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1"># (2)</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scheduled ETA: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">eta</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">previous_failure</span><span class="p">:</span> <span class="c1"># (3)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;This task previously failed with reason: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">previous_failure</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">is_cloud_scheduler</span><span class="p">:</span> <span class="c1"># (4)</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;This task was triggered by Cloud Scheduler job: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">cloud_scheduler_job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>        <span class="c1"># Example: Different logic for first attempt vs retries</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">first_attempt</span><span class="p">:</span> <span class="c1"># (5)</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;First attempt: trying the primary API endpoint.&quot;</span><span class="p">)</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>            <span class="c1"># make_api_call(api_call_details, endpoint_type=&quot;primary&quot;)</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Retry attempt: trying a fallback API endpoint or with reduced payload.&quot;</span><span class="p">)</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>            <span class="c1"># make_api_call(api_call_details, endpoint_type=&quot;fallback&quot;)</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>        <span class="c1"># Your main task logic here</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>        <span class="c1"># ...</span>
+</span></code></pre></div>
+<ol>
+<li><code>attempt_number</code> reflects how many times Cloud Tasks has tried to dispatch this task.</li>
+<li><code>execution_number</code> reflects non-5XX responses.</li>
+<li>Check if the task has failed before.</li>
+<li>Check if the task was triggered by Cloud Scheduler.</li>
+<li>Implement different logic based on whether it's the first attempt or a retry.</li>
+</ol>
+<h3 id="low-level-control">Low-Level Control<a class="headerlink" href="#low-level-control" title="Permanent link">&para;</a></h3>
 <p>For the most granular control over task enqueuing, you can use the <code>push()</code> class method directly. <code>asap()</code> and <code>later()</code> are convenient wrappers around <code>push()</code>. This allows you to specify custom headers, a dynamically generated task name (useful for more specific de-duplication than <code>only_once</code>), or override the queue dynamically.</p>
-<pre><code class="language-python"># Generate a unique task name for de-duplication based on arguments
-# This requires more careful management than `only_once = True`
-unique_part = hashlib.md5(f&quot;{user_id}-{item_id}&quot;.encode()).hexdigest()
-deterministic_task_name = f&quot;ProcessItemTask-{unique_part}&quot;
-
-SendWelcomeEmailTask.push(
-    task_kwargs={&quot;user_id&quot;: 777, &quot;custom_message&quot;: &quot;Pushed with full control!&quot;},
-    headers={&quot;X-Correlation-ID&quot;: &quot;my-custom-trace-id&quot;}, # Custom headers for this specific push
-    delay_in_seconds=60, # Delay by 1 minute
-    queue=&quot;another-dynamic-queue&quot;, # Can override queue here too
-    task_name=deterministic_task_name, # Provide a specific task name
-)
-</code></pre>
-<h2 id="managing-and-debugging-tasks">Managing and Debugging Tasks</h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">unique_part</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">item_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>  <span class="c1"># (1)!</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">deterministic_task_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;ProcessItemTask-</span><span class="si">{</span><span class="n">unique_part</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">push</span><span class="p">(</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="n">task_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="mi">777</span><span class="p">,</span> <span class="s2">&quot;custom_message&quot;</span><span class="p">:</span> <span class="s2">&quot;Pushed with full control!&quot;</span><span class="p">},</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X-Correlation-ID&quot;</span><span class="p">:</span> <span class="s2">&quot;my-custom-trace-id&quot;</span><span class="p">},</span> <span class="c1"># (2)!</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="n">delay_in_seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="c1"># (3)!</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;another-dynamic-queue&quot;</span><span class="p">,</span> <span class="c1"># (4)!</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">task_name</span><span class="o">=</span><span class="n">deterministic_task_name</span><span class="p">,</span> <span class="c1"># (5)!</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>Generate a unique task name for de-duplication based on arguments</li>
+<li>Custom headers for this specific push.</li>
+<li>Delay by 1 minute.</li>
+<li>Can override queue here too.</li>
+<li>Provide a specific task name, e.g., for de-duplication.</li>
+</ol>
+<h2 id="debugging-tasks">Debugging Tasks<a class="headerlink" href="#debugging-tasks" title="Permanent link">&para;</a></h2>
 <p>Django Cloud Tasks provides a couple of utility methods on your task classes for interacting with tasks <strong>already in a queue</strong>.</p>
-<h3 id="debugging-a-specific-task-debug">Debugging a Specific Task (<code>debug()</code>)</h3>
 <p>If a task has failed in the cloud, or you want to re-run a specific execution locally with the exact same payload it had, you can use <code>debug()</code>.</p>
 <ul>
 <li><strong>How it works:</strong> It fetches the task details (including its original payload) from Google Cloud Tasks using its <code>task_id</code> and then executes the <code>run()</code> method locally (synchronously) with that payload. It also populates <code>self._metadata</code> from the fetched task information.</li>
 </ul>
-<pre><code class="language-python"># In a Django shell or management command:
-# from myapp.tasks import SendWelcomeEmailTask
-
-# Assume you got this task ID from your GCP logs
-task_id_from_gcp = &quot;1234567890abcdef&quot;
-
-# This will fetch the task, deserialize its payload, and run it locally:
-SendWelcomeEmailTask.debug(task_id=task_id_from_gcp)
-</code></pre>
-<h3 id="discarding-tasks-discard">Discarding Tasks (<code>discard()</code>)</h3>
-<p>You can remove tasks from a Google Cloud Tasks queue.</p>
-<ul>
-<li>
-<p><strong>Discard a specific task by ID:</strong>
-    <code>python
-    # SendWelcomeEmailTask.discard(task_id="projects/.../tasks/someSpecificId")</code></p>
-</li>
-<li>
-<p><strong>Discard all tasks of a certain type from a queue (use with caution!):</strong>
-    <code>python
-    # This will list all tasks for SendWelcomeEmailTask in its default queue and delete them.
-    # deleted_tasks_info = SendWelcomeEmailTask.discard()
-    # print(f"Deleted tasks: {deleted_tasks_info}")</code></p>
-</li>
-<li>
-<p><strong>Discard tasks of a certain type that have met a minimum retry count:</strong>
-    Useful for clearing out tasks that seem to be failing persistently after a certain number of attempts.
-    <code>python
-    # Delete all SendWelcomeEmailTask instances from the queue that have been dispatched (retried) at least 5 times.
-    # SendWelcomeEmailTask.discard(min_retries=5)</code></p>
-</li>
-</ul>
-<h3 id="handling-failed-tasks">Handling Failed Tasks</h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># from myapp.tasks import SendWelcomeEmailTask</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">task_id_from_gcp</span> <span class="o">=</span> <span class="s2">&quot;1234567890abcdef&quot;</span> <span class="c1"># (1)!</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">task_id_from_gcp</span><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>You'd typically get the <code>task_id</code> from your Google Cloud Tasks Queue</li>
+</ol>
+<h2 id="discarding-tasks">Discarding Tasks<a class="headerlink" href="#discarding-tasks" title="Permanent link">&para;</a></h2>
+<p>Once a bunch of tasks have been enqueued, it can be hard to keep track of them, specially when they start failing and cause a snowball effect of retries.</p>
+<p>For these use cases, you can remove tasks from a Google Cloud Tasks queue.</p>
+<div class="admonition warning">
+<p class="admonition-title">Be careful</p>
+<p>This will delete tasks from a Google Cloud Tasks queue.</p>
+<p>Be very careful with this.</p>
+</div>
+<h3 id="discard-one-task">Discard One Task<a class="headerlink" href="#discard-one-task" title="Permanent link">&para;</a></h3>
+<p>When you know exactly the problematic task, you can discard it by its Task ID.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">task_id_from_gcp</span> <span class="o">=</span> <span class="s2">&quot;1234567890abcdef&quot;</span> <span class="c1"># (1)!</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">task_id_from_gcp</span><span class="p">)</span>
+</span></code></pre></div>
+<ol>
+<li>You'd typically get the <code>task_id</code> from your Google Cloud Tasks Queue</li>
+</ol>
+<h3 id="discard-all-tasks">Discard All Tasks<a class="headerlink" href="#discard-all-tasks" title="Permanent link">&para;</a></h3>
+<p>If multiple tasks share the same queue, you can discard all tasks of a certain type.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">discard</span><span class="p">()</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li>This will list all tasks for <code>SendWelcomeEmailTask</code> in its default queue and delete them.</li>
+</ol>
+<h3 id="discard-persistently-failing-tasks">Discard Persistently Failing Tasks<a class="headerlink" href="#discard-persistently-failing-tasks" title="Permanent link">&para;</a></h3>
+<p>You can discard tasks of a certain type that have met a minimum retry count.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">SendWelcomeEmailTask</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">min_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li>Deletes all <code>SendWelcomeEmailTask</code> instances from the queue that have been dispatched (retried) at least 5 times.</li>
+</ol>
+<h3 id="handling-failed-tasks">Handling Failed Tasks<a class="headerlink" href="#handling-failed-tasks" title="Permanent link">&para;</a></h3>
 <p>Any exception raised by your task's <code>run()</code> method is considered a failure.</p>
 <p>This will inform Google Cloud Tasks to retry the task, according to the policy you've set.</p>
 <p>If you want to skip retrying a task, you can raise <code>DiscardTaskException</code> from within your task.</p>
-<p>This covers the ins and outs of on-demand tasks. They form the foundation for many asynchronous operations in your Django application. </p>
-              
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyTask</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>        <span class="c1"># ...</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>        <span class="k">raise</span> <span class="n">DiscardTaskException</span><span class="p">(</span><span class="s2">&quot;Task failed, skipping retries.&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>This covers the ins and outs of on-demand tasks. They form the foundation for many asynchronous operations in your Django application.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Getting Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../scheduled_tasks/" class="btn btn-neutral float-right" title="Scheduled Tasks">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
           
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
-      </div>
-
-    </section>
-
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-    
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../scheduled_tasks/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
 </div>
-    <script src="../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "..";</script>
-    <script src="../js/theme_extra.js"></script>
-    <script src="../js/theme.js"></script>
-      <script src="../search/main.js"></script>
-    <script>
-        jQuery(function () {
-            SphinxRtdTheme.Navigation.enable(true);
-        });
-    </script>
-
-</body>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate", "content.code.copy", "navigation.instant", "navigation.sections", "toc.integrate", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
 </html>

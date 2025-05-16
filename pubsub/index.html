@@ -1,456 +1,1081 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/pubsub/" />
-      <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Pub/Sub - Django Cloud Tasks</title>
-    <link rel="stylesheet" href="../css/theme.css" />
-    <link rel="stylesheet" href="../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
     
-      <script>
-        // Current page data
-        var mkdocs_page_name = "Pub/Sub";
-        var mkdocs_page_input_path = "pubsub.md";
-        var mkdocs_page_url = "/pubsub/";
-      </script>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://django-cloud-tasks.flamingo.codes/pubsub/">
+      
+      
+        <link rel="prev" href="../scheduled_tasks/">
+      
+      
+        <link rel="next" href="../headers/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
-    <!--[if lt IE 9]>
-      <script src="../js/html5shiv.min.js"></script>
-    <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
-</head>
+    
+      
+        <title>Pub/Sub - Django Cloud Tasks</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
 
-<body class="wy-body-for-nav" role="document">
 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> Django Cloud Tasks
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
-  </form>
-</div>
-      </div>
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Getting Started</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../on_demand_tasks/">On-Demand Tasks</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../scheduled_tasks/">Scheduled Tasks</a>
-                </li>
-              </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Pub/Sub</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#publishing-messages">Publishing Messages</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#1-basic-publisher-publishertask">1. Basic Publisher: PublisherTask</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#2-model-specific-publisher-modelpublishertask">2. Model-Specific Publisher: ModelPublisherTask</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#topic-naming-convention">Topic Naming Convention</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#ensuring-topics-exist-set_up">Ensuring Topics Exist (set_up)</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#subscribing-to-messages-subscribertask">Subscribing to Messages (SubscriberTask)</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#subscription-naming-convention">Subscription Naming Convention</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#setting-up-and-deploying-subscriptions">Setting Up and Deploying Subscriptions</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#customizing-publishers">Customizing Publishers</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-topic-names-for-publishers">Custom Topic Names for Publishers</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#customizing-subscribers">Customizing Subscribers</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-subscription-name-subscription_name">Custom Subscription Name (subscription_name)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-subscription-url-subscription_url">Custom Subscription URL (subscription_url)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#oidc-authentication-for-push-endpoint-_use_oidc_auth">OIDC Authentication for Push Endpoint (_use_oidc_auth)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#subscription-retry-policy-message-acknowledgement-deadline-backoff">Subscription Retry Policy (Message Acknowledgement Deadline &amp; Backoff)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#dead-letter-topics-dltdlq">Dead Letter Topics (DLT/DLQ)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#message-filtering-subscription_filter">Message Filtering (subscription_filter)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#custom-message-parsing-message_parser">Custom Message Parsing (message_parser)</a>
-    </li>
-        </ul>
-    </li>
-    </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../headers/">Header Propagation</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../task_field/">TaskField (Model Field)</a>
-                </li>
-              </ul>
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#publishing-subscribing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Django Cloud Tasks" class="md-header__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Django Cloud Tasks
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pub/Sub
+            
+          </span>
+        </div>
       </div>
     </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">Django Cloud Tasks</a>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
         
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
       </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Pub/Sub</li>
-    <li class="wy-breadcrumbs-aside">
-    </li>
-  </ul>
-  <hr/>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
               
-                <h1 id="publishing-subscribing-google-cloud-pubsub">Publishing &amp; Subscribing (Google Cloud Pub/Sub)</h1>
-<p>Django Cloud Tasks seamlessly integrates with Google Cloud Pub/Sub, enabling you to build powerful event-driven architectures. You can publish messages to Pub/Sub topics when something interesting happens in your application, and define subscriber tasks that react to these messages asynchronously.</p>
-<h2 id="publishing-messages">Publishing Messages</h2>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Django Cloud Tasks" class="md-nav__button md-logo" aria-label="Django Cloud Tasks" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Django Cloud Tasks
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../on_demand_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    On-Demand Tasks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scheduled Tasks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Pub/Sub
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pub/Sub
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#publishing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Publishing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Publishing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Publisher
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      Model Publisher
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topic-naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      Topic Naming Convention
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subscribing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subscribing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Subscribing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#subscription-naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subscription Naming Convention
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-up-and-deploying-subscriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting Up and Deploying Subscriptions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works Under the Hood
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works Under the Hood">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synchronous-publishing-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synchronous Publishing Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asynchronous-publishing-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Asynchronous Publishing Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscription-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subscription Flow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-pubsub-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Pub/Sub Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Pub/Sub Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-topic-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Topic Names
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-subscription-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Subscription Name
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-subscription-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Subscription URL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      OIDC Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscription-retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subscription Retry Policy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dead-letter-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dead Letter Topics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Message Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-message-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Message Parser
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Header Propagation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../task_field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TaskField (Model Field)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="publishing-subscribing">Publishing &amp; Subscribing<a class="headerlink" href="#publishing-subscribing" title="Permanent link">&para;</a></h1>
+<p>Django Cloud Tasks seamlessly integrates with Google Cloud Pub/Sub, enabling you to build powerful event-driven architectures.</p>
+<p>You can publish messages to Pub/Sub topics when something interesting happens in your application, and define subscriber tasks that react to these messages asynchronously.</p>
+<h2 id="publishing">Publishing<a class="headerlink" href="#publishing" title="Permanent link">&para;</a></h2>
 <p>Messages are published to specific "topics." You can think of a topic as a named channel for a certain category of events (e.g., "user-signups", "order-updates").</p>
 <p>There are two main base classes for creating publishers:</p>
 <ol>
 <li><strong><code>PublisherTask</code></strong>: For publishing general-purpose dictionary-based messages.</li>
 <li><strong><code>ModelPublisherTask</code></strong>: A specialized helper for easily publishing messages related to Django model instance events (e.g., when a model is created, updated, or deleted).</li>
 </ol>
-<h3 id="1-basic-publisher-publishertask">1. Basic Publisher: <code>PublisherTask</code></h3>
+<h3 id="basic-publisher">Basic Publisher<a class="headerlink" href="#basic-publisher" title="Permanent link">&para;</a></h3>
 <p>Inherit from <code>PublisherTask</code> to define a generic message publisher. The primary method to override is <code>topic_name()</code>.</p>
 <p><strong>Example: Publishing User Action Events</strong></p>
 <p>Let's say we want to publish an event whenever a critical user action occurs, like a password change or profile update.</p>
-<pre><code class="language-python"># In your app's tasks.py or a dedicated publishers.py file
-
-from django_cloud_tasks.tasks import PublisherTask
-
-class UserActionEventPublisher(PublisherTask):
-    @classmethod
-    def topic_name(cls) -&gt; str:
-        # This will be the base name for your topic.
-        # The final name in GCP might be prefixed (see &quot;Topic Naming&quot; below).
-        return &quot;user-actions&quot;
-
-# --- How to use it ---
-# In your views.py, after a user successfully changes their password:
-# user = request.user
-# event_payload = {
-#     &quot;user_id&quot;: user.id,
-#     &quot;action_type&quot;: &quot;password_changed&quot;,
-#     &quot;ip_address&quot;: get_client_ip(request), # A helper function to get IP
-#     &quot;timestamp&quot;: timezone.now().isoformat()
-# }
-# UserActionEventPublisher.asap(message=event_payload, attributes={&quot;priority&quot;: &quot;high&quot;})
-
-# Or publish synchronously (e.g., for tests or if DJANGO_CLOUD_TASKS_EAGER = True):
-# UserActionEventPublisher.sync(message=event_payload, attributes={&quot;source&quot;: &quot;test_suite&quot;})
-</code></pre>
-<p><strong>How to run <code>PublisherTask</code>:</strong>
-*   <code>YourPublisher.asap(message: dict, attributes: dict[str, str] | None = None)</code>: Enqueues the publishing action itself as an on-demand task (via Cloud Tasks) to publish the message to Pub/Sub. This makes the HTTP request that publishes the message asynchronous.
-*   <code>YourPublisher.sync(message: dict, attributes: dict[str, str] | None = None)</code>: Directly publishes the message to Pub/Sub in the current process.</p>
-<h3 id="2-model-specific-publisher-modelpublishertask">2. Model-Specific Publisher: <code>ModelPublisherTask</code></h3>
-<p>This class is incredibly useful when the event you want to publish is directly tied to a Django model instance (e.g., an <code>Order</code> was created, an <code>Article</code> was updated).</p>
+<div class="language-py highlight"><span class="filename">publishers.py</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PublisherTask</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">UserActionEventPublisher</span><span class="p">(</span><span class="n">PublisherTask</span><span class="p">):</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="k">return</span> <span class="s2">&quot;user-actions&quot;</span> <span class="c1"># (1)!</span>
+</span></code></pre></div>
+<ol>
+<li>The base name for the Pub/Sub topic. The final topic name in GCP might be prefixed (e.g., <code>my-app--user-actions</code>).</li>
+</ol>
+<p>Then, you can use it in any part of your codebase (e.g., in views or signals):</p>
+<div class="language-py highlight"><span class="filename">views.py</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.publishers</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserActionEventPublisher</span> <span class="c1"># Assuming this file is publishers.py</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">event_payload</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="s2">&quot;action_type&quot;</span><span class="p">:</span> <span class="s2">&quot;password_changed&quot;</span><span class="p">,</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="c1"># &quot;ip_address&quot;: get_client_ip(request), # A helper function to get IP</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="p">}</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">UserActionEventPublisher</span><span class="o">.</span><span class="n">asap</span><span class="p">(</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="n">message</span><span class="o">=</span><span class="n">event_payload</span><span class="p">,</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;priority&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span><span class="p">},</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="p">)</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="c1"># ... rest of view logic ...</span>
+</span></code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Publishing Modes</p>
+<p>There are two main modes for publishing messages:</p>
+<ul>
+<li><strong>Asynchronous Publishing (<code>asap</code>)</strong>: The message is published asynchronously via Google Cloud Tasks. This is the recommended approach for most use cases.</li>
+<li><strong>Synchronous Publishing (<code>sync</code>)</strong>: The message is published synchronously in the current process. This is not recommended for most use cases, but can be useful for certain scenarios.</li>
+</ul>
+</div>
+<h3 id="model-publisher">Model Publisher<a class="headerlink" href="#model-publisher" title="Permanent link">&para;</a></h3>
+<p>Inherit from <code>ModelPublisherTask</code> to define a message publisher that is specifically tied to a Django model instance.</p>
+<div class="admonition tip">
+<p class="admonition-title">Useful for Model Instances</p>
+<p>This class is incredibly useful when the event you want to publish is directly tied to a Django model instance (e.g. notifying that a model has been created, updated, or deleted).</p>
+</div>
 <p><strong>Example: Publishing Order Creation Events</strong></p>
-<pre><code class="language-python"># In your app's tasks.py or publishers.py
-# Assuming you have an Order model: models.py
-# class Order(models.Model):
-#     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     status = models.CharField(max_length=50, default=&quot;pending&quot;)
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-from django.db import models # Your Django models
-from django_cloud_tasks.tasks import ModelPublisherTask
-
-class OrderCreatedEvent(ModelPublisherTask):
-    @classmethod
-    def build_message_content(cls, obj: models.Model, **kwargs) -&gt; dict:
-        # obj is an instance of your Django model (e.g., an Order instance)
-        # kwargs can receive any extra arguments passed to asap(), sync(), etc.
-        order = obj # Explicitly cast/type hint if needed
-        return {
-            &quot;order_id&quot;: str(order.order_id),
-            &quot;user_id&quot;: order.user_id,
-            &quot;total_amount&quot;: float(order.total_amount), # Pub/Sub prefers basic JSON types
-            &quot;status&quot;: order.status,
-            &quot;created_at_iso&quot;: order.created_at.isoformat(),
-            &quot;campaign_source&quot;: kwargs.get(&quot;campaign_source&quot;) # Example of using an extra kwarg
-        }
-
-    @classmethod
-    def build_message_attributes(cls, obj: models.Model, **kwargs) -&gt; dict[str, str]:
-        order = obj
-        return {
-            &quot;event_type&quot;: &quot;order_created&quot;,
-            &quot;customer_segment&quot;: &quot;retail&quot;, # Example attribute
-            &quot;region&quot;: kwargs.get(&quot;region&quot;, &quot;unknown&quot;)
-        }
-
-    # topic_name() by default uses the model's app_label and model_name (e.g., &quot;myapp-order&quot;)
-    # You can override it if needed (see &quot;Customizing Publishers&quot; below).
-
-# --- How to use it ---
-# After an order instance is created and saved:
-# new_order = Order.objects.create(user=request.user, total_amount=cart.total, ...)
-
-# Publish ASAP:
-# OrderCreatedEvent.asap(obj=new_order, campaign_source=&quot;spring_sale&quot;, region=&quot;emea&quot;)
-
-# Or, to ensure the message is sent ONLY if the current database transaction commits successfully:
-# from django.db import transaction
-# with transaction.atomic():
-#     new_order.save() # Or new_order.objects.create(...)
-#     OrderCreatedEvent.sync_on_commit(obj=new_order, campaign_source=&quot;newsletter&quot;)
-</code></pre>
+<div class="language-py highlight"><span class="filename">publishers.py</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelPublisherTask</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Order</span> <span class="c1"># Assuming Order model is in models.py</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrderCreatedEvent</span><span class="p">(</span><span class="n">ModelPublisherTask</span><span class="p">):</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_message_content</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="n">order</span> <span class="o">=</span> <span class="n">obj</span> <span class="c1"># Type hint as Order if needed: order: Order = obj</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">order_id</span><span class="p">),</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">order</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="s2">&quot;total_amount&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">total_amount</span><span class="p">),</span> <span class="c1"># (1)!</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="s2">&quot;created_at_iso&quot;</span><span class="p">:</span> <span class="n">order</span><span class="o">.</span><span class="n">created_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>            <span class="s2">&quot;campaign_source&quot;</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;campaign_source&quot;</span><span class="p">)</span> <span class="c1"># (2)!</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="p">}</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_message_attributes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">order</span> <span class="o">=</span> <span class="n">obj</span> <span class="c1"># Type hint as Order if needed</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>            <span class="s2">&quot;event_type&quot;</span><span class="p">:</span> <span class="s2">&quot;order_created&quot;</span><span class="p">,</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>            <span class="s2">&quot;customer_segment&quot;</span><span class="p">:</span> <span class="s2">&quot;retail&quot;</span><span class="p">,</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>            <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;region&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>        <span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li>Pub/Sub message content should ideally use basic JSON-serializable types.</li>
+<li>Extra keyword arguments passed to <code>asap()</code>, <code>sync()</code>, or <code>sync_on_commit()</code> are available in <code>build_message_content</code> and <code>build_message_attributes</code>.</li>
+<li><code>sync_on_commit</code> ensures the message is published only if the surrounding database transaction commits successfully.</li>
+</ol>
+<p>Then, you can use it in any part of your codebase (e.g., in signals):</p>
+<div class="language-py highlight"><span class="filename">signals.py</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">transaction</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.publishers</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderCreatedEvent</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Order</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">order_created_handler</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">created</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">OrderCreatedEvent</span><span class="o">.</span><span class="n">asap</span><span class="p">(</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>            <span class="n">obj</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>            <span class="n">campaign_source</span><span class="o">=</span><span class="s2">&quot;spring_sale&quot;</span><span class="p">,</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>            <span class="n">region</span><span class="o">=</span><span class="s2">&quot;emea&quot;</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="p">)</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="c1"># ... rest of signal logic ...</span>
+</span></code></pre></div>
 <p><strong>Key methods for <code>ModelPublisherTask</code>:</strong></p>
 <ul>
 <li><strong><code>build_message_content(cls, obj: Model, **kwargs) -&gt; dict</code> (Required):</strong> You implement this to transform your model instance (<code>obj</code>) and any extra <code>kwargs</code> into the main JSON payload of the Pub/Sub message.</li>
 <li><strong><code>build_message_attributes(cls, obj: Model, **kwargs) -&gt; dict[str, str]</code> (Required):</strong> You implement this to create a dictionary of string-to-string attributes for the Pub/Sub message. Attributes are useful for filtering messages on the subscriber side without needing to parse the full JSON payload.</li>
 <li><code>sync_on_commit(obj: Model, **kwargs)</code>: A very handy method that delays the actual publishing until the current database transaction is successfully committed. This prevents sending messages for data that might be rolled back.</li>
 </ul>
-<h3 id="topic-naming-convention">Topic Naming Convention</h3>
+<h3 id="topic-naming-convention">Topic Naming Convention<a class="headerlink" href="#topic-naming-convention" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Default <code>topic_name()</code> for <code>PublisherTask</code>:</strong> Uses the class name (e.g., <code>UserActionEventPublisher</code> becomes topic base name <code>UserActionEventPublisher</code>).</li>
 <li><strong>Default <code>topic_name()</code> for <code>ModelPublisherTask</code>:</strong> Uses <code>app_label-model_name</code> (e.g., if <code>Order</code> is in <code>sales</code> app, it becomes <code>sales-order</code>).</li>
 <li><strong>Global Prefixing:</strong> If <code>DJANGO_CLOUD_TASKS_APP_NAME</code> is set in your Django settings (e.g., to <code>"my-ecom-service"</code>), this name, along with the <code>DJANGO_CLOUD_TASKS_DELIMITER</code> (default <code>"--"</code>), will be <strong>prepended</strong> to the base topic name. So, <code>UserActionEventPublisher</code> could become <code>my-ecom-service--UserActionEventPublisher</code> in GCP.</li>
 <li>This prefixing helps organize topics in GCP, especially if multiple services share a project.</li>
 </ul>
-<h3 id="ensuring-topics-exist-set_up">Ensuring Topics Exist (<code>set_up</code>)</h3>
-<p><code>PublisherTask</code> (and by extension <code>ModelPublisherTask</code>) has a <code>set_up()</code> class method. Calling <code>YourPublisherTask.set_up()</code> will attempt to create the Pub/Sub topic in GCP if it doesn't already exist.</p>
-<pre><code class="language-python"># You might call this in an AppConfig.ready() or a custom management command
-# UserActionEventPublisher.set_up()
-# OrderCreatedEvent.set_up() # For ModelPublisherTask, it uses the default topic name based on model
-</code></pre>
-<p>This does <em>not</em> set up IAM permissions for publishing; your service account running the Django app needs <code>pubsub.topics.publish</code> permission on the topic or project.</p>
-<h2 id="subscribing-to-messages-subscribertask">Subscribing to Messages (<code>SubscriberTask</code>)</h2>
-<p>To process messages published to a topic, you define a <code>SubscriberTask</code>. This task will be triggered via an HTTP push request from Google Cloud Pub/Sub to a dedicated endpoint in your Django application when a new message arrives on the subscribed topic.</p>
+<h2 id="subscribing">Subscribing<a class="headerlink" href="#subscribing" title="Permanent link">&para;</a></h2>
+<p>To process messages published to a topic, you define a <code>SubscriberTask</code>.</p>
+<p>This task will be triggered via an HTTP push request from Google Cloud Pub/Sub to a dedicated endpoint in your Django application when a new message arrives on the subscribed topic.</p>
 <p><strong>Example: Processing User Action Events and Order Notifications</strong></p>
-<pre><code class="language-python"># In your app's tasks.py (or a dedicated subscribers.py file)
-
-from django_cloud_tasks.tasks import SubscriberTask
-# from myapp.services import fraud_detection_service, notification_service
-
-class UserActionAuditor(SubscriberTask):
-    @classmethod
-    def topic_name(cls) -&gt; str:
-        # This MUST match the topic name used by UserActionEventPublisher
-        return &quot;user-actions&quot;
-
-    # The run method receives the deserialized message content and attributes
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f&quot;Auditing user action: {content.get('action_type')} for user {content.get('user_id')}&quot;)
-        print(f&quot;  Attributes: {attributes}&quot;)
-        # if content.get('action_type') == 'password_changed':
-        #     fraud_detection_service.check_suspicious_login_after_password_change(content)
-        return {&quot;status&quot;: &quot;action_audited&quot;, &quot;user_id&quot;: content.get('user_id')}
-
-class OrderNotificationHandler(SubscriberTask):
-    @classmethod
-    def topic_name(cls) -&gt; str:
-        # This MUST match the topic from OrderCreatedEvent. For an Order model in 'sales' app:
-        return &quot;sales-order&quot; # Or your custom topic name if overridden in ModelPublisherTask
-
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f&quot;New order received for processing: {content.get('order_id')}&quot;)
-        print(f&quot;  Event Type (from attribute): {attributes.get('event_type')}&quot;)
-        # notification_service.send_order_confirmation_email(content.get('user_id'), content)
-        # inventory_service.reserve_stock(content.get('order_id'), ...)
-        return {&quot;status&quot;: &quot;order_processed&quot;, &quot;order_id&quot;: content.get('order_id')}
-</code></pre>
+<div class="language-py highlight"><span class="filename">subscribers.py</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubscriberTask</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">UserActionAuditor</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="k">return</span> <span class="s2">&quot;user-actions&quot;</span> <span class="c1"># (1)!</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Auditing user action: </span><span class="si">{</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;action_type&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> for user </span><span class="si">{</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Attributes: </span><span class="si">{</span><span class="n">attributes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="c1"># ... rest of subscriber logic ...</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;action_audited&quot;</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">)}</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrderNotificationHandler</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="k">return</span> <span class="s2">&quot;sales-order&quot;</span> <span class="c1"># (2)!</span>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;New order received for processing: </span><span class="si">{</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;order_id&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Event Type (from attribute): </span><span class="si">{</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;event_type&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>        <span class="c1"># ... rest of subscriber logic ...</span>
+</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;order_processed&quot;</span><span class="p">,</span> <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;order_id&#39;</span><span class="p">)}</span>
+</span></code></pre></div>
+<ol>
+<li>The base topic name this subscriber listens to. Must match the <code>topic_name</code> of <code>UserActionEventPublisher</code>.</li>
+<li>The base topic name for order-related events. Must match the <code>topic_name</code> used by <code>OrderCreatedEvent</code>.</li>
+</ol>
 <p><strong>Key elements for <code>SubscriberTask</code>:</strong></p>
 <ul>
 <li><strong><code>topic_name(cls) -&gt; str</code> (Required):</strong> Specifies which Pub/Sub topic this task subscribes to. This name needs to match the <em>base name</em> of the publisher's topic (before any global <code>APP_NAME</code> prefixing).</li>
 <li><strong><code>run(content: dict, attributes: dict[str, str] | None = None)</code>:</strong> Your core logic to handle the incoming message. <code>content</code> is the deserialized JSON payload, and <code>attributes</code> are the string key-value pairs sent with the Pub/Sub message.</li>
 </ul>
-<h3 id="subscription-naming-convention">Subscription Naming Convention</h3>
+<h3 id="subscription-naming-convention">Subscription Naming Convention<a class="headerlink" href="#subscription-naming-convention" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Default <code>subscription_name()</code>:</strong> Similar to topics, the subscription name is derived from <code>DJANGO_CLOUD_TASKS_APP_NAME</code> (if set), the <code>DJANGO_CLOUD_TASKS_DELIMITER</code>, and the <code>SubscriberTask</code> class name (e.g., <code>my-ecom-service--UserActionAuditor</code>).</li>
 <li>This name is used for the actual Pub/Sub Subscription resource created in GCP.</li>
 </ul>
-<h3 id="setting-up-and-deploying-subscriptions">Setting Up and Deploying Subscriptions</h3>
-<p>Defining the <code>SubscriberTask</code> class in Python doesn't automatically create the subscription in Google Cloud Pub/Sub. You need to run a management command:</p>
-<pre><code class="language-bash">python manage.py initialize_subscribers
-</code></pre>
-<p><strong>What this command does:</strong></p>
+<h3 id="setting-up-and-deploying-subscriptions">Setting Up and Deploying Subscriptions<a class="headerlink" href="#setting-up-and-deploying-subscriptions" title="Permanent link">&para;</a></h3>
+<p>Defining the <code>SubscriberTask</code> class in Python doesn't automatically create the subscription in Google Cloud Pub/Sub. You need to run a management command to assure that the subcriptions defined in your codebase are properly reflected in GCP.</p>
+<p>Subscriptions will be created, updated, or deleted as needed.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>manage.py<span class="w"> </span>initialize_subscribers
+</span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">When to run <code>initialize_subscribers</code>?</p>
+<p>Run this as part of your deployment process, especially when you add new <code>SubscriberTask</code>s or change their subscription configurations (like <code>topic_name</code>, <code>filter</code>, retry policies, etc.).</p>
+</div>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood<a class="headerlink" href="#how-it-works-under-the-hood" title="Permanent link">&para;</a></h2>
+<p>Understanding the flow of messages from publisher to subscriber can be helpful for debugging and advanced configurations.</p>
+<h3 id="synchronous-publishing-flow">Synchronous Publishing Flow<a class="headerlink" href="#synchronous-publishing-flow" title="Permanent link">&para;</a></h3>
+<p>In this mode, the call to publish the message to Google Cloud Pub/Sub happens directly in the process that initiated it.</p>
+<p>You can perform this operation by calling <code>YourPublisher.sync(message, attributes)</code>.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant App as Django App
+    participant DCT as django-cloud-tasks
+    participant GPS as Google Cloud Pub/Sub
+
+    App-&gt;&gt;DCT: User code calls YourPublisher.sync(message, attributes)
+    DCT-&gt;&gt;GPS: Publishes message to Pub/Sub topic
+    GPS--&gt;&gt;DCT: Acknowledges publish
+    DCT--&gt;&gt;App: Returns result</code></pre>
+<p><strong>Steps for Synchronous Publishing:</strong></p>
 <ol>
-<li>Scans your project for all <code>SubscriberTask</code> classes.</li>
-<li>For each task, it calls its <code>set_up()</code> class method.</li>
-<li>The default <code>set_up()</code> method in <code>SubscriberTask</code> will:<ul>
-<li>Attempt to create a Pub/Sub <strong>topic</strong> (using the subscriber's <code>topic_name()</code>) if it doesn't already exist. This is a safety measure; ideally, publishers manage their topics.</li>
-<li>Create or update a Pub/Sub <strong>subscription</strong> (using <code>subscription_name()</code>) to that topic.</li>
-<li>Configure the subscription to PUSH messages via HTTP to a Django endpoint specific to that <code>SubscriberTask</code> (derived from <code>subscription_url()</code>).</li>
-<li>Enable OIDC authentication by default for these push requests (see <code>_use_oidc_auth</code> customization).</li>
-<li>Apply other subscription settings like retry policies, dead-letter topics, and filters if customized on the task class.</li>
+<li><strong>Initiation:</strong> Your application code calls <code>YourPublisher.sync(message, attributes)</code>.</li>
+<li><strong>Direct Call:</strong> The <code>django-cloud-tasks</code> library directly invokes the Google Cloud Pub/Sub API to publish the provided message and attributes.</li>
+<li><strong>Acknowledgment:</strong> Google Cloud Pub/Sub acknowledges the receipt of the message.</li>
+<li><strong>Return:</strong> The <code>sync()</code> method returns. This operation is blocking.</li>
+</ol>
+<h3 id="asynchronous-publishing-flow">Asynchronous Publishing Flow<a class="headerlink" href="#asynchronous-publishing-flow" title="Permanent link">&para;</a></h3>
+<p>This is the recommended approach for scenarios like web requests where you don't want to block the main process.</p>
+<p>Publishing is offloaded to a background task via Google Cloud Tasks.</p>
+<p>You can perform this operation by calling <code>YourPublisher.asap(message, attributes)</code>.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant App as Django App
+    participant DCT as django-cloud-tasks
+    participant GCT as Google Cloud Tasks
+    participant GPS as Google Cloud Pub/Sub
+
+    App-&gt;&gt;DCT: User calls YourPublisher.asap(msg, attrs) (Request Context)
+    DCT-&gt;&gt;GCT: Enqueues task (target: DjangoApp's task handler endpoint)
+    GCT--&gt;&gt;DCT: Acknowledges task creation
+    DCT--&gt;&gt;App: Returns immediately (task enqueued)
+
+    GCT-&gt;&gt;DCT: Invokes Task Handler endpoint (Task Handler Context)
+    DCT-&gt;&gt;GPS: Publishes message to Pub/Sub topic
+    GPS--&gt;&gt;DCT: Acknowledges publish
+    DCT--&gt;&gt;GCT: Task Acknowledged (e.g., HTTP 2xx response)</code></pre>
+<p><strong>Steps for Asynchronous Publishing:</strong></p>
+<ol>
+<li><strong>Initiation (Django App - Request Context):</strong> Your application code (e.g., in a Django view) calls <code>YourPublisher.asap(message, attributes)</code> using the <code>django-cloud-tasks</code> library.</li>
+<li><strong>Task Creation (django-cloud-tasks Library):</strong> The library code within your <code>DjangoApp</code> constructs a request to the <code>Google Cloud Tasks</code> service. This request defines a new task, specifying the payload (your message and attributes) and the target (an HTTP endpoint within your own <code>DjangoApp</code> designated for processing these publish tasks).</li>
+<li><strong>Enqueueing (Google Cloud Tasks Service):</strong> The <code>Google Cloud Tasks</code> service receives the request, creates the task, and stores it in a queue. It then acknowledges task creation back to the <code>django-cloud-tasks</code> library.</li>
+<li><strong>Immediate Return (Django App - Request Context):</strong> The <code>asap()</code> method in your application code returns quickly to the caller (e.g., your Django view), as its primary job (enqueueing the task) is complete. The actual publishing happens in the background.</li>
+<li><strong>Task Invocation (Google Cloud Tasks Service to Django App - Task Handler Context):</strong> At a later time, the <code>Google Cloud Tasks</code> service dequeues the task and invokes the target handler endpoint in your <code>DjangoApp</code>. This is an HTTP POST request to a specific URL in your application (e.g., handled by <code>django_cloud_tasks.views.ProcessCloudTaskView</code>).</li>
+<li><strong>Message Publishing (Django App - Task Handler Context using django-cloud-tasks Library):</strong> The task handler code within your <code>DjangoApp</code> (specifically, the <code>django-cloud-tasks</code> view that processes the task) extracts the message and attributes from the task payload. It then re-uses the <code>django-cloud-tasks</code> library's internal publishing logic to send the message to the <code>Google Cloud Pub/Sub</code> service.</li>
+<li><strong>Pub/Sub Acknowledgment (Google Cloud Pub/Sub to django-cloud-tasks Library):</strong> <code>Google Cloud Pub/Sub</code> receives the message, stores it, and acknowledges its receipt back to the <code>django-cloud-tasks</code> publishing logic running within your task handler.</li>
+<li><strong>Task Completion (Django App - Task Handler Context to Google Cloud Tasks Service):</strong> After successfully publishing to Pub/Sub, your task handler (via the <code>django-cloud-tasks</code> library) returns an HTTP 2xx success response to the <code>Google Cloud Tasks</code> service. This acknowledges that the task has been completed successfully, and <code>Google Cloud Tasks</code> will not attempt to retry it.</li>
+</ol>
+<h3 id="subscription-flow">Subscription Flow<a class="headerlink" href="#subscription-flow" title="Permanent link">&para;</a></h3>
+<p>Once a message is in Pub/Sub, the delivery to subscribers happens as follows (assuming a push subscription, which is the default for <code>django-cloud-tasks</code>):</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant GPS as Google Cloud Pub/Sub
+    participant DCT as django-cloud-tasks
+    participant App as Django App
+
+    GPS-&gt;&gt;DCT: HTTP POST to Push Endpoint
+    DCT-&gt;&gt;DCT: Validates request (e.g., OIDC token)
+    DCT-&gt;&gt;App: Finds &amp; calls YourSubscriberTask.run
+    App-&gt;&gt;App: Executes user's task logic
+    App--&gt;&gt;DCT: Returns result/status
+    DCT--&gt;&gt;GPS: HTTP 2xx Acknowledgment (if successful)</code></pre>
+<p><strong>Steps for Subscription Flow:</strong></p>
+<ol>
+<li><strong>Message Delivery:</strong> When a message is published to a topic, Google Cloud Pub/Sub identifies all subscriptions for that topic. For push subscriptions, Pub/Sub sends an HTTP POST request.</li>
+<li><strong>Push Endpoint:</strong> This request is sent to a unique URL generated by <code>django-cloud-tasks</code> for each <code>SubscriberTask</code> (e.g., <code>/_tasks/pubsub/MyApp--MySubscriberTaskName/</code>). This endpoint is handled by <code>django_cloud_tasks.views.ProcessPubSubPushView</code>.</li>
+<li><strong>Request Handling by <code>django-cloud-tasks</code>:</strong><ul>
+<li>Receives the incoming HTTP request.</li>
+<li>Validates the request, typically by checking an OIDC token attached by Google Pub/Sub to ensure authenticity (i.e., that the request genuinely came from Pub/Sub for that specific subscription).</li>
+<li>Extracts the message content (deserialized from JSON by default) and attributes.</li>
+</ul>
+</li>
+<li><strong>User Task Execution:</strong><ul>
+<li>The library identifies the correct <code>SubscriberTask</code> class based on the URL.</li>
+<li>It instantiates the task and calls its <code>run(content, attributes)</code> method, passing the deserialized message.</li>
+</ul>
+</li>
+<li><strong>Acknowledgment to Pub/Sub:</strong><ul>
+<li>If your <code>run()</code> method completes successfully (i.e., doesn't raise an unhandled exception), <code>django-cloud-tasks</code> returns an HTTP 2xx status code (e.g., 200 OK or 204 No Content) back to Google Cloud Pub/Sub.</li>
+<li>This 2xx response acknowledges that the message has been successfully processed. Pub/Sub will then not attempt to redeliver it.</li>
+<li>If your <code>run()</code> method raises an exception, or if the endpoint returns a non-2xx status (e.g., 500), Pub/Sub will consider the message delivery failed and will attempt to redeliver it according to the subscription's configured retry policy.</li>
 </ul>
 </li>
 </ol>
-<p>The command will output <code>[+]</code>, <code>[~]</code>, <code>[-]</code> for added, updated, or (less commonly) deleted subscriptions.</p>
-<p><strong>When to run <code>initialize_subscribers</code>?</strong>
-Run this as part of your deployment process, especially when you add new <code>SubscriberTask</code>s or change their subscription configurations (like <code>topic_name</code>, <code>filter</code>, retry policies, etc.).</p>
-<h2 id="customizing-publishers">Customizing Publishers</h2>
-<h3 id="custom-topic-names-for-publishers">Custom Topic Names for Publishers</h3>
+<p>This overall flow leverages Google Cloud's infrastructure for reliable, at-least-once message delivery.</p>
+<h2 id="advanced-pubsub-configuration">Advanced Pub/Sub Configuration<a class="headerlink" href="#advanced-pubsub-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="custom-topic-names">Custom Topic Names<a class="headerlink" href="#custom-topic-names" title="Permanent link">&para;</a></h3>
 <p>For both <code>PublisherTask</code> and <code>ModelPublisherTask</code>, you can override <code>topic_name(cls, ...)</code> for more control.</p>
-<pre><code class="language-python">class LegacySystemEventPublisher(PublisherTask):
-    @classmethod
-    def topic_name(cls) -&gt; str:
-        # Overrides the default naming based on class name
-        return &quot;legacy-integration-bus&quot;
-
-# For ModelPublisherTask, topic_name can also use the object
-class ProductUpdateToSpecificChannel(ModelPublisherTask):
-    @classmethod
-    def topic_name(cls, obj: models.Model, **kwargs) -&gt; str:
-        product = obj
-        # Example: route product updates to different topics based on category
-        if product.category == &quot;electronics&quot;:
-            return &quot;product-updates-electronics&quot;
-        return &quot;product-updates-general&quot;
-    # ... build_message_content and build_message_attributes ...
-</code></pre>
+<div class="language-py highlight"><span class="filename">publishers.py</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span> <span class="c1"># Assuming you&#39;re using models with ModelPublisherTask</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PublisherTask</span><span class="p">,</span> <span class="n">ModelPublisherTask</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">LegacySystemEventPublisher</span><span class="p">(</span><span class="n">PublisherTask</span><span class="p">):</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="k">return</span> <span class="s2">&quot;legacy-integration-bus&quot;</span> <span class="c1"># (1)!</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1"># For ModelPublisherTask, topic_name can also use the object</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="k">class</span><span class="w"> </span><span class="nc">ProductUpdateToSpecificChannel</span><span class="p">(</span><span class="n">ModelPublisherTask</span><span class="p">):</span> <span class="c1"># (2)!</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="c1"># (3)!</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">product</span> <span class="o">=</span> <span class="n">obj</span> <span class="c1"># Type hint as Product if needed</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="k">if</span> <span class="n">product</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="s2">&quot;electronics&quot;</span><span class="p">:</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>            <span class="k">return</span> <span class="s2">&quot;product-updates-electronics&quot;</span>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>        <span class="k">return</span> <span class="s2">&quot;product-updates-general&quot;</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="c1"># Remember to implement build_message_content and build_message_attributes</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_message_content</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="c1"># Replace with actual implementation</span>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;product_id&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)}</span>
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_message_attributes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>        <span class="c1"># Replace with actual implementation</span>
+</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)}</span>
+</span></code></pre></div>
+<ol>
+<li>Overrides the default naming (based on class name) to a fixed, custom topic name.</li>
+<li>This example demonstrates dynamically choosing a topic based on the model's data.</li>
+<li>When <code>ModelPublisherTask.topic_name</code> accepts an <code>obj</code> argument, it can tailor the topic per instance.</li>
+</ol>
 <p>Remember that if <code>DJANGO_CLOUD_TASKS_APP_NAME</code> is set, it will still be prefixed unless your override includes it or is absolute.</p>
-<h2 id="customizing-subscribers">Customizing Subscribers</h2>
-<p><code>SubscriberTask</code> offers several attributes and methods for fine-tuning the GCP Pub/Sub subscription.</p>
-<h3 id="custom-subscription-name-subscription_name">Custom Subscription Name (<code>subscription_name</code>)</h3>
+<h3 id="custom-subscription-name">Custom Subscription Name<a class="headerlink" href="#custom-subscription-name" title="Permanent link">&para;</a></h3>
 <p>While default naming is usually fine, you can override <code>subscription_name()</code> if needed, similar to <code>schedule_name</code> for periodic tasks.</p>
-<h3 id="custom-subscription-url-subscription_url">Custom Subscription URL (<code>subscription_url</code>)</h3>
+<h3 id="custom-subscription-url">Custom Subscription URL<a class="headerlink" href="#custom-subscription-url" title="Permanent link">&para;</a></h3>
 <p>This is rarely needed, as the default URL points to the correct handler in <code>django-cloud-tasks</code>. Overriding this means you're pointing Pub/Sub to a custom endpoint you've built.</p>
-<h3 id="oidc-authentication-for-push-endpoint-_use_oidc_auth">OIDC Authentication for Push Endpoint (<code>_use_oidc_auth</code>)</h3>
+<h3 id="oidc-authentication">OIDC Authentication<a class="headerlink" href="#oidc-authentication" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Class attribute <code>_use_oidc_auth: bool = True</code>.</li>
 <li>Controls if the Pub/Sub push subscription expects Google to send an OIDC token for authentication. Generally, keep this <code>True</code> if your Django app runs on a service like Cloud Run that can validate these tokens.</li>
 </ul>
-<h3 id="subscription-retry-policy-message-acknowledgement-deadline-backoff">Subscription Retry Policy (Message Acknowledgement Deadline &amp; Backoff)</h3>
+<h3 id="subscription-retry-policy">Subscription Retry Policy<a class="headerlink" href="#subscription-retry-policy" title="Permanent link">&para;</a></h3>
 <p>These settings on your <code>SubscriberTask</code> class map to the Pub/Sub subscription's message delivery retry configuration. They define how Pub/Sub handles messages if your endpoint doesn't acknowledge them (e.g., returns an error or times out).</p>
 <ul>
 <li><strong><code>max_retries: int | None = UNSET</code></strong>: Maximum delivery attempts before sending to a dead-letter topic (if configured). Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MAX_RETRIES</code> or GCP default.</li>
 <li><strong><code>min_backoff: int | None = UNSET</code></strong>: Minimum delay (in seconds) Pub/Sub waits before redelivering an unacknowledged message. Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MIN_BACKOFF</code> or GCP default (typically 10s).</li>
 <li><strong><code>max_backoff: int | None = UNSET</code></strong>: Maximum delay (in seconds) for redelivery. Defaults to global <code>DJANGO_CLOUD_TASKS_SUBSCRIBER_MAX_BACKOFF</code> or GCP default (typically 600s).</li>
 </ul>
-<pre><code class="language-python">class TimeSensitiveAlertSubscriber(SubscriberTask):
-    topic_name = &quot;critical-alerts&quot;
-    min_backoff = 5    # Retry quickly for these alerts, minimum 5 seconds
-    max_backoff = 60   # But don't wait too long, max 1 minute
-    max_retries = 3    # Only try 3 times before considering it failed (e.g., for dead-lettering)
-
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f&quot;Processing time-sensitive alert: {content}&quot;)
-        # ... alert processing ...
-</code></pre>
-<h3 id="dead-letter-topics-dltdlq">Dead Letter Topics (DLT/DLQ)</h3>
-<p>If a message consistently fails processing after configured retries, Pub/Sub can forward it to a Dead Letter Topic (DLT), effectively a Dead Letter Queue (DLQ).</p>
+<div class="language-py highlight"><span class="filename">subscribers.py</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubscriberTask</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">UNSET</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">TimeSensitiveAlertSubscriber</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">_use_oidc_auth</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># Ensure OIDC token is expected</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">max_retries</span> <span class="o">=</span> <span class="mi">5</span>         <span class="c1"># (1)!</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">min_backoff</span> <span class="o">=</span> <span class="mi">20</span>        <span class="c1"># (2)!</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">max_backoff</span> <span class="o">=</span> <span class="mi">120</span>       <span class="c1"># (3)!</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="k">return</span> <span class="s2">&quot;critical-alerts&quot;</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>        <span class="c1"># Process time-sensitive alert</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing alert: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="c1"># ...</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;alert_processed&quot;</span><span class="p">}</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="c1"># Example of using a dead-letter topic</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="k">class</span><span class="w"> </span><span class="nc">ImportantEventSubscriber</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="n">dead_letter_topic_name</span> <span class="o">=</span> <span class="s2">&quot;failed-important-events&quot;</span> <span class="c1"># (4)!</span>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>    <span class="c1"># dead_letter_subscription_name = &quot;my-app--custom-dlt-sub-for-important-events&quot; # (5)!</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>    <span class="n">max_retries</span> <span class="o">=</span> <span class="mi">3</span> <span class="c1"># (6)!</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>        <span class="k">return</span> <span class="s2">&quot;important-events&quot;</span>
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>        <span class="c1"># Process important event</span>
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>        <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;problem&quot;</span><span class="p">:</span> <span class="c1"># Simulate a processing failure</span>
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Simulated processing error for important event&quot;</span><span class="p">)</span>
+</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing event: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-7-35"><a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;event_processed&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li>Attempt message delivery up to 5 times.</li>
+<li>Wait at least 20 seconds before the first retry.</li>
+<li>Cap the maximum delay between retries to 120 seconds.</li>
+<li>If message processing fails after <code>max_retries</code> (3 in this case), it will be sent to the Pub/Sub topic named <code>failed-important-events</code> (prefixed by <code>DJANGO_CLOUD_TASKS_APP_NAME</code> if set).</li>
+<li>Optionally, specify a custom name for the dead-letter <em>subscription</em> itself. If not set, a default name will be generated.</li>
+<li>Try processing up to 3 times before the message is eligible for the dead-letter topic.</li>
+</ol>
+<h3 id="dead-letter-topics">Dead Letter Topics<a class="headerlink" href="#dead-letter-topics" title="Permanent link">&para;</a></h3>
+<p>If a message consistently fails processing after configured retries, Pub/Sub can forward it to a Dead Letter Topic (DLT). This is crucial for ensuring that problematic messages don't get stuck in an infinite retry loop and can be investigated later.</p>
 <ul>
-<li><strong><code>dead_letter_topic_name(cls) -&gt; str | None</code></strong>: Override to return the <em>base name</em> of the DLT. If <code>None</code> (default), no DLT is used for this subscriber.</li>
-<li><strong><code>dead_letter_subscription_name(cls) -&gt; str</code></strong>: Name for the subscription to the DLT (often just the DLT name).</li>
+<li><strong><code>dead_letter_topic_name: str | None = None</code></strong>: The base name of the Pub/Sub topic to use as a DLT. If set, <code>django-cloud-tasks</code> will configure the main subscription to send messages here after <code>max_retries</code> have been exhausted. The actual DLT name in GCP will be prefixed by <code>DJANGO_CLOUD_TASKS_APP_NAME</code> if configured.</li>
+<li><strong><code>dead_letter_subscription_name: str | None = None</code></strong>: Optionally, specify a custom name for the subscription that <code>django-cloud-tasks</code> creates for the dead-letter topic. If not provided, a default name is generated. This subscription is just a way to inspect messages in the DLT; you might also have a separate <code>SubscriberTask</code> listening to this DLT for automated processing or alerting.</li>
 </ul>
-<p>The <code>initialize_subscribers</code> command will attempt to set up the DLT and necessary permissions if you configure this. You'll need a separate process or subscriber to monitor and handle messages in the DLT.</p>
-<pre><code class="language-python">class PaymentProcessingSubscriber(SubscriberTask):
-    topic_name = &quot;payment-requests&quot;
-    max_retries = 5 # After 5 failed attempts, send to DLT
-
-    @classmethod
-    def dead_letter_topic_name(cls) -&gt; str | None:
-        return &quot;payment-requests-failed&quot; # Base name for the DLT
-
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        # ... process payment ...
-        # if permanent_failure_condition(content):
-        #     raise DiscardTaskException() # To prevent retries and avoid DLT for known bad messages
-        pass
-</code></pre>
-<h3 id="message-filtering-subscription_filter">Message Filtering (<code>subscription_filter</code>)</h3>
-<p>Pub/Sub allows subscriptions to specify a filter, so the subscription only receives messages whose attributes match the filter. This can reduce the number of messages your subscriber task needs to process.</p>
+<p>The <code>initialize_subscribers</code> command will attempt to create the dead-letter topic if it doesn't exist and grant the necessary permissions for the Pub/Sub service account to publish to it.</p>
+<h3 id="message-filtering">Message Filtering<a class="headerlink" href="#message-filtering" title="Permanent link">&para;</a></h3>
+<p>Pub/Sub allows subscriptions to specify a filter, so the subscription only receives messages whose attributes match the filter. This can reduce the number of messages your subscriber task needs to process and can be more efficient than filtering in your task's <code>run</code> method.</p>
 <ul>
-<li><strong><code>subscription_filter(cls) -&gt; str | None</code></strong>: Return a filter string based on <a href="https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax">Pub/Sub filter syntax</a>.</li>
+<li><strong><code>subscription_filter: str | None = None</code></strong>: A class attribute. Set this to a filter string according to the <a href="https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax">Pub/Sub filter syntax</a>.</li>
 </ul>
-<pre><code class="language-python">class HighPriorityOrderSubscriber(SubscriberTask):
-    topic_name = &quot;sales-order&quot; # Subscribes to the same topic as OrderNotificationHandler
-
-    @classmethod
-    def subscription_filter(cls) -&gt; str | None:
-        # Only receive messages where the 'priority' attribute is 'high'
-        return 'attributes.priority = &quot;high&quot;'
-
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f&quot;Processing HIGH PRIORITY order: {content.get('order_id')}&quot;)
-        # ... specialized high-priority handling ...
-</code></pre>
-<h3 id="custom-message-parsing-message_parser">Custom Message Parsing (<code>message_parser</code>)</h3>
+<div class="language-py highlight"><span class="filename">subscribers.py</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubscriberTask</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">FilteredEventSubscriber</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="c1"># Example: attributes.eventType = &quot;user_signup&quot; OR attributes.priority = &#39;high&#39;</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">subscription_filter</span> <span class="o">=</span> <span class="s1">&#39;attributes.event_type = &quot;user_signup&quot; OR attributes.event_type = &quot;user_delete&quot;&#39;</span>  <span class="c1"># (1)!</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">return</span> <span class="s2">&quot;generic-user-events&quot;</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">event_type</span> <span class="o">=</span> <span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;event_type&quot;</span><span class="p">)</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing filtered event of type &#39;</span><span class="si">{</span><span class="n">event_type</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="c1"># ... logic for user_signup or user_delete events</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">event_type</span><span class="si">}</span><span class="s2">_processed&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li>This filter string tells Pub/Sub to only deliver messages that have an <code>event_type</code> attribute of either <code>"user_signup"</code> or <code>"user_delete"</code>. The filter is applied by GCP Pub/Sub before delivering the message.</li>
+</ol>
+<h3 id="custom-message-parser">Custom Message Parser<a class="headerlink" href="#custom-message-parser" title="Permanent link">&para;</a></h3>
+<p>By default, <code>SubscriberTask</code> expects the Pub/Sub message data to be a JSON-encoded string (UTF-8). If your messages are published in a different format (e.g., plain text, Avro, Protobuf), you can provide a custom static method to parse the raw message body.</p>
 <ul>
-<li><strong><code>message_parser(cls) -&gt; Callable</code></strong>: A callable used to parse the raw message body received from Pub/Sub. Defaults to <code>json.loads</code>.</li>
-<li>You'd only override this if your publishers are sending non-JSON messages (e.g., raw text, protobuf), which is less common when using this library's <code>PublisherTask</code> which serializes to JSON.</li>
+<li><strong><code>message_parser(data: bytes, attributes: dict[str, str] | None = None) -&gt; TypedMessage</code></strong>: A <code>staticmethod</code> on your <code>SubscriberTask</code> class.<ul>
+<li>It receives the raw message <code>data</code> as <code>bytes</code> and the message <code>attributes</code>.</li>
+<li>It should return an instance of <code>django_cloud_tasks.typed_message_sender.TypedMessage</code>. The <code>content</code> field of this <code>TypedMessage</code> can be any Python object (e.g., a Pydantic model, a dictionary, a custom class instance).</li>
+<li>The <code>run</code> method of your task will then receive this parsed object as its <code>content</code> argument.</li>
 </ul>
+</li>
+</ul>
+<div class="language-py highlight"><span class="filename">subscribers.py</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span> <span class="c1"># Or your custom deserialization library</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubscriberTask</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_cloud_tasks.typed_message_sender</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedMessage</span> <span class="c1"># (1)!</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Assume this Pydantic model is defined elsewhere, e.g., in schemas.py</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># from pydantic import BaseModel, Field</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># from typing import Literal</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># class UserActivity(BaseModel):</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1">#     user_id: int</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1">#     activity_type: Literal[&quot;login&quot;, &quot;logout&quot;, &quot;post_comment&quot;]</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1">#     timestamp: str # ISO format string</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="k">class</span><span class="w"> </span><span class="nc">PydanticMessageSubscriber</span><span class="p">(</span><span class="n">SubscriberTask</span><span class="p">):</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="nd">@classmethod</span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">topic_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>        <span class="k">return</span> <span class="s2">&quot;user-activity-stream&quot;</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="nd">@staticmethod</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">message_parser</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypedMessage</span><span class="p">:</span> <span class="c1"># (2)!</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>        <span class="c1"># from .schemas import UserActivity # Assuming UserActivity is in schemas.py</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>        <span class="c1"># For this example, we&#39;ll use a simple dict instead of a Pydantic model</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>        <span class="c1"># to avoid adding a Pydantic dependency just for this example.</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>        <span class="c1"># In a real scenario, you would parse into your Pydantic model here:</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>        <span class="c1"># parsed_content = UserActivity.model_validate_json(data.decode(&quot;utf-8&quot;))</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>        <span class="c1"># return TypedMessage(content=parsed_content, attributes=attributes)</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>        <span class="c1"># Simple dictionary parsing for example purposes</span>
+</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>        <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span> <span class="c1"># (3)!</span>
+</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>        <span class="k">return</span> <span class="n">TypedMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attributes</span><span class="p">)</span> <span class="c1"># (4)!</span>
+</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>
+</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> <span class="c1"># (5)!</span>
+</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>        <span class="c1"># If using Pydantic: user_activity: UserActivity = content</span>
+</span><span id="__span-9-33"><a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>        <span class="c1"># Now &#39;content&#39; is whatever your message_parser returned (e.g., a UserActivity instance or dict here)</span>
+</span><span id="__span-9-34"><a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>        <span class="c1"># print(f&quot;Processing Pydantic model: User {user_activity.user_id} did {user_activity.activity_type}&quot;)</span>
+</span><span id="__span-9-35"><a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing parsed message: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-9-36"><a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;parsed_message_processed&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li><code>TypedMessage</code> is a simple data structure (<code>NamedTuple</code>) provided by the library to hold the parsed <code>content</code> and original <code>attributes</code>.</li>
+<li>Define <code>message_parser</code> as a <code>staticmethod</code> that takes <code>bytes</code> and returns <code>TypedMessage</code>.</li>
+<li>Decode the <code>bytes</code> (e.g., from UTF-8) and parse it (e.g., using <code>json.loads</code> or a Pydantic model's <code>model_validate_json</code>).</li>
+<li>Return a <code>TypedMessage</code> instance. The <code>content</code> attribute can be any Python object.</li>
+<li>The <code>run</code> method's <code>content</code> argument will now be the object that was in <code>TypedMessage.content</code> (e.g., a dictionary in this example, or an instance of <code>UserActivity</code> if you were using Pydantic).</li>
+</ol>
+<p>This provides a powerful way to integrate with diverse message formats and leverage strong typing within your subscriber logic.</p>
 <p>This event-driven model using Pub/Sub provides a robust and scalable way to build decoupled applications where services can communicate and react to events without direct dependencies. </p>
-              
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../scheduled_tasks/" class="btn btn-neutral float-left" title="Scheduled Tasks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../headers/" class="btn btn-neutral float-right" title="Header Propagation">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
           
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
-      </div>
-
-    </section>
-
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-    
-      <span><a href="../scheduled_tasks/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../headers/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
 </div>
-    <script src="../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "..";</script>
-    <script src="../js/theme_extra.js"></script>
-    <script src="../js/theme.js"></script>
-      <script src="../search/main.js"></script>
-    <script>
-        jQuery(function () {
-            SphinxRtdTheme.Navigation.enable(true);
-        });
-    </script>
-
-</body>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate", "content.code.copy", "navigation.instant", "navigation.sections", "toc.integrate", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
 </html>
