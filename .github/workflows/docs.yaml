@@ -26,7 +26,7 @@ jobs:
           python-version: 3.13
       - run: pip install uv
       - run: uv sync --group docs
-      - run: mkdocs gh-deploy --force
+      - run: uv run mkdocs gh-deploy --force
 
   deploy_mkdocs:
     needs: build_mkdocs
