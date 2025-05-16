@@ -21,9 +21,8 @@ Powered by [GCP Pilot](https://github.com/flamingo-run/gcp-pilot).
 ### Installation
 
 ```bash
-pip install django-cloud-tasks
+pip install django-google-cloud-tasks
 ```
-*(Note: The original README mentioned `django-google-cloud-tasks`, but the project seems to be `django-cloud-tasks`. Assuming `django-cloud-tasks` is the correct package name as used in `INSTALLED_APPS` and the CNAME).*
 
 ### Django Setup
 
