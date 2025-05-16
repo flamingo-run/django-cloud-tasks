@@ -1,7 +1,9 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/django-google-cloud-tasks)
+
 ![Github CI](https://github.com/flamingo-run/django-cloud-tasks/workflows/Github%20CI/badge.svg)
 [![Maintainability](https://qlty.sh/badges/4c0e2685-e6a9-4dbe-b23d-15f666a98d1d/maintainability.svg)](https://qlty.sh/gh/flamingo-run/projects/django-cloud-tasks)
 [![Code Coverage](https://qlty.sh/badges/4c0e2685-e6a9-4dbe-b23d-15f666a98d1d/test_coverage.svg)](https://qlty.sh/gh/flamingo-run/projects/django-cloud-tasks)
+
 [![python](https://img.shields.io/badge/python-3.11-blue.svg)]()
 [![python](https://img.shields.io/badge/python-3.12-blue.svg)]()
 [![python](https://img.shields.io/badge/python-3.13-blue.svg)]()
