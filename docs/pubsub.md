@@ -1,8 +1,10 @@
-# Publishing & Subscribing (Google Cloud Pub/Sub)
+# Publishing & Subscribing
 
-Django Cloud Tasks seamlessly integrates with Google Cloud Pub/Sub, enabling you to build powerful event-driven architectures. You can publish messages to Pub/Sub topics when something interesting happens in your application, and define subscriber tasks that react to these messages asynchronously.
+Django Cloud Tasks seamlessly integrates with Google Cloud Pub/Sub, enabling you to build powerful event-driven architectures.
 
-## Publishing Messages
+You can publish messages to Pub/Sub topics when something interesting happens in your application, and define subscriber tasks that react to these messages asynchronously.
+
+## Publishing
 
 Messages are published to specific "topics." You can think of a topic as a named channel for a certain category of events (e.g., "user-signups", "order-updates").
 
@@ -11,7 +13,7 @@ There are two main base classes for creating publishers:
 1.  **`PublisherTask`**: For publishing general-purpose dictionary-based messages.
 2.  **`ModelPublisherTask`**: A specialized helper for easily publishing messages related to Django model instance events (e.g., when a model is created, updated, or deleted).
 
-### 1. Basic Publisher: `PublisherTask`
+### Basic Publisher
 
 Inherit from `PublisherTask` to define a generic message publisher. The primary method to override is `topic_name()`.
 
@@ -19,96 +21,104 @@ Inherit from `PublisherTask` to define a generic message publisher. The primary 
 
 Let's say we want to publish an event whenever a critical user action occurs, like a password change or profile update.
 
-```python
-# In your app's tasks.py or a dedicated publishers.py file
-
+```py title="publishers.py"
 from django_cloud_tasks.tasks import PublisherTask
 
 class UserActionEventPublisher(PublisherTask):
     @classmethod
     def topic_name(cls) -> str:
-        # This will be the base name for your topic.
-        # The final name in GCP might be prefixed (see "Topic Naming" below).
-        return "user-actions"
+        return "user-actions" # (1)!
 
-# --- How to use it ---
-# In your views.py, after a user successfully changes their password:
-# user = request.user
-# event_payload = {
-#     "user_id": user.id,
-#     "action_type": "password_changed",
-#     "ip_address": get_client_ip(request), # A helper function to get IP
-#     "timestamp": timezone.now().isoformat()
-# }
-# UserActionEventPublisher.asap(message=event_payload, attributes={"priority": "high"})
-
-# Or publish synchronously (e.g., for tests or if DJANGO_CLOUD_TASKS_EAGER = True):
-# UserActionEventPublisher.sync(message=event_payload, attributes={"source": "test_suite"})
 ```
 
-**How to run `PublisherTask`:**
-*   `YourPublisher.asap(message: dict, attributes: dict[str, str] | None = None)`: Enqueues the publishing action itself as an on-demand task (via Cloud Tasks) to publish the message to Pub/Sub. This makes the HTTP request that publishes the message asynchronous.
-*   `YourPublisher.sync(message: dict, attributes: dict[str, str] | None = None)`: Directly publishes the message to Pub/Sub in the current process.
+1.  The base name for the Pub/Sub topic. The final topic name in GCP might be prefixed (e.g., `my-app--user-actions`).
 
-### 2. Model-Specific Publisher: `ModelPublisherTask`
+Then, you can use it in any part of your codebase (e.g., in views or signals):
 
-This class is incredibly useful when the event you want to publish is directly tied to a Django model instance (e.g., an `Order` was created, an `Article` was updated).
+```py title="views.py"
+from django.utils import timezone
+from .publishers import UserActionEventPublisher # Assuming this file is publishers.py
+
+def my_view(request):
+    user = request.user
+    event_payload = {
+        "user_id": user.id,
+        "action_type": "password_changed",
+        # "ip_address": get_client_ip(request), # A helper function to get IP
+        "timestamp": timezone.now().isoformat()
+    }
+    UserActionEventPublisher.asap(
+        message=event_payload,
+        attributes={"priority": "high"},
+    )
+    # ... rest of view logic ...
+```
+
+!!! info "Publishing Modes"
+
+    There are two main modes for publishing messages:
+
+    *   **Asynchronous Publishing (`asap`)**: The message is published asynchronously via Google Cloud Tasks. This is the recommended approach for most use cases.
+    *   **Synchronous Publishing (`sync`)**: The message is published synchronously in the current process. This is not recommended for most use cases, but can be useful for certain scenarios.
+
+
+### Model Publisher
+
+Inherit from `ModelPublisherTask` to define a message publisher that is specifically tied to a Django model instance.
+
+!!! tip "Useful for Model Instances"
+    This class is incredibly useful when the event you want to publish is directly tied to a Django model instance (e.g. notifying that a model has been created, updated, or deleted).
 
 **Example: Publishing Order Creation Events**
 
-```python
-# In your app's tasks.py or publishers.py
-# Assuming you have an Order model: models.py
-# class Order(models.Model):
-#     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     status = models.CharField(max_length=50, default="pending")
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-from django.db import models # Your Django models
+```py title="publishers.py"
 from django_cloud_tasks.tasks import ModelPublisherTask
+from .models import Order # Assuming Order model is in models.py
 
 class OrderCreatedEvent(ModelPublisherTask):
     @classmethod
     def build_message_content(cls, obj: models.Model, **kwargs) -> dict:
-        # obj is an instance of your Django model (e.g., an Order instance)
-        # kwargs can receive any extra arguments passed to asap(), sync(), etc.
-        order = obj # Explicitly cast/type hint if needed
+        order = obj # Type hint as Order if needed: order: Order = obj
         return {
             "order_id": str(order.order_id),
             "user_id": order.user_id,
-            "total_amount": float(order.total_amount), # Pub/Sub prefers basic JSON types
+            "total_amount": float(order.total_amount), # (1)!
             "status": order.status,
             "created_at_iso": order.created_at.isoformat(),
-            "campaign_source": kwargs.get("campaign_source") # Example of using an extra kwarg
+            "campaign_source": kwargs.get("campaign_source") # (2)!
         }
 
     @classmethod
     def build_message_attributes(cls, obj: models.Model, **kwargs) -> dict[str, str]:
-        order = obj
+        order = obj # Type hint as Order if needed
         return {
             "event_type": "order_created",
-            "customer_segment": "retail", # Example attribute
+            "customer_segment": "retail",
             "region": kwargs.get("region", "unknown")
         }
-
-    # topic_name() by default uses the model's app_label and model_name (e.g., "myapp-order")
-    # You can override it if needed (see "Customizing Publishers" below).
-
-# --- How to use it ---
-# After an order instance is created and saved:
-# new_order = Order.objects.create(user=request.user, total_amount=cart.total, ...)
-
-# Publish ASAP:
-# OrderCreatedEvent.asap(obj=new_order, campaign_source="spring_sale", region="emea")
-
-# Or, to ensure the message is sent ONLY if the current database transaction commits successfully:
-# from django.db import transaction
-# with transaction.atomic():
-#     new_order.save() # Or new_order.objects.create(...)
-#     OrderCreatedEvent.sync_on_commit(obj=new_order, campaign_source="newsletter")
 ```
+
+1.  Pub/Sub message content should ideally use basic JSON-serializable types.
+2.  Extra keyword arguments passed to `asap()`, `sync()`, or `sync_on_commit()` are available in `build_message_content` and `build_message_attributes`.
+3.  `sync_on_commit` ensures the message is published only if the surrounding database transaction commits successfully.
+
+Then, you can use it in any part of your codebase (e.g., in signals):
+
+```py title="signals.py"
+from django.db import transaction
+from .publishers import OrderCreatedEvent
+from .models import Order
+
+def order_created_handler(sender, instance, created, **kwargs):
+    if created:
+        OrderCreatedEvent.asap(
+            obj=instance,
+            campaign_source="spring_sale",
+            region="emea"
+        )
+    # ... rest of signal logic ...
+```
+
 
 **Key methods for `ModelPublisherTask`:**
 
@@ -123,56 +133,45 @@ class OrderCreatedEvent(ModelPublisherTask):
 *   **Global Prefixing:** If `DJANGO_CLOUD_TASKS_APP_NAME` is set in your Django settings (e.g., to `"my-ecom-service"`), this name, along with the `DJANGO_CLOUD_TASKS_DELIMITER` (default `"--"`), will be **prepended** to the base topic name. So, `UserActionEventPublisher` could become `my-ecom-service--UserActionEventPublisher` in GCP.
 *   This prefixing helps organize topics in GCP, especially if multiple services share a project.
 
-### Ensuring Topics Exist (`set_up`)
 
-`PublisherTask` (and by extension `ModelPublisherTask`) has a `set_up()` class method. Calling `YourPublisherTask.set_up()` will attempt to create the Pub/Sub topic in GCP if it doesn't already exist.
+## Subscribing
 
-```python
-# You might call this in an AppConfig.ready() or a custom management command
-# UserActionEventPublisher.set_up()
-# OrderCreatedEvent.set_up() # For ModelPublisherTask, it uses the default topic name based on model
-```
-This does *not* set up IAM permissions for publishing; your service account running the Django app needs `pubsub.topics.publish` permission on the topic or project.
+To process messages published to a topic, you define a `SubscriberTask`.
 
-## Subscribing to Messages (`SubscriberTask`)
-
-To process messages published to a topic, you define a `SubscriberTask`. This task will be triggered via an HTTP push request from Google Cloud Pub/Sub to a dedicated endpoint in your Django application when a new message arrives on the subscribed topic.
+This task will be triggered via an HTTP push request from Google Cloud Pub/Sub to a dedicated endpoint in your Django application when a new message arrives on the subscribed topic.
 
 **Example: Processing User Action Events and Order Notifications**
 
-```python
-# In your app's tasks.py (or a dedicated subscribers.py file)
-
+```py title="subscribers.py"
 from django_cloud_tasks.tasks import SubscriberTask
-# from myapp.services import fraud_detection_service, notification_service
+
 
 class UserActionAuditor(SubscriberTask):
     @classmethod
     def topic_name(cls) -> str:
-        # This MUST match the topic name used by UserActionEventPublisher
-        return "user-actions"
+        return "user-actions" # (1)!
 
-    # The run method receives the deserialized message content and attributes
     def run(self, content: dict, attributes: dict[str, str] | None = None):
         print(f"Auditing user action: {content.get('action_type')} for user {content.get('user_id')}")
         print(f"  Attributes: {attributes}")
-        # if content.get('action_type') == 'password_changed':
-        #     fraud_detection_service.check_suspicious_login_after_password_change(content)
+        # ... rest of subscriber logic ...
         return {"status": "action_audited", "user_id": content.get('user_id')}
+
 
 class OrderNotificationHandler(SubscriberTask):
     @classmethod
     def topic_name(cls) -> str:
-        # This MUST match the topic from OrderCreatedEvent. For an Order model in 'sales' app:
-        return "sales-order" # Or your custom topic name if overridden in ModelPublisherTask
+        return "sales-order" # (2)!
 
     def run(self, content: dict, attributes: dict[str, str] | None = None):
         print(f"New order received for processing: {content.get('order_id')}")
         print(f"  Event Type (from attribute): {attributes.get('event_type')}")
-        # notification_service.send_order_confirmation_email(content.get('user_id'), content)
-        # inventory_service.reserve_stock(content.get('order_id'), ...)
+        # ... rest of subscriber logic ...
         return {"status": "order_processed", "order_id": content.get('order_id')}
 ```
+
+1.  The base topic name this subscriber listens to. Must match the `topic_name` of `UserActionEventPublisher`.
+2.  The base topic name for order-related events. Must match the `topic_name` used by `OrderCreatedEvent`.
 
 **Key elements for `SubscriberTask`:**
 
@@ -186,72 +185,180 @@ class OrderNotificationHandler(SubscriberTask):
 
 ### Setting Up and Deploying Subscriptions
 
-Defining the `SubscriberTask` class in Python doesn't automatically create the subscription in Google Cloud Pub/Sub. You need to run a management command:
+Defining the `SubscriberTask` class in Python doesn't automatically create the subscription in Google Cloud Pub/Sub. You need to run a management command to assure that the subcriptions defined in your codebase are properly reflected in GCP.
+
+Subscriptions will be created, updated, or deleted as needed.
 
 ```bash
 python manage.py initialize_subscribers
 ```
 
-**What this command does:**
+!!! tip "When to run `initialize_subscribers`?"
+    Run this as part of your deployment process, especially when you add new `SubscriberTask`s or change their subscription configurations (like `topic_name`, `filter`, retry policies, etc.).
 
-1.  Scans your project for all `SubscriberTask` classes.
-2.  For each task, it calls its `set_up()` class method.
-3.  The default `set_up()` method in `SubscriberTask` will:
-    *   Attempt to create a Pub/Sub **topic** (using the subscriber's `topic_name()`) if it doesn't already exist. This is a safety measure; ideally, publishers manage their topics.
-    *   Create or update a Pub/Sub **subscription** (using `subscription_name()`) to that topic.
-    *   Configure the subscription to PUSH messages via HTTP to a Django endpoint specific to that `SubscriberTask` (derived from `subscription_url()`).
-    *   Enable OIDC authentication by default for these push requests (see `_use_oidc_auth` customization).
-    *   Apply other subscription settings like retry policies, dead-letter topics, and filters if customized on the task class.
 
-The command will output `[+]`, `[~]`, `[-]` for added, updated, or (less commonly) deleted subscriptions.
+## How It Works Under the Hood
 
-**When to run `initialize_subscribers`?**
-Run this as part of your deployment process, especially when you add new `SubscriberTask`s or change their subscription configurations (like `topic_name`, `filter`, retry policies, etc.).
+Understanding the flow of messages from publisher to subscriber can be helpful for debugging and advanced configurations.
 
-## Customizing Publishers
 
-### Custom Topic Names for Publishers
+### Synchronous Publishing Flow
+
+In this mode, the call to publish the message to Google Cloud Pub/Sub happens directly in the process that initiated it.
+
+You can perform this operation by calling `YourPublisher.sync(message, attributes)`.
+
+```mermaid
+sequenceDiagram
+    participant App as Django App
+    participant DCT as django-cloud-tasks
+    participant GPS as Google Cloud Pub/Sub
+
+    App->>DCT: User code calls YourPublisher.sync(message, attributes)
+    DCT->>GPS: Publishes message to Pub/Sub topic
+    GPS-->>DCT: Acknowledges publish
+    DCT-->>App: Returns result
+```
+
+**Steps for Synchronous Publishing:**
+
+1.  **Initiation:** Your application code calls `YourPublisher.sync(message, attributes)`.
+2.  **Direct Call:** The `django-cloud-tasks` library directly invokes the Google Cloud Pub/Sub API to publish the provided message and attributes.
+3.  **Acknowledgment:** Google Cloud Pub/Sub acknowledges the receipt of the message.
+4.  **Return:** The `sync()` method returns. This operation is blocking.
+
+### Asynchronous Publishing Flow
+
+This is the recommended approach for scenarios like web requests where you don't want to block the main process.
+
+Publishing is offloaded to a background task via Google Cloud Tasks.
+
+You can perform this operation by calling `YourPublisher.asap(message, attributes)`.
+
+```mermaid
+sequenceDiagram
+    participant App as Django App
+    participant DCT as django-cloud-tasks
+    participant GCT as Google Cloud Tasks
+    participant GPS as Google Cloud Pub/Sub
+
+    App->>DCT: User calls YourPublisher.asap(msg, attrs) (Request Context)
+    DCT->>GCT: Enqueues task (target: DjangoApp's task handler endpoint)
+    GCT-->>DCT: Acknowledges task creation
+    DCT-->>App: Returns immediately (task enqueued)
+
+    GCT->>DCT: Invokes Task Handler endpoint (Task Handler Context)
+    DCT->>GPS: Publishes message to Pub/Sub topic
+    GPS-->>DCT: Acknowledges publish
+    DCT-->>GCT: Task Acknowledged (e.g., HTTP 2xx response)
+```
+
+**Steps for Asynchronous Publishing:**
+
+1.  **Initiation (Django App - Request Context):** Your application code (e.g., in a Django view) calls `YourPublisher.asap(message, attributes)` using the `django-cloud-tasks` library.
+2.  **Task Creation (django-cloud-tasks Library):** The library code within your `DjangoApp` constructs a request to the `Google Cloud Tasks` service. This request defines a new task, specifying the payload (your message and attributes) and the target (an HTTP endpoint within your own `DjangoApp` designated for processing these publish tasks).
+3.  **Enqueueing (Google Cloud Tasks Service):** The `Google Cloud Tasks` service receives the request, creates the task, and stores it in a queue. It then acknowledges task creation back to the `django-cloud-tasks` library.
+4.  **Immediate Return (Django App - Request Context):** The `asap()` method in your application code returns quickly to the caller (e.g., your Django view), as its primary job (enqueueing the task) is complete. The actual publishing happens in the background.
+5.  **Task Invocation (Google Cloud Tasks Service to Django App - Task Handler Context):** At a later time, the `Google Cloud Tasks` service dequeues the task and invokes the target handler endpoint in your `DjangoApp`. This is an HTTP POST request to a specific URL in your application (e.g., handled by `django_cloud_tasks.views.ProcessCloudTaskView`).
+6.  **Message Publishing (Django App - Task Handler Context using django-cloud-tasks Library):** The task handler code within your `DjangoApp` (specifically, the `django-cloud-tasks` view that processes the task) extracts the message and attributes from the task payload. It then re-uses the `django-cloud-tasks` library's internal publishing logic to send the message to the `Google Cloud Pub/Sub` service.
+7.  **Pub/Sub Acknowledgment (Google Cloud Pub/Sub to django-cloud-tasks Library):** `Google Cloud Pub/Sub` receives the message, stores it, and acknowledges its receipt back to the `django-cloud-tasks` publishing logic running within your task handler.
+8.  **Task Completion (Django App - Task Handler Context to Google Cloud Tasks Service):** After successfully publishing to Pub/Sub, your task handler (via the `django-cloud-tasks` library) returns an HTTP 2xx success response to the `Google Cloud Tasks` service. This acknowledges that the task has been completed successfully, and `Google Cloud Tasks` will not attempt to retry it.
+
+### Subscription Flow
+
+Once a message is in Pub/Sub, the delivery to subscribers happens as follows (assuming a push subscription, which is the default for `django-cloud-tasks`):
+
+```mermaid
+sequenceDiagram
+    participant GPS as Google Cloud Pub/Sub
+    participant DCT as django-cloud-tasks
+    participant App as Django App
+
+    GPS->>DCT: HTTP POST to Push Endpoint
+    DCT->>DCT: Validates request (e.g., OIDC token)
+    DCT->>App: Finds & calls YourSubscriberTask.run
+    App->>App: Executes user's task logic
+    App-->>DCT: Returns result/status
+    DCT-->>GPS: HTTP 2xx Acknowledgment (if successful)
+```
+
+**Steps for Subscription Flow:**
+
+1.  **Message Delivery:** When a message is published to a topic, Google Cloud Pub/Sub identifies all subscriptions for that topic. For push subscriptions, Pub/Sub sends an HTTP POST request.
+2.  **Push Endpoint:** This request is sent to a unique URL generated by `django-cloud-tasks` for each `SubscriberTask` (e.g., `/_tasks/pubsub/MyApp--MySubscriberTaskName/`). This endpoint is handled by `django_cloud_tasks.views.ProcessPubSubPushView`.
+3.  **Request Handling by `django-cloud-tasks`:**
+    *   Receives the incoming HTTP request.
+    *   Validates the request, typically by checking an OIDC token attached by Google Pub/Sub to ensure authenticity (i.e., that the request genuinely came from Pub/Sub for that specific subscription).
+    *   Extracts the message content (deserialized from JSON by default) and attributes.
+4.  **User Task Execution:**
+    *   The library identifies the correct `SubscriberTask` class based on the URL.
+    *   It instantiates the task and calls its `run(content, attributes)` method, passing the deserialized message.
+5.  **Acknowledgment to Pub/Sub:**
+    *   If your `run()` method completes successfully (i.e., doesn't raise an unhandled exception), `django-cloud-tasks` returns an HTTP 2xx status code (e.g., 200 OK or 204 No Content) back to Google Cloud Pub/Sub.
+    *   This 2xx response acknowledges that the message has been successfully processed. Pub/Sub will then not attempt to redeliver it.
+    *   If your `run()` method raises an exception, or if the endpoint returns a non-2xx status (e.g., 500), Pub/Sub will consider the message delivery failed and will attempt to redeliver it according to the subscription's configured retry policy.
+
+This overall flow leverages Google Cloud's infrastructure for reliable, at-least-once message delivery.
+
+
+## Advanced Pub/Sub Configuration
+
+### Custom Topic Names
 
 For both `PublisherTask` and `ModelPublisherTask`, you can override `topic_name(cls, ...)` for more control.
 
-```python
+```py title="publishers.py"
+from django.db import models # Assuming you're using models with ModelPublisherTask
+from django_cloud_tasks.tasks import PublisherTask, ModelPublisherTask
+
 class LegacySystemEventPublisher(PublisherTask):
     @classmethod
     def topic_name(cls) -> str:
-        # Overrides the default naming based on class name
-        return "legacy-integration-bus"
+        return "legacy-integration-bus" # (1)!
 
 # For ModelPublisherTask, topic_name can also use the object
-class ProductUpdateToSpecificChannel(ModelPublisherTask):
+class ProductUpdateToSpecificChannel(ModelPublisherTask): # (2)!
     @classmethod
-    def topic_name(cls, obj: models.Model, **kwargs) -> str:
-        product = obj
-        # Example: route product updates to different topics based on category
+    def topic_name(cls, obj: models.Model, **kwargs) -> str: # (3)!
+        product = obj # Type hint as Product if needed
         if product.category == "electronics":
             return "product-updates-electronics"
         return "product-updates-general"
-    # ... build_message_content and build_message_attributes ...
+
+    # Remember to implement build_message_content and build_message_attributes
+    @classmethod
+    def build_message_content(cls, obj: models.Model, **kwargs) -> dict:
+        # Replace with actual implementation
+        return {"product_id": obj.pk, "name": getattr(obj, 'name', '')}
+
+    @classmethod
+    def build_message_attributes(cls, obj: models.Model, **kwargs) -> dict[str, str]:
+        # Replace with actual implementation
+        return {"category": getattr(obj, 'category', 'unknown')}
+
 ```
+
+1.  Overrides the default naming (based on class name) to a fixed, custom topic name.
+2.  This example demonstrates dynamically choosing a topic based on the model's data.
+3.  When `ModelPublisherTask.topic_name` accepts an `obj` argument, it can tailor the topic per instance.
+
 Remember that if `DJANGO_CLOUD_TASKS_APP_NAME` is set, it will still be prefixed unless your override includes it or is absolute.
 
-## Customizing Subscribers
 
-`SubscriberTask` offers several attributes and methods for fine-tuning the GCP Pub/Sub subscription.
-
-### Custom Subscription Name (`subscription_name`)
+### Custom Subscription Name
 
 While default naming is usually fine, you can override `subscription_name()` if needed, similar to `schedule_name` for periodic tasks.
 
-### Custom Subscription URL (`subscription_url`)
+### Custom Subscription URL
 
 This is rarely needed, as the default URL points to the correct handler in `django-cloud-tasks`. Overriding this means you're pointing Pub/Sub to a custom endpoint you've built.
 
-### OIDC Authentication for Push Endpoint (`_use_oidc_auth`)
+### OIDC Authentication
 
 *   Class attribute `_use_oidc_auth: bool = True`.
 *   Controls if the Pub/Sub push subscription expects Google to send an OIDC token for authentication. Generally, keep this `True` if your Django app runs on a service like Cloud Run that can validate these tokens.
 
-### Subscription Retry Policy (Message Acknowledgement Deadline & Backoff)
+### Subscription Retry Policy
 
 These settings on your `SubscriberTask` class map to the Pub/Sub subscription's message delivery retry configuration. They define how Pub/Sub handles messages if your endpoint doesn't acknowledge them (e.g., returns an error or times out).
 
@@ -259,66 +366,143 @@ These settings on your `SubscriberTask` class map to the Pub/Sub subscription's 
 *   **`min_backoff: int | None = UNSET`**: Minimum delay (in seconds) Pub/Sub waits before redelivering an unacknowledged message. Defaults to global `DJANGO_CLOUD_TASKS_SUBSCRIBER_MIN_BACKOFF` or GCP default (typically 10s).
 *   **`max_backoff: int | None = UNSET`**: Maximum delay (in seconds) for redelivery. Defaults to global `DJANGO_CLOUD_TASKS_SUBSCRIBER_MAX_BACKOFF` or GCP default (typically 600s).
 
-```python
+```py title="subscribers.py"
+from django_cloud_tasks.tasks import SubscriberTask
+from django_cloud_tasks.constants import UNSET
+
 class TimeSensitiveAlertSubscriber(SubscriberTask):
-    topic_name = "critical-alerts"
-    min_backoff = 5    # Retry quickly for these alerts, minimum 5 seconds
-    max_backoff = 60   # But don't wait too long, max 1 minute
-    max_retries = 3    # Only try 3 times before considering it failed (e.g., for dead-lettering)
-
-    def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f"Processing time-sensitive alert: {content}")
-        # ... alert processing ...
-```
-
-### Dead Letter Topics (DLT/DLQ)
-
-If a message consistently fails processing after configured retries, Pub/Sub can forward it to a Dead Letter Topic (DLT), effectively a Dead Letter Queue (DLQ).
-
-*   **`dead_letter_topic_name(cls) -> str | None`**: Override to return the *base name* of the DLT. If `None` (default), no DLT is used for this subscriber.
-*   **`dead_letter_subscription_name(cls) -> str`**: Name for the subscription to the DLT (often just the DLT name).
-
-The `initialize_subscribers` command will attempt to set up the DLT and necessary permissions if you configure this. You'll need a separate process or subscriber to monitor and handle messages in the DLT.
-
-```python
-class PaymentProcessingSubscriber(SubscriberTask):
-    topic_name = "payment-requests"
-    max_retries = 5 # After 5 failed attempts, send to DLT
+    _use_oidc_auth = True # Ensure OIDC token is expected
+    max_retries = 5         # (1)!
+    min_backoff = 20        # (2)!
+    max_backoff = 120       # (3)!
 
     @classmethod
-    def dead_letter_topic_name(cls) -> str | None:
-        return "payment-requests-failed" # Base name for the DLT
+    def topic_name(cls) -> str:
+        return "critical-alerts"
 
     def run(self, content: dict, attributes: dict[str, str] | None = None):
-        # ... process payment ...
-        # if permanent_failure_condition(content):
-        #     raise DiscardTaskException() # To prevent retries and avoid DLT for known bad messages
-        pass
-```
+        # Process time-sensitive alert
+        print(f"Processing alert: {content}")
+        # ...
+        return {"status": "alert_processed"}
 
-### Message Filtering (`subscription_filter`)
-
-Pub/Sub allows subscriptions to specify a filter, so the subscription only receives messages whose attributes match the filter. This can reduce the number of messages your subscriber task needs to process.
-
-*   **`subscription_filter(cls) -> str | None`**: Return a filter string based on [Pub/Sub filter syntax](https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax).
-
-```python
-class HighPriorityOrderSubscriber(SubscriberTask):
-    topic_name = "sales-order" # Subscribes to the same topic as OrderNotificationHandler
+# Example of using a dead-letter topic
+class ImportantEventSubscriber(SubscriberTask):
+    dead_letter_topic_name = "failed-important-events" # (4)!
+    # dead_letter_subscription_name = "my-app--custom-dlt-sub-for-important-events" # (5)!
+    max_retries = 3 # (6)!
 
     @classmethod
-    def subscription_filter(cls) -> str | None:
-        # Only receive messages where the 'priority' attribute is 'high'
-        return 'attributes.priority = "high"'
+    def topic_name(cls) -> str:
+        return "important-events"
 
     def run(self, content: dict, attributes: dict[str, str] | None = None):
-        print(f"Processing HIGH PRIORITY order: {content.get('order_id')}")
-        # ... specialized high-priority handling ...
+        # Process important event
+        if content.get("value") == "problem": # Simulate a processing failure
+             raise ValueError("Simulated processing error for important event")
+        print(f"Processing event: {content}")
+        return {"status": "event_processed"}
+
 ```
 
-### Custom Message Parsing (`message_parser`)
+1.  Attempt message delivery up to 5 times.
+2.  Wait at least 20 seconds before the first retry.
+3.  Cap the maximum delay between retries to 120 seconds.
+4.  If message processing fails after `max_retries` (3 in this case), it will be sent to the Pub/Sub topic named `failed-important-events` (prefixed by `DJANGO_CLOUD_TASKS_APP_NAME` if set).
+5.  Optionally, specify a custom name for the dead-letter *subscription* itself. If not set, a default name will be generated.
+6.  Try processing up to 3 times before the message is eligible for the dead-letter topic.
 
-*   **`message_parser(cls) -> Callable`**: A callable used to parse the raw message body received from Pub/Sub. Defaults to `json.loads`.
-*   You'd only override this if your publishers are sending non-JSON messages (e.g., raw text, protobuf), which is less common when using this library's `PublisherTask` which serializes to JSON.
+### Dead Letter Topics
+
+If a message consistently fails processing after configured retries, Pub/Sub can forward it to a Dead Letter Topic (DLT). This is crucial for ensuring that problematic messages don't get stuck in an infinite retry loop and can be investigated later.
+
+*   **`dead_letter_topic_name: str | None = None`**: The base name of the Pub/Sub topic to use as a DLT. If set, `django-cloud-tasks` will configure the main subscription to send messages here after `max_retries` have been exhausted. The actual DLT name in GCP will be prefixed by `DJANGO_CLOUD_TASKS_APP_NAME` if configured.
+*   **`dead_letter_subscription_name: str | None = None`**: Optionally, specify a custom name for the subscription that `django-cloud-tasks` creates for the dead-letter topic. If not provided, a default name is generated. This subscription is just a way to inspect messages in the DLT; you might also have a separate `SubscriberTask` listening to this DLT for automated processing or alerting.
+
+The `initialize_subscribers` command will attempt to create the dead-letter topic if it doesn't exist and grant the necessary permissions for the Pub/Sub service account to publish to it.
+
+### Message Filtering
+
+Pub/Sub allows subscriptions to specify a filter, so the subscription only receives messages whose attributes match the filter. This can reduce the number of messages your subscriber task needs to process and can be more efficient than filtering in your task's `run` method.
+
+*   **`subscription_filter: str | None = None`**: A class attribute. Set this to a filter string according to the [Pub/Sub filter syntax](https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax).
+
+```py title="subscribers.py"
+from django_cloud_tasks.tasks import SubscriberTask
+
+class FilteredEventSubscriber(SubscriberTask):
+    # Example: attributes.eventType = "user_signup" OR attributes.priority = 'high'
+    subscription_filter = 'attributes.event_type = "user_signup" OR attributes.event_type = "user_delete"'  # (1)!
+
+    @classmethod
+    def topic_name(cls) -> str:
+        return "generic-user-events"
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None):
+        event_type = attributes.get("event_type")
+        print(f"Processing filtered event of type '{event_type}': {content}")
+        # ... logic for user_signup or user_delete events
+        return {"status": f"{event_type}_processed"}
+
+```
+
+1.  This filter string tells Pub/Sub to only deliver messages that have an `event_type` attribute of either `"user_signup"` or `"user_delete"`. The filter is applied by GCP Pub/Sub before delivering the message.
+
+### Custom Message Parser
+
+By default, `SubscriberTask` expects the Pub/Sub message data to be a JSON-encoded string (UTF-8). If your messages are published in a different format (e.g., plain text, Avro, Protobuf), you can provide a custom static method to parse the raw message body.
+
+*   **`message_parser(data: bytes, attributes: dict[str, str] | None = None) -> TypedMessage`**: A `staticmethod` on your `SubscriberTask` class.
+    *   It receives the raw message `data` as `bytes` and the message `attributes`.
+    *   It should return an instance of `django_cloud_tasks.typed_message_sender.TypedMessage`. The `content` field of this `TypedMessage` can be any Python object (e.g., a Pydantic model, a dictionary, a custom class instance).
+    *   The `run` method of your task will then receive this parsed object as its `content` argument.
+
+```py title="subscribers.py"
+import json # Or your custom deserialization library
+from django_cloud_tasks.tasks import SubscriberTask
+from django_cloud_tasks.typed_message_sender import TypedMessage # (1)!
+
+# Assume this Pydantic model is defined elsewhere, e.g., in schemas.py
+# from pydantic import BaseModel, Field
+# from typing import Literal
+# class UserActivity(BaseModel):
+#     user_id: int
+#     activity_type: Literal["login", "logout", "post_comment"]
+#     timestamp: str # ISO format string
+
+class PydanticMessageSubscriber(SubscriberTask):
+    @classmethod
+    def topic_name(cls) -> str:
+        return "user-activity-stream"
+
+    @staticmethod
+    def message_parser(data: bytes, attributes: dict[str, str] | None = None) -> TypedMessage: # (2)!
+        # from .schemas import UserActivity # Assuming UserActivity is in schemas.py
+        # For this example, we'll use a simple dict instead of a Pydantic model
+        # to avoid adding a Pydantic dependency just for this example.
+        # In a real scenario, you would parse into your Pydantic model here:
+        # parsed_content = UserActivity.model_validate_json(data.decode("utf-8"))
+        # return TypedMessage(content=parsed_content, attributes=attributes)
+        
+        # Simple dictionary parsing for example purposes
+        content = json.loads(data.decode("utf-8")) # (3)!
+        return TypedMessage(content=content, attributes=attributes) # (4)!
+
+    def run(self, content: dict, attributes: dict[str, str] | None = None): # (5)!
+        # If using Pydantic: user_activity: UserActivity = content
+        # Now 'content' is whatever your message_parser returned (e.g., a UserActivity instance or dict here)
+        # print(f"Processing Pydantic model: User {user_activity.user_id} did {user_activity.activity_type}")
+        print(f"Processing parsed message: {content}")
+        return {"status": "parsed_message_processed"}
+
+```
+
+1.  `TypedMessage` is a simple data structure (`NamedTuple`) provided by the library to hold the parsed `content` and original `attributes`.
+2.  Define `message_parser` as a `staticmethod` that takes `bytes` and returns `TypedMessage`.
+3.  Decode the `bytes` (e.g., from UTF-8) and parse it (e.g., using `json.loads` or a Pydantic model's `model_validate_json`).
+4.  Return a `TypedMessage` instance. The `content` attribute can be any Python object.
+5.  The `run` method's `content` argument will now be the object that was in `TypedMessage.content` (e.g., a dictionary in this example, or an instance of `UserActivity` if you were using Pydantic).
+
+This provides a powerful way to integrate with diverse message formats and leverage strong typing within your subscriber logic.
 
 This event-driven model using Pub/Sub provides a robust and scalable way to build decoupled applications where services can communicate and react to events without direct dependencies. 

@@ -32,11 +32,14 @@ To enable header propagation, you **must** add the relevant middleware to your `
 ```python
 MIDDLEWARE = [
     # ... other django middleware ...
-    'django_cloud_tasks.middleware.HeadersContextMiddleware',
-    'django_cloud_tasks.middleware.PubSubHeadersMiddleware', # Important for subscriber tasks
+    'django_cloud_tasks.middleware.HeadersContextMiddleware', # (1)
+    'django_cloud_tasks.middleware.PubSubHeadersMiddleware', # (2)
     # ... other app middleware ...
 ]
 ```
+
+1. Essential for capturing headers from incoming Django requests and making them available for propagation. Also helps make headers available within a task's execution if they were propagated by Cloud Tasks.
+2. Specifically for tasks triggered by Pub/Sub push subscriptions. It extracts headers embedded in the Pub/Sub message body.
 
 *   `HeadersContextMiddleware`: Essential for capturing headers from incoming Django requests and making them available for propagation when new tasks are initiated. It also helps make headers available within a task's execution if they were propagated by Cloud Tasks.
 *   `PubSubHeadersMiddleware`: Specifically for tasks triggered by Pub/Sub push subscriptions. It extracts headers that were embedded in the Pub/Sub message body by a `PublisherTask` and loads them into the Django request context for the subscriber task handler.
@@ -66,9 +69,9 @@ You configure which headers are propagated and how they are keyed in Pub/Sub mes
         DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS_KEY = "_propagated_context_headers"
         ```
 
-## Accessing Propagated Headers in Your Tasks
+## Accessing Propagated Headers
 
-### 1. For On-Demand (`Task`) and Scheduled (`PeriodicTask`) Tasks
+### Tasks
 
 These tasks are executed via an HTTP request from Google Cloud Tasks/Scheduler. Propagated headers are part of this request.
 
@@ -77,23 +80,25 @@ Access them via `self._metadata.custom_headers` in your task's `run` method. Thi
 ```python
 from django_cloud_tasks.tasks import Task
 
+
 class ProcessDataWithTraceTask(Task):
     def run(self, data_id: int):
-        # Headers in custom_headers are typically lowercased
-        trace_id = self._metadata.custom_headers.get("traceparent")
+        trace_id = self._metadata.custom_headers.get("traceparent") # (1)
         tenant_id = self._metadata.custom_headers.get("x-tenant-id")
 
         print(f"Executing for data ID: {data_id}, Trace: {trace_id}, Tenant: {tenant_id}")
         # ... your task logic ...
 ```
 
-### 2. For Subscriber Tasks (`SubscriberTask` - Pub/Sub)
+1. Headers in `custom_headers` are typically lowercased by the web server/Django.
+
+### Pub/Sub
 
 With `PublisherTask`, headers are embedded in the Pub/Sub message *body*. Your `SubscriberTask` accesses them from the `content` dictionary using the `DJANGO_CLOUD_TASKS_PROPAGATED_HEADERS_KEY`.
 
 ```python
 from django_cloud_tasks.tasks import SubscriberTask
-from django_cloud_tasks.tasks.helpers import get_app
+from django_cloud_tasks.tasks.helpers import get_app # (1)
 
 class AuditLogSubscriber(SubscriberTask):
     @classmethod
@@ -101,16 +106,19 @@ class AuditLogSubscriber(SubscriberTask):
         return "user-activity-events"
 
     def run(self, content: dict, attributes: dict[str, str] | None = None):
-        headers_key = get_app().propagated_headers_key
-        propagated_headers = content.get(headers_key, {})
+        headers_key = get_app().propagated_headers_key # (2)
+        propagated_headers = content.get(headers_key, {}) # (3)
 
-        user_id = propagated_headers.get("X-User-ID") # Case here matches what was put into the dict
+        user_id = propagated_headers.get("X-User-ID") # (4)
         request_id = propagated_headers.get("X-Request-ID")
-
-        # original_event_payload might exclude the headers for clarity if needed
-        # original_event_payload = {k: v for k, v in content.items() if k != headers_key}
 
         print(f"Audit event: {content}, User: {user_id}, Request: {request_id}")
         # ... audit logging ...
 ```
-By correctly setting up the middleware and configurations, header propagation provides valuable context for your asynchronous operations. 
+
+1. Helper to get the app config, useful for accessing settings like `propagated_headers_key` dynamically.
+2. Get the configured key for propagated headers.
+3. Safely retrieve the dictionary of propagated headers from the message content.
+4. Access specific headers. The case here matches how they were put into the dictionary by `PublisherTask`.
+
+By correctly setting up the middleware and configurations, header propagation provides valuable context for your asynchronous operations.

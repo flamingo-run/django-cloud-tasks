@@ -16,28 +16,29 @@ pip install django-cloud-tasks
 
 ## Django Setup
 
-1.  Add `'django_cloud_tasks'` to your `INSTALLED_APPS` in `settings.py`:
+1. Add `'django_cloud_tasks'` to your `INSTALLED_APPS` in `settings.py`:
 
-    ```python
-    INSTALLED_APPS = [
-        # ... other apps
-        'django_cloud_tasks',
-        # ...
-    ]
-    ```
+``` py title="settings.py"
+INSTALLED_APPS = [
+    # ...
+    'django_cloud_tasks',
+    # ...
+]
+```
 
-2.  Include the Django Cloud Tasks URLs in your main `urls.py`. These URLs are the endpoints that Google Cloud services will call to trigger your tasks.
+2. Include the Django Cloud Tasks URLs in your main `urls.py`. These URLs are the endpoints that Google Cloud services will call to trigger your tasks.
 
-    ```python
-    from django.urls import path, include
+``` py title="urls.py"
+from django.urls import path, include
 
-    urlpatterns = [
-        # ... other urls
-        path('my-tasks-prefix/', include('django_cloud_tasks.urls')), # You can choose your own prefix
-        # ...
-    ]
-    ```
-    Make sure this endpoint is publicly accessible if you're not running in a private VPC, as Google Cloud services need to reach it.
+urlpatterns = [
+    # ... other urls
+    path('my-tasks-prefix/', include('django_cloud_tasks.urls')),
+    # ...
+]
+```
+
+3. Make sure this endpoint is publicly accessible if you're not running in a private VPC, as Google Cloud services need to reach it.
 
 ## Required Google Cloud APIs
 
@@ -64,7 +65,7 @@ Here are some of the main ones to get you started:
 
 *   **`DJANGO_CLOUD_TASKS_EAGER`**: If set to `True`, tasks will run synchronously (i.e., immediately in the same process) instead of being sent to Google Cloud. This is incredibly useful for local development and testing, as it bypasses the need for GCP setup and lets you debug tasks like regular function calls.
     *   Default: `False`
-    *   Example: `DJANGO_CLOUD_TASKS_EAGER = settings.DEBUG` (to enable eager mode when Django's `DEBUG` is true)
+    *   Example: `DJANGO_CLOUD_TASKS_EAGER = settings.DEBUG` # (1)
 
 *   **`DJANGO_CLOUD_TASKS_URL_NAME`**: The specific Django URL *name* (not path) within the included `django_cloud_tasks.urls` that is used as the endpoint for on-demand tasks triggered by Cloud Tasks and scheduled tasks triggered by Cloud Scheduler.
     *   Default: `"tasks-endpoint"`

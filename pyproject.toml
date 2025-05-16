@@ -34,6 +34,10 @@ dev = [
     "ruff>=0.8.2",
     "safety>=3.2.11",
 ]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.14",
+]
 
 [tool.ruff]
 line-length = 120
