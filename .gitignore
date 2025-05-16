@@ -123,3 +123,5 @@ dmypy.json
 .idea/
 
 .run/
+
+coverage.lcov
