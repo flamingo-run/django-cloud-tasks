@@ -81,7 +81,7 @@ class Routine(ModelDiffMixin, models.Model):
         constraints = (
             models.CheckConstraint(
                 name="max_retries_less_than_attempt_count",
-                check=models.Q(max_retries__gte=models.F("attempt_count")),
+                condition=models.Q(max_retries__gte=models.F("attempt_count")),
             ),
         )
 
