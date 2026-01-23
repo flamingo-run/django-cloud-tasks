@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="routine",
             constraint=models.CheckConstraint(
-                check=models.Q(("max_retries__gte", models.F("attempt_count"))),
+                condition=models.Q(("max_retries__gte", models.F("attempt_count"))),
                 name="max_retries_less_than_attempt_count",
             ),
         ),
