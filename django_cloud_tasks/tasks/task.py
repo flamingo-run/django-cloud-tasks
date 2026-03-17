@@ -51,12 +51,12 @@ class TaskMetadata:
         if (attempt_str := headers.get(f"{cloud_tasks_prefix}Taskexecutioncount")) is not None:
             execution_number = int(attempt_str)
         else:
-            execution_number = None
+            execution_number = 0
 
         if (retry_str := headers.get(f"{cloud_tasks_prefix}Taskretrycount")) is not None:
             dispatch_number = int(retry_str)
         else:
-            dispatch_number = None
+            dispatch_number = 0
 
         if eta_epoch := headers.get(f"{cloud_tasks_prefix}Tasketa"):
             eta = datetime.fromtimestamp(int(eta_epoch.split(".")[0]), tz=timezone.utc)

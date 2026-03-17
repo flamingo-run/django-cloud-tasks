@@ -418,6 +418,28 @@ class TestTaskMetadata(TestCase):
         self.assertEqual("wizard-api--LevitationTask", metadata.cloud_scheduler_job_name)
         self.assertEqual(datetime(2023, 11, 3, 15, 27, 0, tzinfo=UTC), metadata.cloud_scheduler_schedule_time)
 
+    def test_create_from_cloud_scheduler_headers_without_cloud_tasks_headers(self):
+        headers = {
+            "X-Cloudtasks-Tasketa": str(self.some_date.timestamp()),
+            "X-Cloudtasks-Projectname": "wizard-project",
+            "X-Cloudtasks-Queuename": "wizard-queue",
+            "X-Cloudtasks-Taskname": "hp-1234567",
+            "X-Cloudscheduler": "true",
+            "X-Cloudscheduler-Scheduletime": "2023-11-03T08:27:00-07:00",
+            "X-Cloudscheduler-Jobname": "wizard-api--LevitationTask",
+        }
+        metadata = TaskMetadata.from_headers(headers=headers)
+
+        self.assertEqual(0, metadata.dispatch_number)
+        self.assertEqual(0, metadata.execution_number)
+        self.assertEqual(1, metadata.attempt_number)
+        self.assertTrue(metadata.first_attempt)
+        self.assertTrue(metadata.is_cloud_scheduler)
+
+        output_headers = metadata.to_headers()
+        self.assertEqual("0", output_headers["X-Cloudtasks-Taskretrycount"])
+        self.assertEqual("0", output_headers["X-Cloudtasks-Taskexecutioncount"])
+
     def test_build_headers(self):
         headers = self.sample_metadata.to_headers()
 
