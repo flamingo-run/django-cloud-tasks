@@ -226,29 +226,42 @@ class DjangoCloudTasksAppConfig(AppConfig):
         client = CloudSubscriber()
 
         def _get_subscriptions():
-            names = []
+            subscriptions = []
             if not self.app_name:
-                return names
+                return subscriptions
 
             for subscription in client.list_subscriptions(suffix=self.app_name):
                 subscription_id = subscription.name.rsplit("subscriptions/", 1)[-1]
-                task_name = subscription.push_config.push_endpoint.rsplit("/", 1)[-1]
-                names.append((task_name, subscription_id))
-            return names
+                push_endpoint = subscription.push_config.push_endpoint
+                task_name = push_endpoint.rsplit("/", 1)[-1]
+                subscriptions.append((subscription_id, task_name, push_endpoint))
+            return subscriptions
+
+        def _is_obsolete(subscription_id: str, task_name: str, push_endpoint: str) -> bool:
+            if task_name not in expected:
+                return True
+            # Left behind when a task changes its subscription_name(): it still pushes to the task,
+            # but set_up() only manages the subscription the task names now.
+            task_klass = expected[task_name]
+            return push_endpoint == task_klass.subscription_url() and subscription_id != task_klass.subscription_name()
 
         expected = self.subscriber_tasks.copy()
-        existing = dict(_get_subscriptions())
+        existing = _get_subscriptions()
 
-        to_add = set(expected) - set(existing)
-        to_remove = set(existing) - set(expected)
+        to_add = set(expected) - {task_name for _, task_name, _ in existing}
+        to_remove = {
+            subscription_id
+            for subscription_id, task_name, push_endpoint in existing
+            if _is_obsolete(subscription_id=subscription_id, task_name=task_name, push_endpoint=push_endpoint)
+        }
         to_update = set(expected) - set(to_add)
 
         for task_to_add in to_add:
             task_klass = expected[task_to_add]
             task_klass.set_up()
 
-        for task_to_remove in to_remove:
-            client.delete_subscription(subscription_id=existing[task_to_remove])
+        for subscription_to_remove in to_remove:
+            client.delete_subscription(subscription_id=subscription_to_remove)
 
         for task_to_update in to_update:
             task_klass = expected[task_to_update]
