@@ -91,3 +91,65 @@ class CommandsTest(SimpleTestCase):
             expected_subscribe_calls=2,
             expected_output=expected_output,
         )
+
+
+class InitializeSubscribersTest(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+        app_config = apps.get_app_config("django_cloud_tasks")
+        app_name = patch.object(app_config, "app_name", new_callable=PropertyMock, return_value="potato")
+        app_name.start()
+        self.addCleanup(app_name.stop)
+        self.app_config = app_config
+
+    def _subscription(self, subscription_id: str, push_endpoint: str) -> Mock:
+        subscription = Mock()
+        subscription.name = f"projects/potato-project/subscriptions/{subscription_id}"
+        subscription.push_config.push_endpoint = push_endpoint
+        return subscription
+
+    def _initialize(self, existing: List[Mock]) -> List[str]:
+        with (
+            patch_auth(),
+            patch("gcp_pilot.pubsub.CloudSubscriber.list_subscriptions", return_value=existing),
+            patch("gcp_pilot.pubsub.CloudSubscriber.create_or_update_subscription"),
+            patch("gcp_pilot.pubsub.CloudSubscriber.delete_subscription") as delete,
+        ):
+            self.app_config.initialize_subscribers()
+        return sorted(call.kwargs["subscription_id"] for call in delete.call_args_list)
+
+    def test_deletes_every_subscription_of_a_removed_task(self):
+        endpoint = "http://localhost:8080/subscriptions/GoneTask"
+        existing = [
+            self._subscription(subscription_id="gone-topic--potato", push_endpoint=endpoint),
+            self._subscription(subscription_id="gone-topic--v2--potato", push_endpoint=endpoint),
+        ]
+
+        deleted = self._initialize(existing=existing)
+
+        self.assertEqual(["gone-topic--potato", "gone-topic--v2--potato"], deleted)
+
+    def test_deletes_a_stale_subscription_pushing_to_an_existing_task(self):
+        from sample_app.tasks import PleaseNotifyMeTask
+
+        endpoint = PleaseNotifyMeTask.subscription_url()
+        existing = [
+            self._subscription(subscription_id=PleaseNotifyMeTask.subscription_name(), push_endpoint=endpoint),
+            self._subscription(subscription_id="old-potato-topic--potato", push_endpoint=endpoint),
+        ]
+
+        deleted = self._initialize(existing=existing)
+
+        self.assertEqual(["old-potato-topic--potato"], deleted)
+
+    def test_keeps_a_subscription_pushing_to_a_same_named_task_elsewhere(self):
+        existing = [
+            self._subscription(
+                subscription_id="potato-topic--other-potato",
+                push_endpoint="https://other.example.com/subscriptions/PleaseNotifyMeTask",
+            ),
+        ]
+
+        deleted = self._initialize(existing=existing)
+
+        self.assertEqual([], deleted)
